@@ -1,0 +1,44 @@
+! HS: this is taken from http://mcplots.cern.ch/dat/ee/zhad/T/aleph1/91.2/pythia8/8.240/tune-monash13.params
+!     
+!     This is a LEP setup at 91.2 GeV. Expect a single core event rate of 1500 events per second
+!     without any rivet analyes --- this is an upper limit as running more and more rivet
+!     analyses in conjunction with pythia becomes more costly. With the two analyses below
+!     I see about 800 events per second.
+!     It is desirable to accumulate of the order of 1 million events per parameter point.
+!     E.g. using 100 ranks, each doing 10k events.
+!
+!     All parameters are implicitly set to the current default of whatever
+!     version of pythia8 is used.
+!
+!     Typical rivet analyses are ALEPH_2004_S5765862 and DELPHI_1996_S3430090
+!
+!
+!     The settings in 1) are overwritten by pythia8-diy, left them in for reference.
+!
+! 1) Settings that will be used in a main program.
+Main:numberOfEvents = 100000          ! number of events to generate
+Next:numberShowEvent = 0           ! suppress full listing of first events
+
+# random seed
+Random:setSeed = on
+Random:seed = 125442
+
+! 2) Beam parameter settings.
+Beams:idA = 11                ! first beam,  e- = 11
+Beams:idB = -11                ! second beam, e+ = -11
+Beams:eCM = 91.2               ! CM energy of collision
+
+
+
+# Pythia 8 settings for LEP
+# Hadronic decays including b quarks, with ISR photons switched off
+WeakSingleBoson:ffbar2gmZ = on
+23:onMode = off
+23:onIfAny = 1 2 3 4 5
+PDF:lepton = off
+SpaceShower:QEDshowerByL = off
+
+# LEP : Make particles with c*tau > 100 mm stable:
+# (E.g., K0S, Lambda, Sigma, Xi, Omega are treated as *unstable*.)
+ParticleDecays:limitTau0 = On
+ParticleDecays:tau0Max = 100.0

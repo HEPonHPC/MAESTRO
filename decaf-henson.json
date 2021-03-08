@@ -1,0 +1,73 @@
+{
+    "workflow": {
+        "filter_level": "NONE",
+        "nodes": [
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./orchestrator.py --debug 1 -a conf/algoparams_bk.json",
+                "func": "orch_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_miniapp_initial.py -a conf/algoparams_bk.json -e conf/data.json -c process.dat",
+                "func": "miniappinitial_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./buildInterpol.py -a conf/algoparams_bk.json -c process.dat",
+                "func": "inputPre_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_miniapp.py -a conf/algoparams_bk.json -e conf/data.json -o multi",
+                "func": "miniappmulti_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./approx.py -a conf/algoparams_bk.json -e conf/data.json -w conf/weights", 
+                "func": "approx_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./chi2.py -e conf/data.json -w conf/weights -a conf/algoparams_bk.json -c process.dat",
+                "func": "chi2_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_miniapp.py -a conf/algoparams_bk.json -e conf/data.json -o single",
+                "func": "miniappsingle_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+                "start_proc": 0,
+                "nprocs": 1,
+             	"cmdline": "./newBox.py -a conf/algoparams_bk.json -w conf/weights -e conf/data.json",
+                "func": "newbox_py",
+                "inports": [],
+                "outports": []
+            }
+        ],
+        "edges": [
+        ]
+    }
+}

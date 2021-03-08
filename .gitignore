@@ -6,3 +6,5 @@
 .idea
 weights
 WD
+!process.dat
+!decaf-henson.json
