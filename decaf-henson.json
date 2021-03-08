@@ -13,7 +13,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./mc_miniapp_initial.py -a conf/algoparams_bk.json -e conf/data.json -c process.dat",
+                "cmdline": "./mc_miniapp_initial.py -e conf/data.json -c process.dat",
                 "func": "miniappinitial_py",
                 "inports": [],
                 "outports": []
