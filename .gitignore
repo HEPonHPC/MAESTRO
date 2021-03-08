@@ -1,0 +1,8 @@
+*.h5
+*.json
+*.dat
+*.cmd
+\.DS_Store
+.idea
+weights
+WD
