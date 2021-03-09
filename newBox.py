@@ -71,7 +71,7 @@ def tr_update(expdatafile,wtfile):
             else:
                 continue
         # print("chi2_ra_k=\t{}\nchi2_ra_kp1=\t{}\nchi2_mc_k=\t{}\nchi2_mc_kp1=\t{}\n".format(chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1))
-        if debug==1:
+        if debug:
             print("chi2/ra k\t= %.2E" % (chi2_ra_k))
             print("chi2/ra k+1\t= %.2E" % (chi2_ra_kp1))
             print("chi2/mc k\t= %.2E" % (chi2_mc_k))
@@ -84,7 +84,7 @@ def tr_update(expdatafile,wtfile):
         tr_maxradius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_maxradius")
 
         # grad = IO.gradient(kpstar)
-        if debug==1: print("rho k\t\t= %.3f" % (rho))
+        if debug: print("rho k\t\t= %.3f" % (rho))
         if rho < tr_eta :
             if debug: print("rho < eta New point rejected")
             tr_radius /=2
@@ -94,7 +94,7 @@ def tr_update(expdatafile,wtfile):
             copyfile(kpstarfile,kp1pstarfile)
             copyfile(kMCout,kp1MCout)
         else:
-            if debug==1: print("rho >= eta. New point accepted")
+            if debug: print("rho >= eta. New point accepted")
             tr_radius = min(tr_radius*2,tr_maxradius)
             curr_p = kp1pstar
             trradmsg = "TR radius doubled"
@@ -133,18 +133,18 @@ def tr_update(expdatafile,wtfile):
     status = "CONTINUE"
     if np.linalg.norm(grad) <= min_gradientNorm:
         status = 1
-        if debug==1: print("STOP\t\t= Norm of the gradient too small {}".format(np.linalg.norm(grad)))
+        if debug: print("STOP\t\t= Norm of the gradient too small {}".format(np.linalg.norm(grad)))
     elif k >= max_iteration-1:
         status = 2
-        if debug==1: print("STOP\t\t= Max iterations reached")
+        if debug: print("STOP\t\t= Max iterations reached")
     elif simulationbudgetused >= max_simulationBudget:
         status = 3
-        if debug==1: print("STOP\t\t= Simulation budget depleted")
+        if debug: print("STOP\t\t= Simulation budget depleted")
     else: status = 0
     if debug: print("Status\t\t= {}".format(status))
     ato.putInMemoryMap(memoryMap=memorymap, key="status",
                        value=status)
-    ato.writeMemoryMap(memorymap)
+    ato.writeMemoryMap(memorymap, forceFileWrite=True)
 
     if status > 0:
         print("===terminating the workflow after", k+1, "iterations@TR_UPDATE===")
