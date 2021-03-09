@@ -1,8 +1,8 @@
-import pyhenson as h
 import numpy as np
 import json
 import argparse
 import sys
+import apprentice.tools as ato
 
 # Number of local minima
 m = 10
@@ -76,32 +76,27 @@ def runSimulation(p,fidelity,problemname,factor=1):
     return Y,E
 
 #def problem_main_program(algoparams,paramfile,binids,outfile):
-def problem_main_program(algoparams,paramfile,expdata,outfile):
-    #orc@15-02: generating binids from expdata
-    with open(args.EXPDATA, 'r') as f:
+def problem_main_program(paramfile,processcard=None,memorymap = None,
+                         expdatafile=None, outfile=None,outdir=None):
+    with open(expdatafile, 'r') as f:
         expdata = json.load(f)
     binids = [b for b in expdata]
 
-    debug = h.get("debug")
+    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
+    fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="fidelity")
+    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
 
-    with open(algoparams,'r') as f:
-        algoparamds = json.load(f)
-    param_names = algoparamds["param_names"]
-    fidelity = algoparamds["fidelity"]
-    dim = algoparamds['dim']
+    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
 
-    tr_center = algoparamds['tr']['center']
-    parambounds = algoparamds['param_bounds'] if "param_bounds" in algoparamds and \
-                                                     algoparamds['param_bounds'] is not None \
-                                                    else None
-    if parambounds is not None:
-        for d in range(dim):
-            if parambounds[d][0] > tr_center[d] or tr_center[d] > parambounds[d][1]:
-                raise Exception("Starting TR center along dimension {} is not within parameter bound "
-                                "[{}, {}]".format(d+1,parambounds[d][0],parambounds[d][1]))
-        if debug==1: print("Phy bounds \t= {}".format(parambounds))
-    else:
-        if debug==1: print("Phy bounds \t= {}".format(None))
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                         key="min_param_bounds")
+    max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                         key="max_param_bounds")
+    for d in range(dim):
+        if min_param_bounds[d] > tr_center[d] or tr_center[d] > max_param_bounds[d]:
+            raise Exception("Starting TR center along dimension {} is not within parameter bound "
+                                "[{}, {}]".format(d+1,min_param_bounds[d],max_param_bounds[d]))
 
     with open(paramfile,'r') as f:
         ds = json.load(f)
@@ -130,19 +125,10 @@ def problem_main_program(algoparams,paramfile,expdata,outfile):
             for p in P
         ])
 
-    if 'simulationbudgetused' not in algoparamds:
-        algoparamds['simulationbudgetused'] = 0
-    algoparamds['simulationbudgetused'] += fidelity * len(P)
-
-    # print("##########")
-    # print(vals)
-    # print(errs)
-    # print("##########")
+    ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                    value=fidelity * len(P))
     import h5py
     f = h5py.File(outfile, "w")
-
-    # print(pnames)
-    # print(runs)
 
     f.create_dataset("index", data=np.char.encode(BNAMES, encoding='utf8'), compression=4)
     f.create_dataset("runs", data=np.char.encode(runs, encoding='utf8'), compression=4)
@@ -153,10 +139,9 @@ def problem_main_program(algoparams,paramfile,expdata,outfile):
     f.create_dataset("errors", data=errs, compression=4)
     f.close()
 
-    if debug==1: print("Done. Output written to %s" % outfile)
-    with open(algoparams,'w') as f:
-        json.dump(algoparamds,f,indent=4)
+    if debug==1: print("mc_miniapp_simple done. Output written to %s" % outfile)
     sys.stdout.flush()
+    ato.writeMemoryMap(memoryMap=memorymap)
 
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
@@ -166,49 +151,97 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run Simulation (with noise added)',
                                      formatter_class=SaneFormatter)
-    parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-                        help="Algorithm Parameters (JSON)")
-    #parser.add_argument("--newpin", dest="NEWPINFILE", type=str, default=None,
-    #                    help="New parameters input file (JSON)")
-    #parser.add_argument("-b", dest="BINIDS", type=str, default=[], nargs='+',
-    #                    help="Bin ids Shekel#1 or X2#1 and so on")
     parser.add_argument("-e", dest="EXPDATA", type=str, default=None,
                         help="Experimental data file (JSON)")
-    parser.add_argument("-o", dest="OUTFILE", type=str, default=None,
-                        help="MC Output file (HDF5)")
+    parser.add_argument("-o", dest="OPTION", type=str, default=None,
+                       help="Option (initial,single, or multi)")
+    parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
+                        help="Process Card location")
 
     args = parser.parse_args()
 
+    (memorymap, pyhenson) = ato.readMemoryMap()
+    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
+    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
+    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
+    min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                         key="min_param_bounds")
+    max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                         key="max_param_bounds")
 
-    k = h.get("iter") 
-    MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
-    MCout_1_kp1 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
-    MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
+    if args.OPTION == "initial":
+        paramfile = "logs/newparams_1_k0.json"
+        outfile = "logs/MCout_1_k0.h5"
+        outdir  = "logs/pythia_1_k0"
 
-    newparams_1_kp1 = "logs/newparams_1" + "_k{}.json".format(k + 1)
-    newparams_1_k = "logs/newparams_1" + "_k{}.json".format(k)
-    newparams_Np_k = "logs/newparams_Np" + "_k{}.json".format(k)
+        if k == 0:
+            if debug:
+                with open(args.EXPDATA, 'r') as f:
+                    expdata = json.load(f)
+                binids = [b for b in expdata]
+                print("\n#####################################")
+                print("Initially")
+                print("#####################################")
+                print("\Delta_1 \t= {}".format(tr_radius))
+                print("N_p \t\t= {}".format(N_p))
+                print("dim \t\t= {}".format(dim))
+                print("|B| \t\t= {}".format(len(binids)))
+                print("P_1 \t\t= {}".format(tr_center))
+                print("pyhenson \t= {}".format(pyhenson))
+                print("Min Phy bnd \t= {}".format(min_param_bounds))
+                print("Min Phy bnd \t= {}".format(max_param_bounds))
 
-    #print(args.OUTFILE)
-    #sys.stdout.flush()
+                sys.stdout.flush()
 
-    #orc@25-02: getting a flag to differentiate between multiple runs or single run, basically which output file
-    if args.OUTFILE =="multi":
-        paramfile = newparams_Np_k 
-        outfile = MCout_Np_k
+            with open (paramfile,'w') as f:
+                json.dump({"parameters":[tr_center]},f,indent=4)
+            ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center], outdir)
+
+            problem_main_program(
+                paramfile,
+                args.PROCESSCARD,
+                memorymap,
+                args.EXPDATA,
+                outfile,
+                outdir
+            )
+        else:
+            if debug:
+                print("Skipping the initial MC run...")
+                sys.stdout.flush()
     else:
-        paramfile = newparams_1_kp1
-        outfile = MCout_1_kp1
+        MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
+        MCout_1_kp1 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
+        MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
 
-    gradCond = h.get("signal")
-    if gradCond ==0:
-        problem_main_program(
-            args.ALGOPARAMS,
-            paramfile,
-            #args.NEWPINFILE,
-            args.EXPDATA,
-            #args.OUTFILE
-            outfile
-        )
+        newparams_1_kp1 = "logs/newparams_1" + "_k{}.json".format(k + 1)
+        newparams_1_k = "logs/newparams_1" + "_k{}.json".format(k)
+        newparams_Np_k = "logs/newparams_Np" + "_k{}.json".format(k)
 
-    # print(runSimulation(P=[[4, 4, 4, 4]], fidelity=1000, problemname="Shekel"))
+        outdir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
+        outdir_1_k = "logs/pythia_1" + "_k{}".format(k)
+        outdir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
+        if args.OPTION == "multi":
+            paramfile = newparams_Np_k
+            outfile = MCout_Np_k
+            outdir = outdir_Np_k
+        else:
+            paramfile = newparams_1_kp1
+            outfile = MCout_1_kp1
+            outdir = outdir_1_kp1
+
+        gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+
+        if not gradCond:
+            problem_main_program(
+                paramfile,
+                args.PROCESSCARD,
+                memorymap,
+                args.EXPDATA,
+                outfile,
+                outdir
+            )

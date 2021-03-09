@@ -1,20 +1,21 @@
-import pyhenson as h
 import h5py
 import apprentice
 import json
 import sys
 import argparse
 import numpy as np
+import apprentice.tools as ato
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
     pass
-def run_approx(algoparams,interpolationdatafile,valoutfile, erroutfile,expdatafile,wtfile):
-    # print("Starting approximation --")
+def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafile,wtfile):
+    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+
+    if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
     assert (erroutfile != interpolationdatafile)
     assert (valoutfile != interpolationdatafile)
-    debug = h.get("debug")
 
     DATA = apprentice.io.readH5(interpolationdatafile)
     # print(DATA)
@@ -56,12 +57,10 @@ def run_approx(algoparams,interpolationdatafile,valoutfile, erroutfile,expdatafi
     # print("Done --- approximation of {} objects written to {} and {}".format(
     #         len(idx), valoutfile, erroutfile))
 
-    with open(algoparams,'r') as f:
-        algoparamds = json.load(f)
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
 
-    tr_center = algoparamds['tr']['center']
-    tr_radius = algoparamds['tr']['radius']
-    sigma = algoparamds['tr']['sigma']
 
     #print("BYE from approx")
     #sys.stdout.flush()
@@ -73,24 +72,21 @@ def run_approx(algoparams,interpolationdatafile,valoutfile, erroutfile,expdatafi
     IO._AS.setRecurrence(tr_radius)
     IO._EAS.setRecurrence(tr_radius)
     grad = IO.gradient(tr_center)
-    # print(np.linalg.norm(grad),sigma, tr_radius)
-    if np.linalg.norm(grad) <= sigma * tr_radius:
-        h.add("signal", 1) #orc@15-02: gradCond -> YES
-        #algoparamds['tr']['gradientCondition'] = "YES"
-    #else: algoparamds['tr']['gradientCondition'] = "NO"
-    else: h.add("signal", 0) #orc@15-02: gradCond -> NO
+    if np.linalg.norm(grad) <= tr_sigma * tr_radius:
+        ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                           value=True)
+    else: ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                       value=False)
 
-    if debug==1: print("||grad|| \t= %.3f"%(np.linalg.norm(grad)))
+    if debug: print("||grad|| \t= %.3f <=> %.3f"%(np.linalg.norm(grad),tr_sigma * tr_radius))
     sys.stdout.flush()
-    #orc@26-02: eliminate as much as possible, and convert into henson signaling (e.g., gradCond is already done)
-    with open(algoparams,'w') as f:
-        json.dump(algoparamds,f,indent=4)
+    ato.writeMemoryMap(memorymap)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Construct Model',
                                      formatter_class=SaneFormatter)
-    parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-                        help="Algorithm Parameters (JSON)")
+    # parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
+    #                     help="Algorithm Parameters (JSON)")
 #    parser.add_argument("-i", dest="INTERPOLATIONDATAFILE", type=str, default=None,
 #                        help="Interpolation data (MC HDF5) file")
 #    parser.add_argument("--valappfile", dest="VALAPPFILE", type=str, default=None,
@@ -104,16 +100,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    k = h.get("iter")
+    (memorymap, pyhenson) = ato.readMemoryMap()
+    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+
     MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
     valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k)
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
     run_approx(
-        args.ALGOPARAMS,
-        #args.INTERPOLATIONDATAFILE,
+        memorymap,
         MCout_Np_k,
-        #args.VALAPPFILE,
-        #args.ERRAPPFILE,
         valapproxfile_k,
         errapproxfile_k,
         args.EXPDATA,

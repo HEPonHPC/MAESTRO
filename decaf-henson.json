@@ -5,7 +5,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./orchestrator.py --debug 1 -a conf/algoparams_bk.json",
+                "cmdline": "./orchestrator.py -v -a conf/algoparams_bk.json",
                 "func": "orch_py",
                 "inports": [],
                 "outports": []
@@ -13,7 +13,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./mc_miniapp_initial.py -e conf/data.json -c process.dat",
+                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o initial",
                 "func": "miniappinitial_py",
                 "inports": [],
                 "outports": []
@@ -21,7 +21,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./buildInterpol.py -a conf/algoparams_bk.json -c process.dat",
+                "cmdline": "./buildInterpol.py -c process.dat",
                 "func": "inputPre_py",
                 "inports": [],
                 "outports": []
@@ -29,7 +29,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./mc_miniapp.py -a conf/algoparams_bk.json -e conf/data.json -o multi",
+                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o multi",
                 "func": "miniappmulti_py",
                 "inports": [],
                 "outports": []
@@ -37,7 +37,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./approx.py -a conf/algoparams_bk.json -e conf/data.json -w conf/weights", 
+                "cmdline": "./approx.py -e conf/data.json -w conf/weights",
                 "func": "approx_py",
                 "inports": [],
                 "outports": []
@@ -45,7 +45,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./chi2.py -e conf/data.json -w conf/weights -a conf/algoparams_bk.json -c process.dat",
+                "cmdline": "./chi2.py -e conf/data.json -w conf/weights -c process.dat",
                 "func": "chi2_py",
                 "inports": [],
                 "outports": []
@@ -53,7 +53,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./mc_miniapp.py -a conf/algoparams_bk.json -e conf/data.json -o single",
+                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o single",
                 "func": "miniappsingle_py",
                 "inports": [],
                 "outports": []
@@ -61,7 +61,7 @@
             {
                 "start_proc": 0,
                 "nprocs": 1,
-             	"cmdline": "./newBox.py -a conf/algoparams_bk.json -w conf/weights -e conf/data.json",
+             	"cmdline": "./newBox.py -w conf/weights -e conf/data.json",
                 "func": "newbox_py",
                 "inports": [],
                 "outports": []

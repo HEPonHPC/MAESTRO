@@ -1,63 +1,29 @@
-import pyhenson as h
 import argparse
 import json
 import numpy as np
-import apprentice
-
-#orc@26-02:for now, putting this here, but then will be called via apprentice
-def writePythiaFiles(proccardfile, pnames, points, outdir, fnamep="params.dat", fnameg="generator.cmd"):
-     def readProcessCard(fname):
-         with open(fname) as f:
-             L = [l.strip() for l in f]
-         return L
-     from os.path import join, exists
-     for num, p in enumerate(points):
-         npad = "{}".format(num).zfill(1+int(np.ceil(np.log10(len(points)))))
-         outd = join(outdir, npad)
-         if not exists(outd):
-             import os
-             os.makedirs(outd)
-
-         outfparams = join(outd, fnamep)
-         with open(outfparams, "w") as pf:
-             for k, v in zip(pnames, p):
-                 pf.write("{name} {val:e}\n".format(name=k, val=v))
-
-         outfgenerator = join(outd, fnameg)
-         pc = readProcessCard(proccardfile)
-         with open(outfgenerator, "w") as pg:
-             for l in pc:
-                 pg.write(l+"\n")
-             for k, v in zip(pnames, p):
-                 pg.write("{name} = {val:e}\n".format(name=k, val=v))
-
-
+import apprentice.tools as ato
 
 # DO NOT REMOVE COMMENTED CODE FROM THE FUNCTION BELOW
 #orc@15-02: looks like only algoparams and newparamoutfile is used as args, hence, omitting the rest
 #def buildInterpolationPoints(algoparams,paramfileName,iterationNo,newparamoutfile,prevparamoutfile):
-def buildInterpolationPoints(algoparams,iterationNo,processcard=None,outdir=None,newparamoutfile=None,fnamep="params.dat",fnameg="generator.cmd"):
+def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile=None,
+                             outdir=None,fnamep="params.dat",fnameg="generator.cmd"):
     ############################################################
     # Step 0: Get relevent algorithm parameters and past parameter
     # vectors
     ############################################################
-    with open(algoparams,'r') as f:
-        ds = json.load(f)
+    debug = ato.getFromMemoryMap(memoryMap=memoryMap, key="debug")
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
+    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
+    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
+    point_min_dist = ato.getFromMemoryMap(memoryMap=memorymap, key="point_min_dist")
+    min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                            key="min_param_bounds")
+    max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                            key="max_param_bounds")
 
-    debug = h.get("debug")
-
-    tr_radius = ds['tr']['radius']
-    #tr_radius = h.get("tr_radius")
-    # tr_center = ds['tr']['center']
-    tr_center = h.get("tr_center")
-    # classsss = h.get("classss")
-    # classsss.fun()
-    N_p = ds['N_p']
-    dim = ds['dim']
-    pnames = ds['param_names']
-    point_min_dist = ds['point_min_dist']
-    parambounds = ds['param_bounds'] if "param_bounds" in ds and ds['param_bounds'] is not None else None
-    # if parambounds exists: parambounds = h.get("param_bounds")
 
 
     # prevparamsarr = []
@@ -98,13 +64,10 @@ def buildInterpolationPoints(algoparams,iterationNo,processcard=None,outdir=None
     # print(np_remain)
     np_remain = N_p
     newparams = None
-    if parambounds is not None:
-        minarr = [max(tr_center[d] - tr_radius,parambounds[d][0]) for d in range(dim)]
-        maxarr = [min(tr_center[d] + tr_radius,parambounds[d][1]) for d in range(dim)]
-    else:
-        minarr = [tr_center[d] - tr_radius for d in range(dim)]
-        maxarr = [tr_center[d] + tr_radius for d in range(dim)]
-    if debug==1: print("TR bounds \t= {}".format([["%.3f"%a,"%.3f"%b] for a,b in zip(minarr,maxarr)]))
+    minarr = [max(tr_center[d] - tr_radius, min_param_bounds[d]) for d in range(dim)]
+    maxarr = [min(tr_center[d] + tr_radius, max_param_bounds[d]) for d in range(dim)]
+
+    if debug: print("TR bounds \t= {}".format([["%.3f"%a,"%.3f"%b] for a,b in zip(minarr,maxarr)]))
     while np_remain >0:
         ############################################################
         # Step 2: get the remaining points needed (doing uniform random
@@ -162,11 +125,10 @@ def buildInterpolationPoints(algoparams,iterationNo,processcard=None,outdir=None
     with open(newparamoutfile,'w') as f:
         json.dump(ds, f, indent=4)
 
-    h.add("signal", 0) #gradCond -> NO
-
-    #TODO: shift to apprentice version when you have the latest version
-    #apprentice.tools.writePythiaFiles(processcard,pnames,newparams,outdir,fnamep,fnameg)
-    writePythiaFiles(processcard,pnames,newparams,outdir,fnamep,fnameg)
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                       value=False) #gradCond -> NO
+    ato.writeMemoryMap(memorymap)
+    ato.writePythiaFiles(processcard,param_names,newparams,outdir,fnamep,fnameg)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -174,8 +136,8 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate sample points',
                                      formatter_class=SaneFormatter)
-    parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-                        help="Algorithm Parameters (JSON)")
+    # parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
+    #                     help="Algorithm Parameters (JSON)")
     #parser.add_argument("-p", dest="PARAMFILENAME", type=str, default=None,
     #                    help="Previous parameters file name string before adding the iteration "
     #                         "number and file extention e.g., new_params_N_p") #NOT USED FOR NOW
@@ -190,18 +152,28 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    k = h.get("iter")
+    (memorymap, pyhenson) = ato.readMemoryMap()
+    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+
     newparams_Np_k = "logs/newparams_Np" + "_k{}.json".format(k)
     pythiadir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
 
     buildInterpolationPoints(
-        args.ALGOPARAMS,
-    #    args.PREVPARAMSFN,
-    #    args.ITERNO,
-        k,
         args.PROCESSCARD,
-        pythiadir_Np_k,
-        newparams_Np_k
-    #    args.NEWPOUTFILE
-    #    args.PREVPOUTFILE
+        memorymap,
+        newparams_Np_k,
+        pythiadir_Np_k
     )
+
+
+    # buildInterpolationPoints(
+    #     args.ALGOPARAMS,
+    # #    args.PREVPARAMSFN,
+    # #    args.ITERNO,
+    #     k,
+    #     args.PROCESSCARD,
+    #     pythiadir_Np_k,
+    #     newparams_Np_k
+    # #    args.NEWPOUTFILE
+    # #    args.PREVPOUTFILE
+    # )

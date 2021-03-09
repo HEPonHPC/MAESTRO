@@ -1,54 +1,26 @@
-import pyhenson as h
 import json
 import numpy as np
 import argparse
 import sys
+import apprentice.tools as ato
 import apprentice
-
-#orc@26-02:for now, putting this here, but then will be called via apprentice
-def writePythiaFiles(proccardfile, pnames, points, outdir, fnamep="params.dat", fnameg="generator.cmd"):
-     def readProcessCard(fname):
-         with open(fname) as f:
-             L = [l.strip() for l in f]
-         return L
-     from os.path import join, exists
-     for num, p in enumerate(points):
-         npad = "{}".format(num).zfill(1+int(np.ceil(np.log10(len(points)))))
-         outd = join(outdir, npad)
-         if not exists(outd):
-             import os
-             os.makedirs(outd)
-
-         outfparams = join(outd, fnamep)
-         with open(outfparams, "w") as pf:
-             for k, v in zip(pnames, p):
-                 pf.write("{name} {val:e}\n".format(name=k, val=v))
-
-         outfgenerator = join(outd, fnameg)
-         pc = readProcessCard(proccardfile)
-         with open(outfgenerator, "w") as pg:
-             for l in pc:
-                 pg.write(l+"\n")
-             for k, v in zip(pnames, p):
-                 pg.write("{name} = {val:e}\n".format(name=k, val=v))
 
 def mkCov(yerrs):
     import numpy as np
     return np.atleast_2d(yerrs).T * np.atleast_2d(yerrs) * np.eye(yerrs.shape[0])
 
-def run_chi2_optimization(algoparams,processcard,valfile,errfile,expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
-    #print("Starting chi2 optimization --")
-    #sys.stdout.flush()
-    with open(algoparams, 'r') as f:
-        algoparamds = json.load(f)
-    paramnames = algoparamds["param_names"]
+def run_chi2_optimization(processcard,memorymap,valfile,errfile,
+                          expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
+    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    if debug: print("Starting chi2 optimization --")
+    sys.stdout.flush()
+
+    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
 
     IO = apprentice.appset.TuningObjective2(wtfile,
                                             expdatafile,
                                             valfile,
                                             errfile)
-
-    debug = h.get("debug")
 
     res = IO.minimize(5,10)
     SCLR = IO._AS._RA[0]
@@ -67,9 +39,7 @@ def run_chi2_optimization(algoparams,processcard,valfile,errfile,expdatafile,wtf
     with open(pstarfile,'w') as f:
         json.dump(outds,f,indent=4)
 
-    #TODO: shift to apprentice version when you have the latest version
-    #apprentice.tools.writePythiaFiles(processcard,paramnames, [outputdata['x']], pythiadir)
-    writePythiaFiles(processcard,paramnames, [outputdata['x']], pythiadir)
+    ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -91,34 +61,32 @@ if __name__ == "__main__":
 #                        help="p^* parameter outfile (JSON)")
     parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
                         help="Process Card location")
-    parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-                        help="Algorithm Parameters (JSON)")
+    # parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
+    #                     help="Algorithm Parameters (JSON)")
 
     args = parser.parse_args()
-    gradCond = h.get("signal")
 
-    k = h.get("iter")
+    (memorymap, pyhenson) = ato.readMemoryMap()
+    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+
     newparams_1_kp1 = "logs/newparams_1" + "_k{}.json".format(k + 1)
     valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k) 
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
     resultoutfile_k = "logs/chi2result" + "_k{}.json".format(k)
-    pythiadir_1_kp1 = "logs/pythia_1" + "_k{}".format(k+1)
+    pythiadir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
 
-    if gradCond ==0:
+    if not gradCond:
         run_chi2_optimization(
-            args.ALGOPARAMS,
             args.PROCESSCARD,
-            #args.VALAPPFILE,
-            #args.ERRAPPFILE,
+            memorymap,
             valapproxfile_k,
             errapproxfile_k,
             args.EXPDATA,
             args.WEIGHTS,
-            #args.CHI2RESULTFILE,
             resultoutfile_k,
             newparams_1_kp1,
             pythiadir_1_kp1
-            #args.PSTARFILE
         )
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
