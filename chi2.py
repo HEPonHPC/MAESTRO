@@ -39,6 +39,7 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
     with open(pstarfile,'w') as f:
         json.dump(outds,f,indent=4)
 
+    ato.writeMemoryMap(memorymap)
     ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
