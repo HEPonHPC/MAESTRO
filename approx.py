@@ -41,7 +41,7 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
         exit(1)
 
     comm.barrier()
-    print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(DATA)))
+    if debug: print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(DATA)))
     sys.stdout.flush()
 
     # idx = [i for i in range(len(DATA))]
@@ -75,8 +75,8 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
             # print("\n\n\n\n")
             # print(_X,_Y,_E)
             val = apprentice.RationalApproximation(X, Y, order=(2, 0), pnames=pnames)
-            val._vmin = val.fmin(nsamples=100,nrestart=20)
-            val._vmax = val.fmax(nsamples=100, nrestart=20)
+            # val._vmin = val.fmin(nsamples=100,nrestart=20)
+            # val._vmax = val.fmax(nsamples=100, nrestart=20)
             val._xmin = xmin[num]
             val._xmax = xmax[num]
 
@@ -90,7 +90,7 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
     t5 = time.time()
     if rank == 0:
         print()
-        print("Approximation calculation took {} seconds".format(t5 - t4))
+        if debug: print("Approximation calculation took {} seconds".format(t5 - t4))
         sys.stdout.flush()
 
 
