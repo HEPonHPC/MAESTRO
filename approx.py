@@ -1,7 +1,7 @@
 import h5py
 import apprentice
 import json
-import sys
+import sys,os
 import argparse
 import numpy as np
 import apprentice.tools as ato
@@ -12,75 +12,147 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
 def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafile,wtfile):
     debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
 
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+    except Exception as e:
+        print("Exception when trying to import mpi4py:", e)
+        comm = None
+        pass
+
     if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
     assert (erroutfile != interpolationdatafile)
     assert (valoutfile != interpolationdatafile)
 
-    DATA = apprentice.io.readH5(interpolationdatafile)
+    # DATA = apprentice.io.readH5(interpolationdatafile)
     # print(DATA)
-    pnames = apprentice.io.readPnamesH5(interpolationdatafile, xfield="params")
-    idx = [i for i in range(len(DATA))]
-    valapp = []
-    errapp = []
+    # pnames = apprentice.io.readPnamesH5(interpolationdatafile, xfield="params")
+    if os.path.isfile(interpolationdatafile):
+        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
+    elif os.path.isdir(interpolationdatafile):
+        # YODA directory parsing here
+        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(interpolationdatafile, "params.dat",
+                                                                            wtfile, storeAsH5=False,comm=comm)
+    else:
+        print("{} neither directory nor file, exiting".format(args[0]))
+        exit(1)
+
+    comm.barrier()
+    print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(DATA)))
+    sys.stdout.flush()
+
+    # idx = [i for i in range(len(DATA))]
+    valapp = {}
+    errapp = {}
+
+    import time
+    t4 = time.time()
+    import datetime
 
     # S = apprentice.Scaler(DATA[0][0])  # Let's assume that all X are the same for simplicity
     # print("Halfway reporting: before generating the output file --")
-    for num, (_X, _Y, _E) in enumerate(DATA):
+    for num, (X, Y, E) in  enumerate(DATA):
+        thisBinId = binids[num]
+        if debug:
+            if rank == 0 or rank == size - 1:
+                if ((num + 1) % 5 == 0):
+                    now = time.time()
+                    tel = now - t4
+                    ttg = tel * (len(DATA) - num) / (num + 1)
+                    eta = now + ttg
+                    eta = datetime.datetime.fromtimestamp(now + ttg)
+                    sys.stdout.write(
+                        "{}[{}] {}/{} (elapsed: {:.1f}s, to go: {:.1f}s, ETA: {})\r".format(
+                            80 * " " if rank > 0 else "", rank, num + 1, len(DATA), tel, ttg,
+                            eta.strftime('%Y-%m-%d %H:%M:%S')), )
+                    sys.stdout.flush()
         # print(_X)
         # print(_Y)
         try:
             # print("\n\n\n\n")
             # print(_X,_Y,_E)
-            valapp.append(apprentice.RationalApproximation(_X, _Y, order=(2, 0), pnames=pnames))
-            errapp.append(apprentice.RationalApproximation(_X, _E, order=(1, 0), pnames=pnames))
+            val = apprentice.RationalApproximation(X, Y, order=(2, 0), pnames=pnames)
+            val._vmin = val.fmin(nsamples=100,nrestart=20)
+            val._vmax = val.fmax(nsamples=100, nrestart=20)
+            val._xmin = xmin[num]
+            val._xmax = xmax[num]
+
+            err = apprentice.RationalApproximation(X, E, order=(1, 0), pnames=pnames)
         except AssertionError as error:
             print(error)
-    # What do these do? Are the next 4 lines required
-    # S.save("{}.scaler".format(valoutfile))
-    # S.save("{}.scaler".format(erroutfile))
-    # S.save(valoutfile)
-    # S.save(erroutfile)
-
-    # This reads the unique identifiers of the bins
-    with h5py.File(interpolationdatafile, "r") as f:
-        binids = f.get("index")[idx]
-
-    JD = {x.decode(): y.asDict for x, y in zip(binids, valapp)}
-    with open(valoutfile, "w") as f:
-        json.dump(JD, f)
-
-    JD = {x.decode(): y.asDict for x, y in zip(binids, errapp)}
-    with open(erroutfile, "w") as f:
-        json.dump(JD, f)
-
-    # print("Done --- approximation of {} objects written to {} and {}".format(
-    #         len(idx), valoutfile, erroutfile))
-
-    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
-    tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
+        valapp[thisBinId] = val.asDict
+        errapp[thisBinId] = err.asDict
+    ALLVALAPP = comm.gather(valapp, root=0)
+    ALLERRAPP = comm.gather(errapp, root=0)
+    t5 = time.time()
+    if rank == 0:
+        print()
+        print("Approximation calculation took {} seconds".format(t5 - t4))
+        sys.stdout.flush()
 
 
-    #print("BYE from approx")
-    #sys.stdout.flush()
+        # What do these do? Are the next 4 lines required
+        # S.save("{}.scaler".format(valoutfile))
+        # S.save("{}.scaler".format(erroutfile))
+        # S.save(valoutfile)
+        # S.save(erroutfile)
 
-    IO = apprentice.appset.TuningObjective2(wtfile,
-                                            expdatafile,
-                                            valoutfile,
-                                            erroutfile)
-    IO._AS.setRecurrence(tr_radius)
-    IO._EAS.setRecurrence(tr_radius)
-    grad = IO.gradient(tr_center)
-    if np.linalg.norm(grad) <= tr_sigma * tr_radius:
-        ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                           value=True)
-    else: ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                       value=False)
 
-    if debug: print("||grad|| \t= %.3f <=> %.3f"%(np.linalg.norm(grad),tr_sigma * tr_radius))
-    sys.stdout.flush()
-    ato.writeMemoryMap(memorymap)
+        # JD = {x.decode(): y.asDict for x, y in zip(binids, valapp)}
+        from collections import OrderedDict
+        JD = OrderedDict()
+        a = {}
+        for apps in ALLVALAPP:
+            a.update(apps)
+        for k in a.keys():
+            JD[k] = a[k]
+        with open(valoutfile, "w") as f:
+            json.dump(JD, f)
+
+        JD = OrderedDict()
+        a = {}
+        for apps in ALLERRAPP:
+            a.update(apps)
+        for k in a.keys():
+            JD[k] = a[k]
+        with open(erroutfile, "w") as f:
+            json.dump(JD, f)
+
+        # print("Done --- approximation of {} objects written to {} and {}".format(
+        #         len(idx), valoutfile, erroutfile))
+
+        tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+        tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+        tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
+
+
+        #print("BYE from approx")
+        #sys.stdout.flush()
+        try:
+            IO = apprentice.appset.TuningObjective2(wtfile,
+                                                    expdatafile,
+                                                    valoutfile,
+                                                    erroutfile, debug=debug)
+            IO._AS.setRecurrence(tr_radius)
+            IO._EAS.setRecurrence(tr_radius)
+            grad = IO.gradient(tr_center)
+            if np.linalg.norm(grad) <= tr_sigma * tr_radius:
+                ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                                   value=True)
+            else: ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                               value=False)
+            if debug: print(
+                "||grad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
+        except:
+            ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                               value=False)
+            pass
+
+        sys.stdout.flush()
+        ato.writeMemoryMap(memorymap)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Construct Model',

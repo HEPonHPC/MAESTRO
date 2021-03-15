@@ -115,6 +115,8 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
     runs = sorted(list(PARAMS.keys()))
     vals = []
     errs = []
+    xmin = []
+    xmax = []
     for bno, b in enumerate(binids):
         vals.append([
             runSimulation(p,fidelity=fidelity,problemname=HNAMES[bno],factor=FACTOR[bno])[0][0]
@@ -124,6 +126,8 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
             runSimulation(p, fidelity=fidelity, problemname=HNAMES[bno], factor=FACTOR[bno])[1][0]
             for p in P
         ])
+        xmin.append(min_param_bounds)
+        xmax.append(max_param_bounds)
 
     ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                     value=fidelity * len(P))
@@ -137,6 +141,8 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
     pset.attrs["names"] = [x.encode('utf8') for x in pnames]
     f.create_dataset("values", data=vals, compression=4)
     f.create_dataset("errors", data=errs, compression=4)
+    f.create_dataset("xmin", data=xmin, compression=4)
+    f.create_dataset("xmax", data=xmax, compression=4)
     f.close()
 
     if debug==1: print("mc_miniapp_simple done. Output written to %s" % outfile)
