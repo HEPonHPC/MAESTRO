@@ -12,7 +12,18 @@ def mkCov(yerrs):
 def run_chi2_optimization(processcard,memorymap,valfile,errfile,
                           expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
     debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
-    if debug: print("Starting chi2 optimization --")
+
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+    except Exception as e:
+        print("Exception when trying to import mpi4py:", e)
+        comm = None
+        pass
+
+    if rank == 0 and debug:
+        print("Starting chi2 optimization --")
     sys.stdout.flush()
 
     param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
@@ -20,27 +31,29 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
     IO = apprentice.appset.TuningObjective2(wtfile,
                                             expdatafile,
                                             valfile,
-                                            errfile)
+                                            errfile,
+                                            debug=debug)
 
-    res = IO.minimize(5,10)
-    SCLR = IO._AS._RA[0]
-    outputdata = {
-        "x": res['x'].tolist(),
-        "fun" : res['fun'],
-        "scaler":SCLR.asDict
-    }
-    with open(chi2resultoutfile,'w') as f:
-        json.dump(outputdata,f,indent=4)
+    res = IO.minimizeMPI(nstart=5,nrestart=10,comm=comm)
+    if rank == 0:
+        SCLR = IO._AS._RA[0]
+        outputdata = {
+            "x": res['x'].tolist(),
+            "fun" : res['fun'],
+            "scaler":SCLR.asDict
+        }
+        with open(chi2resultoutfile,'w') as f:
+            json.dump(outputdata,f,indent=4)
 
-    outds = {
-        "parameters": [outputdata['x']]
-    }
-    if debug==1: print("\\SP amin \t= {}".format(["%.3f"%(c) for c in res['x']]))
-    with open(pstarfile,'w') as f:
-        json.dump(outds,f,indent=4)
+        outds = {
+            "parameters": [outputdata['x']]
+        }
+        if debug: print("\\SP amin \t= {}".format(["%.3f"%(c) for c in res['x']]))
+        with open(pstarfile,'w') as f:
+            json.dump(outds,f,indent=4)
 
-    ato.writeMemoryMap(memorymap)
-    ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
+        ato.writeMemoryMap(memorymap)
+        ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
