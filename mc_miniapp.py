@@ -129,8 +129,10 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
         xmin.append(min_param_bounds)
         xmax.append(max_param_bounds)
 
-    ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
-                                    value=fidelity * len(P))
+    # ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+    #                                 value=fidelity * len(P))
+    simulationBudgetUsed = fidelity * len(P)
+
     import h5py
     f = h5py.File(outfile, "w")
 
@@ -147,7 +149,8 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
 
     if debug==1: print("mc_miniapp_simple done. Output written to %s" % outfile)
     sys.stdout.flush()
-    ato.writeMemoryMap(memoryMap=memorymap)
+    # ato.writeMemoryMap(memoryMap=memorymap)
+    return simulationBudgetUsed
 
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
@@ -187,6 +190,7 @@ if __name__ == "__main__":
         outfile = "logs/MCout_1_k0.h5"
         outdir  = "logs/pythia_1_k0"
 
+        simulationBudgetUsed = 0.
         if k == 0 and rank==0 :
             if debug:
                 with open(args.EXPDATA, 'r') as f:
@@ -210,7 +214,7 @@ if __name__ == "__main__":
                 json.dump({"parameters":[tr_center]},f,indent=4)
             ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center], outdir) #orc@19-03: writePythiaFiles func causing problem w multiple procs
 
-            problem_main_program(
+            simulationBudgetUsed = problem_main_program(
                 paramfile,
                 args.PROCESSCARD,
                 memorymap,
@@ -220,8 +224,12 @@ if __name__ == "__main__":
             )
         else:
             if debug:
-                print("Skipping the initial MC run...")
+                print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
                 sys.stdout.flush()
+        simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+        ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                           value=simulationBudgetUsed)
+        ato.writeMemoryMap(memoryMap=memorymap)
     else:
         MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
         MCout_1_kp1 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
@@ -245,12 +253,17 @@ if __name__ == "__main__":
 
         gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
 
-        if not gradCond and rank ==0 :
-            problem_main_program(
-                paramfile,
-                args.PROCESSCARD,
-                memorymap,
-                args.EXPDATA,
-                outfile,
-                outdir
-            )
+        simulationBudgetUsed = 0.
+        if not gradCond and rank == 0:
+            simulationBudgetUsed = problem_main_program(
+                                    paramfile,
+                                    args.PROCESSCARD,
+                                    memorymap,
+                                    args.EXPDATA,
+                                    outfile,
+                                    outdir
+                                )
+        simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+        ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                        value=simulationBudgetUsed)
+        ato.writeMemoryMap(memoryMap=memorymap)
