@@ -7,9 +7,7 @@ import json
 import numpy as np
 from shutil import copyfile
 
-def tr_update(expdatafile,wtfile):
-
-    (memorymap, pyhenson) = ato.readMemoryMap()
+def tr_update(memorymap,expdatafile,wtfile):
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     kpstarfile = "logs/newparams_1" + "_k{}.json".format(k)
     kMCout = "logs/MCout_1" + "_k{}.h5".format(k)
@@ -108,10 +106,10 @@ def tr_update(expdatafile,wtfile):
         copyfile(kpstarfile,kp1pstarfile)
         copyfile(kMCout,kp1MCout)
     # put  tr_radius and curr_p in radius and center and write to algoparams
-    ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
-                       value=tr_radius)
-    ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
-                       value=curr_p)
+    # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
+    #                    value=tr_radius)
+    # ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
+    #                    value=curr_p)
     if debug: print("\Delta k+1 \t= %.2E (%s)"%(tr_radius,trradmsg))
 
     if debug: print("P k+1 \t\t= {} ({})".format(["%.3f"%(c) for c in curr_p],trcentermsg))
@@ -130,7 +128,6 @@ def tr_update(expdatafile,wtfile):
     IO._EAS.setRecurrence(curr_p)
     grad = IO.gradient(curr_p)
 
-    status = "CONTINUE"
     if np.linalg.norm(grad) <= min_gradientNorm:
         status = 1
         if debug: print("STOP\t\t= Norm of the gradient too small {}".format(np.linalg.norm(grad)))
@@ -142,14 +139,15 @@ def tr_update(expdatafile,wtfile):
         if debug: print("STOP\t\t= Simulation budget depleted")
     else: status = 0
     if debug: print("Status\t\t= {}".format(status))
-    ato.putInMemoryMap(memoryMap=memorymap, key="status",
-                       value=status)
-    ato.writeMemoryMap(memorymap, forceFileWrite=True)
+    # ato.putInMemoryMap(memoryMap=memorymap, key="status",
+    #                    value=status)
+    # ato.writeMemoryMap(memorymap, forceFileWrite=True)
 
     if status > 0:
         print("===terminating the workflow after", k+1, "iterations@TR_UPDATE===")
         sys.stdout.flush()
         os._exit(0)
+    return (status,tr_radius,curr_p)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -169,8 +167,21 @@ if __name__ == "__main__":
     size = comm.Get_size()
     rank = comm.Get_rank()
 
+    (memorymap, pyhenson) = ato.readMemoryMap()
+    status,radius,center = None,None,None
     if rank == 0:
-        tr_update(
+        (status,radius,center) = tr_update(
+            memorymap,
             args.EXPDATA,
             args.WEIGHTS
         )
+    status = comm.bcast(status, root=0)
+    radius = comm.bcast(radius, root=0)
+    center = comm.bcast(center, root=0)
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
+                       value=radius)
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
+                       value=center)
+    ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                       value=status)
+    ato.writeMemoryMap(memorymap, forceFileWrite=True)
