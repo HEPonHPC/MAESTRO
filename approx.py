@@ -92,6 +92,7 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
     ALLVALAPP = comm.gather(valapp, root=0)
     ALLERRAPP = comm.gather(errapp, root=0)
     t5 = time.time()
+    gradCondToWrite = False
     if rank == 0:
         print()
         if debug: print("Approximation calculation took {} seconds".format(t5 - t4))
@@ -144,18 +145,25 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
             IO._EAS.setRecurrence(tr_radius)
             grad = IO.gradient(tr_center)
             if np.linalg.norm(grad) <= tr_sigma * tr_radius:
-                ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                                   value=True)
-            else: ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                               value=False)
+                # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                #                    value=True)
+                gradCondToWrite = True
+            else:
+                gradCondToWrite = False
+                # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                #                value=False)
             if debug: print(
                 "||grad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
         except:
-            ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                               value=False)
+            # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+            #                    value=False)
+            gradCondToWrite = False
             pass
 
         sys.stdout.flush()
+    gradCondToWrite = comm.bcast(gradCondToWrite, root=0)
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                                          value=gradCondToWrite)
     ato.writeMemoryMap(memorymap)
     comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
     print("BYE from approx")
