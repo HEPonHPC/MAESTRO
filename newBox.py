@@ -37,12 +37,12 @@ def tr_update(expdatafile,wtfile):
                                             valfile,
                                             errfile)
     if not gradCond:
-        kDATA = apprentice.io.readH5(kMCout)
+        kDATA = apprentice.io.readH5(kMCout) #orc@19-03: parallel version doesn't like these readH5 funcs 
         idx = [i for i in range(len(kDATA))]
         with h5py.File(kMCout, "r") as f:
             tmp = f.get("index")[idx]
         mcbinids = [t.decode() for t in tmp]
-        kp1DATA = apprentice.io.readH5(kp1MCout)
+        kp1DATA = apprentice.io.readH5(kp1MCout) #orc@19-03: parallel version doesn't like these readH5 funcs
 
         with open (kp1pstarfile,'r') as f:
             ds = json.load(f)
@@ -164,7 +164,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    tr_update(
-        args.EXPDATA,
-        args.WEIGHTS
-    )
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    if rank == 0:
+        tr_update(
+            args.EXPDATA,
+            args.WEIGHTS
+        )

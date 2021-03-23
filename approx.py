@@ -22,25 +22,29 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
         comm = None
         pass
 
+    comm.barrier()
     if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
     assert (erroutfile != interpolationdatafile)
     assert (valoutfile != interpolationdatafile)
 
+    #orc@19-03: os.path.isdir not good for multi procs
+    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
+
     # DATA = apprentice.io.readH5(interpolationdatafile)
     # print(DATA)
     # pnames = apprentice.io.readPnamesH5(interpolationdatafile, xfield="params")
-    if os.path.isfile(interpolationdatafile):
-        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
-    elif os.path.isdir(interpolationdatafile):
+    #if os.path.isfile(interpolationdatafile):
+    #    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
+    #elif os.path.isdir(interpolationdatafile):
         # YODA directory parsing here
-        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(interpolationdatafile, "params.dat",
-                                                                            wtfile, storeAsH5=False,comm=comm)
-    else:
-        print("{} neither directory nor file, exiting".format(args[0]))
-        exit(1)
+    #    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(interpolationdatafile, "params.dat",
+    #                                                                        wtfile, storeAsH5=False,comm=comm)
+    #else:
+    #    print("{} neither directory nor file, exiting".format(args[0]))
+    #    exit(1)
 
-    comm.barrier()
+    comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
     if debug: print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(DATA)))
     sys.stdout.flush()
 
@@ -152,7 +156,10 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
             pass
 
         sys.stdout.flush()
-        ato.writeMemoryMap(memorymap)
+    ato.writeMemoryMap(memorymap)
+    comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
+    print("BYE from approx")
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Construct Model',

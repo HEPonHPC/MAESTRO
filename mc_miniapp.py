@@ -165,6 +165,9 @@ if __name__ == "__main__":
                         help="Process Card location")
 
     args = parser.parse_args()
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
     (memorymap, pyhenson) = ato.readMemoryMap()
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
@@ -184,7 +187,7 @@ if __name__ == "__main__":
         outfile = "logs/MCout_1_k0.h5"
         outdir  = "logs/pythia_1_k0"
 
-        if k == 0:
+        if k == 0 and rank==0 :
             if debug:
                 with open(args.EXPDATA, 'r') as f:
                     expdata = json.load(f)
@@ -205,7 +208,7 @@ if __name__ == "__main__":
 
             with open (paramfile,'w') as f:
                 json.dump({"parameters":[tr_center]},f,indent=4)
-            ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center], outdir)
+            ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center], outdir) #orc@19-03: writePythiaFiles func causing problem w multiple procs
 
             problem_main_program(
                 paramfile,
@@ -242,7 +245,7 @@ if __name__ == "__main__":
 
         gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
 
-        if not gradCond:
+        if not gradCond and rank ==0 :
             problem_main_program(
                 paramfile,
                 args.PROCESSCARD,

@@ -128,7 +128,12 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile=Non
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                        value=False) #gradCond -> NO
     ato.writeMemoryMap(memorymap)
-    ato.writePythiaFiles(processcard,param_names,newparams,outdir,fnamep,fnameg)
+    #orc@19-03: writePythiaFiles func causing problem w multiple procs
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.rank
+    if rank ==0:
+        ato.writePythiaFiles(processcard,param_names,newparams,outdir,fnamep,fnameg)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):

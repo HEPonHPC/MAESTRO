@@ -51,9 +51,9 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
         if debug: print("\\SP amin \t= {}".format(["%.3f"%(c) for c in res['x']]))
         with open(pstarfile,'w') as f:
             json.dump(outds,f,indent=4)
-
-        ato.writeMemoryMap(memorymap)
         ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
+
+    ato.writeMemoryMap(memorymap)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
