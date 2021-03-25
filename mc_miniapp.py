@@ -190,7 +190,7 @@ if __name__ == "__main__":
         outfile = "logs/MCout_1_k0.h5"
         outdir  = "logs/pythia_1_k0"
 
-        simulationBudgetUsed = 0.
+        simulationBudgetUsed = 0
         if k == 0 and rank==0 :
             if debug:
                 with open(args.EXPDATA, 'r') as f:
@@ -226,10 +226,11 @@ if __name__ == "__main__":
             if debug:
                 print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
                 sys.stdout.flush()
-        simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
-        ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
-                           value=simulationBudgetUsed)
-        ato.writeMemoryMap(memoryMap=memorymap)
+        if k ==0: #orc@25-03: no need to bcast in other iterations than the first one.
+            simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+            ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                               value=simulationBudgetUsed)
+            ato.writeMemoryMap(memoryMap=memorymap)
     else:
         MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
         MCout_1_kp1 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
@@ -251,9 +252,9 @@ if __name__ == "__main__":
             outfile = MCout_1_kp1
             outdir = outdir_1_kp1
 
-        gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
 
-        simulationBudgetUsed = 0.
+        gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+        simulationBudgetUsed = 0
         if not gradCond and rank == 0:
             simulationBudgetUsed = problem_main_program(
                                     paramfile,
