@@ -29,17 +29,19 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
     assert (valoutfile != interpolationdatafile)
 
     #orc@19-03: os.path.isdir not good for multi procs
-    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
-
+    # DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
     # DATA = apprentice.io.readH5(interpolationdatafile)
     # print(DATA)
     # pnames = apprentice.io.readPnamesH5(interpolationdatafile, xfield="params")
-    #if os.path.isfile(interpolationdatafile):
-    #    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
-    #elif os.path.isdir(interpolationdatafile):
+    if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
         # YODA directory parsing here
-    #    DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(interpolationdatafile, "params.dat",
-    #                                                                        wtfile, storeAsH5=False,comm=comm)
+        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+            interpolationdatafile, "params.dat",
+            wtfile, storeAsH5=False, comm=comm)
+    else:
+        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
+            interpolationdatafile, wtfile, comm=comm)
+
     #else:
     #    print("{} neither directory nor file, exiting".format(args[0]))
     #    exit(1)
