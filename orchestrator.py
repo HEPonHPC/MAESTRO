@@ -11,27 +11,41 @@ if __name__ == "__main__":
 			formatter_class=SaneFormatter)
 	parser.add_argument("-v", "--debug", dest="DEBUG", default=False, action="store_true",
 			help="Turn on some debug messages")
+	parser.add_argument("-c", "--continue", dest="CONTINUE", default=False, action="store_true",
+						help="Continue from previous iteration. Required only for local runs. "
+							 "Use false in first iteration and true in subsequent iterations.")
 	parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
 			help="Algorithm Parameters (JSON)")
 
 	args = parser.parse_args()
 	import apprentice.tools as ato
-	memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
-	ato.putInMemoryMap(memoryMap=memorymap, key="debug", value=args.DEBUG)
 
-	for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
+	if args.CONTINUE:
+		(memorymap, pyhenson) = ato.readMemoryMap()
+		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+		ato.putInMemoryMap(memoryMap=memorymap, key="debug", value=args.DEBUG)
+		k = currk + 1
 		ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 		pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
-
-		if ato.getFromMemoryMap(memoryMap=memorymap,key="debug"):
+		if ato.getFromMemoryMap(memoryMap=memorymap, key="debug"):
 			print("orchestrator: yielding to other tasks, at iter", k)
-		sys.stdout.flush()
-		if pyhenson:
-			import pyhenson as h
-			h.yield_()
-		else:
-			break
 
-	print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
+	else:
+		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
+		ato.putInMemoryMap(memoryMap=memorymap, key="debug", value=args.DEBUG)
+		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
+			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
+			pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
+
+			if ato.getFromMemoryMap(memoryMap=memorymap,key="debug"):
+				print("orchestrator: yielding to other tasks, at iter", k)
+			sys.stdout.flush()
+			if pyhenson:
+				import pyhenson as h
+				h.yield_()
+			else:
+				break
+
+		print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
 	sys.stdout.flush()
 	os._exit(0)
