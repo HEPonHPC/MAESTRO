@@ -22,7 +22,6 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
         comm = None
         pass
 
-    comm.barrier()
     if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
     assert (erroutfile != interpolationdatafile)
@@ -167,8 +166,8 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                                           value=gradCondToWrite)
     ato.writeMemoryMap(memorymap)
-    comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
-    print("BYE from approx")
+    #comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
+    print("BYE from approx", rank, gradCondToWrite)
     sys.stdout.flush()
 
 if __name__ == "__main__":
