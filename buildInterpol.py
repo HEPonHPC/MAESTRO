@@ -3,140 +3,261 @@ import json
 import numpy as np
 import apprentice.tools as ato
 
-# DO NOT REMOVE COMMENTED CODE FROM THE FUNCTION BELOW
-#orc@15-02: looks like only algoparams and newparamoutfile is used as args, hence, omitting the rest
-#def buildInterpolationPoints(algoparams,paramfileName,iterationNo,newparamoutfile,prevparamoutfile):
-def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile=None,
-                             outdir=None,fnamep="params.dat",fnameg="generator.cmd"):
+def checkifnotinminseperationdist(point1,point2,mindist):
+    distarr = [np.abs(point1[vno] - point2[vno]) for vno in range(len(point1))]
+    infn = max(distarr)
+    return infn >= mindist
+
+def readParamFile(file):
+    import json
+    with open(file, 'r') as f:
+        ds = json.load(f)
+        return ds['parameters']
+
+def checkIfPointInTR(point, tr_center, tr_radius):
+    distarr = [np.abs(point[vno] - tr_center[vno]) for vno in range(len(point))]
+    infn = max(distarr)
+    return infn <= tr_radius
+
+def checkIfSamePoint(point1,point2):
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    for vno in range(len(point1)):
+        if not isclose(point1[vno],point2[vno]):
+            return False
+    return True
+
+def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_metadata):
+    params = readParamFile(file)
+    for pno,p in enumerate(params):
+        if checkIfPointInTR(p, tr_center, tr_radius):
+            if not checkIfSamePoint(p, tr_center):
+                if p_pool is None:
+                    p_pool = np.array([p])
+                    p_pool_metadata["0"]={"file":file,"index":pno,
+                                            "k":iterno,"ptype":paramtype}
+                else:
+                    p_pool = np.concatenate((p_pool, np.array([p])))
+                    p_pool_metadata[str(len(p_pool)-1)] = {"file": file, "index": pno,
+                                                           "k":iterno,"ptype":paramtype}
+    return p_pool
+
+def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_metadata):
+    if p_sel_prev is None:
+        p_sel_prev = np.array([param])
+        p_sel_prev_metadata['0'] = p_pool_metadata[str(poolindex)]
+    else:
+        p_sel_prev = np.concatenate((p_sel_prev, np.array([param])))
+        p_sel_prev_metadata[str(len(p_sel_prev)-1)] = p_pool_metadata[str(poolindex)]
+    return p_sel_prev
+
+def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,N_p,mindist):
+    for pino, pi in enumerate(p_init):
+        if not I_init[pino]: continue
+        result = True
+        if p_sel_prev is not None:
+            for psprev in p_sel_prev:
+                result = checkifnotinminseperationdist(pi, psprev, mindist)
+                if not result:
+                    break
+        if result and p_sel_new is not None:
+            for psnew in p_sel_new:
+                result = checkifnotinminseperationdist(pi, psnew, mindist)
+                if not result:
+                    break
+        if result:
+            if p_sel_new is None:
+                p_sel_new = np.array([pi])
+            else:
+                p_sel_new = np.concatenate((p_sel_new, np.array([pi])))
+            I_init[pino] = False
+        psnewlength = 0
+        psprevlength = 0
+        if p_sel_new is not None:
+            psnewlength = len(p_sel_new)
+        if p_sel_prev is not None:
+            psprevlength = len(p_sel_prev)
+        if psnewlength + psprevlength == N_p:
+            break
+    return p_sel_new,I_init
+
+def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="newp.json",
+                             outdir=None,prevparamoutfile="oldp.json",fnamep="params.dat",
+                             fnameg="generator.cmd"):
     ############################################################
-    # Step 0: Get relevent algorithm parameters and past parameter
-    # vectors
+    # Get relevent algorithm parameters
     ############################################################
     import sys
+    currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     debug = ato.getFromMemoryMap(memoryMap=memoryMap, key="debug")
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
     param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
-    point_min_dist = ato.getFromMemoryMap(memoryMap=memorymap, key="point_min_dist")
+    theta = ato.getFromMemoryMap(memoryMap=memorymap, key="theta")
+    thetaprime = ato.getFromMemoryMap(memoryMap=memorymap, key="thetaprime")
     min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
                                             key="min_param_bounds")
     max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
                                             key="max_param_bounds")
 
-
-
-    # prevparamsarr = []
-    # fnamearr = []
-    # pnoarr = []
-    # np_remain = N_p
-    # for iter in range(iterationNo):
-    #     fname = paramfileName + "_k{}.json".format(iter)
-    #     with open(fname,'r') as f:
-    #         ds = json.load(f)
-    #     pparr = ds['parameters']
-    #     for pno, p in enumerate(pparr):
-    #         distarr = [np.abs(p[vno] - tr_center[vno]) for vno in range(dim)]
-    #         infn = max(distarr)
-    #         if infn <= tr_radius:
-    #             prevparamsarr.append(p)
-    #             fnamearr.append(fname)
-    #             pnoarr.append(pno)
-    #
-    # prevparamobj = {}
-    # prevparamsarraccpet = []
-    # for pno,p in enumerate(prevparamsarr):
-    #     add = True
-    #     for pa in prevparamsarraccpet:
-    #         distarr = [np.abs(p[vno] - pa[vno]) for vno in range(dim)]
-    #         infn = max(distarr)
-    #         add = infn >= point_min_dist
-    #         if not add:
-    #             break
-    #     if add:
-    #         np_remain -= 1
-    #         if fnamearr[pno] not in prevparamobj:
-    #             prevparamobj[fnamearr[pno]] = {}
-    #         prevparamobj[fnamearr[pno]][str(pnoarr[pno])] = p
-    #     if np_remain==0:
-    #         break
-    # print(prevparamobj)
-    # print(np_remain)
+    ############################################################
+    # Data Structures
+    ############################################################
     np_remain = N_p
-    newparams = None
     minarr = [max(tr_center[d] - tr_radius, min_param_bounds[d]) for d in range(dim)]
     maxarr = [min(tr_center[d] + tr_radius, max_param_bounds[d]) for d in range(dim)]
+    mindist = theta * tr_radius
+    equivalencedist = thetaprime * tr_radius
 
-    if debug: print("TR bounds \t= {}".format([["%.3f"%a,"%.3f"%b] for a,b in zip(minarr,maxarr)]))
-    sys.stdout.flush()
-    while np_remain >0:
+
+    p_init = np.array([])
+    p_pool = None
+    p_pool_metadata = {}
+    p_sel_prev = None
+    p_sel_prev_metadata = {}
+    p_sel_new = None
+    I_init = []
+    I_pool = []
+
+
+    factor = 1
+    while(len(p_init[I_init])<N_p):
         ############################################################
-        # Step 2: get the remaining points needed (doing uniform random
-        # for now)
+        # Inititalize p_init and I_init
         ############################################################
-
-        Xperdim = ()
-        for d in range(dim):
-            Xperdim = Xperdim + (np.random.rand(np_remain, ) *
-                                 (maxarr[d] - minarr[d]) + minarr[d],)  # Coordinates are generated in [MIN,MAX]
-
-        Xnew = np.column_stack(Xperdim)
+        p_init = ato.getLHSsamples(dim=dim,npoints=factor*N_p,criterion="maximin",minarr=minarr,maxarr=maxarr)
+        I_init = [True for i in p_init]
 
         ############################################################
-        # Step 3: Make sure all points are at least a certain distance
-        # from each other. If not, go to step 2 and repeat
+        # Discard points from p_init that are in minimum seperation distance
         ############################################################
-
-        for xn in Xnew:
-            newparamsAccept = [True]
-            newparamsAccept2 = [True]
-            # if len(prevparams) > 0:
-            #     newparamsAccept = [False] * len(prevparams[prevParamAccept])
-            #     for xno,xo in enumerate(prevparams[prevParamAccept]):
-            #         distarr = [np.abs(xn[vno] - xo[vno]) for vno in range(dim)]
-            #         infn = max(distarr)
-            #         newparamsAccept[xno] = infn >= point_min_dist
-            if newparams is not None:
-                newparamsAccept2 = [False] * len(newparams)
-                for xno,xo in enumerate(newparams):
-                    distarr = [np.abs(xn[vno] - xo[vno]) for vno in range(dim)]
-                    infn = max(distarr)
-                    newparamsAccept2[xno] = infn >= point_min_dist
-
-            if all(newparamsAccept) and all(newparamsAccept2):
-                if newparams is not None:
-                    newparams = np.concatenate((newparams, np.array([xn])))
-                else:
-                    newparams = np.array([xn])
-                np_remain -= 1
-
-            if np_remain == 0:
-                break
+        for pcurrindex in range(1,len(p_init)):
+            pcurr = p_init[pcurrindex]
+            for potherindex in range(pcurrindex):
+                if not I_init[potherindex]: continue
+                pother = p_init[potherindex]
+                result = checkifnotinminseperationdist(pcurr,pother,mindist)
+                if not result:
+                    I_init[pcurrindex] = result
+                    break
+        factor+=1
+    print(p_init)
 
     ############################################################
-    # Step 4: Output all the new points to be given to the problem
-    # to run the simulation on
+    # polulate p_pool
     ############################################################
-    ds = {
-        "parameters":newparams.tolist()
-    }
-    # if prevparams is not None:
-    #     ds["prevparameters"] = prevparams[prevParamAccept].tolist()
-    # print(ds)
-    #orc@19-03: writePythiaFiles func and json dump causing problem w multiple procs
+    tr_center_param_fn = "logs/newparams_1" #+ "_k{}.json".format(k)
+    prev_np_param_fn = "logs/newparams_Np" #+ "_k{}.json".format(k)
+    for k in range(currIteration):
+        tr_center_param = tr_center_param_fn + "_k{}.json".format(k)
+        p_pool = addParamsToPool(tr_center_param,k,"1",tr_center,tr_radius,p_pool,p_pool_metadata)
+
+        prev_np_param =  prev_np_param_fn + "_k{}.json".format(k)
+        p_pool = addParamsToPool(prev_np_param,k,"Np", tr_center, tr_radius, p_pool,p_pool_metadata)
+
+
+    if p_pool is not None:
+        I_pool = [True for i in p_pool]
+        ############################################################
+        # Discard points from p_pool that are the very similar
+        ############################################################
+        for pcurrindex in range(1, len(p_pool)):
+            pcurr = p_pool[pcurrindex]
+            for potherindex in range(pcurrindex):
+                if not I_pool[potherindex]: continue
+                pother = p_pool[potherindex]
+                result = checkIfSamePoint(pcurr, pother)
+                if result:
+                    I_pool[pcurrindex] = False
+                    break
+
+    print(p_pool)
+    print(I_pool)
+    print(p_pool_metadata)
+    print("###############################################")
+
+    ############################################################
+    # Find close matches from p_pool for points in p_init
+    # and add to p_sel_prev
+    ############################################################
+    if p_pool is not None:
+        for pino,pi in enumerate(p_init):
+            if not I_init[pino]: continue
+            for ppno,pp in enumerate(p_pool):
+                if not I_pool[ppno]: continue
+                result = checkifnotinminseperationdist(pi, pp, equivalencedist)
+                if not result:
+                    p_sel_prev = addParamToSelPrev(pp,ppno,p_pool_metadata,p_sel_prev,p_sel_prev_metadata)
+                    I_pool[ppno] = False
+                    I_init[pino] = False
+
+        print(p_sel_prev)
+        print(p_sel_prev_metadata)
+        print(I_pool)
+        print(I_init)
+        print("###############################################")
+    ############################################################
+    # If not enough points add points not used before or not in
+    # minimum seperation distance from p_pool to p_sel_prev
+    ############################################################
+    if p_sel_prev is not None and len(p_sel_prev) < N_p:
+        for ppno, pp in enumerate(p_pool):
+            if not I_pool[ppno]: continue
+            print(ppno)
+            result = True
+            for psprev in p_sel_prev:
+                result = checkifnotinminseperationdist(pp, psprev, mindist)
+                if not result:
+                    break
+
+            if result:
+                p_sel_prev = addParamToSelPrev(pp, ppno, p_pool_metadata, p_sel_prev,
+                                               p_sel_prev_metadata)
+                I_pool[ppno] = False
+        print(p_sel_prev)
+        print(p_sel_prev_metadata)
+        print(I_pool)
+        print("###############################################")
+
+    ############################################################
+    # If not enough points add points not used before or not in
+    # minimum seperation distance from p_init to p_sel_new
+    ############################################################
+    if p_sel_prev is None or len(p_sel_prev) < N_p:
+        (p_sel_new, I_init) = addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new, N_p, mindist)
+
+    print(p_sel_new)
+    print(I_init)
+    print("###############################################")
+
+    ############################################################
+    # Save data and exit
+    ############################################################
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
+                       value=False)  # gradCond -> NO
+    ato.writeMemoryMap(memorymap)
+
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
     rank = comm.rank
     if rank ==0:
+        if p_sel_new is None:
+            p_sel_new = np.array([])
+        ato.writePythiaFiles(processcard, param_names, p_sel_new, outdir, fnamep, fnameg)
+        ds = {
+            "parameters": p_sel_new.tolist()
+        }
         with open(newparamoutfile,'w') as f:
             json.dump(ds, f, indent=4)
+        if p_sel_prev is None:
+            p_sel_prev_metadata["parameters"] = []
+        else:
+            p_sel_prev_metadata["parameters"] = p_sel_prev.tolist()
+        with open(prevparamoutfile,'w') as f:
+            json.dump(p_sel_prev_metadata, f, indent=4)
 
-    ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                       value=False) #gradCond -> NO
-    ato.writeMemoryMap(memorymap)
-    if rank ==0:
-        ato.writePythiaFiles(processcard,param_names,newparams,outdir,fnamep,fnameg)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -144,17 +265,6 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate sample points',
                                      formatter_class=SaneFormatter)
-    # parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-    #                     help="Algorithm Parameters (JSON)")
-    #parser.add_argument("-p", dest="PARAMFILENAME", type=str, default=None,
-    #                    help="Previous parameters file name string before adding the iteration "
-    #                         "number and file extention e.g., new_params_N_p") #NOT USED FOR NOW
-#    parser.add_argument("--iterno", dest="ITERNO", type=int, default=0,
-#                        help="Current iteration number")
-#    parser.add_argument("--newpout", dest="NEWPOUTFILE", type=str, default=None,
-#                        help="New parameters output file (JSON)")
-    #parser.add_argument("--prevpout", dest="PREVPOUTFILE", type=str, default=None,
-    #                    help="Previous parameters (to reuse) output file (JSON)") #NOT USED FOR NOW
     parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
                         help="Process Card location")
 
@@ -164,24 +274,13 @@ if __name__ == "__main__":
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
     newparams_Np_k = "logs/newparams_Np" + "_k{}.json".format(k)
+    prevparams_Np_k = "logs/prevparams_Np" + "_k{}.json".format(k)
     pythiadir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
 
     buildInterpolationPoints(
         args.PROCESSCARD,
         memorymap,
         newparams_Np_k,
-        pythiadir_Np_k
+        pythiadir_Np_k,
+        prevparams_Np_k
     )
-
-
-    # buildInterpolationPoints(
-    #     args.ALGOPARAMS,
-    # #    args.PREVPARAMSFN,
-    # #    args.ITERNO,
-    #     k,
-    #     args.PROCESSCARD,
-    #     pythiadir_Np_k,
-    #     newparams_Np_k
-    # #    args.NEWPOUTFILE
-    # #    args.PREVPOUTFILE
-    # )
