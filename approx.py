@@ -9,8 +9,11 @@ import apprentice.tools as ato
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
     pass
-def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafile,wtfile):
+def run_approx(memorymap,interpolationdatafile,prevparamfile,valoutfile,
+               erroutfile,expdatafile,wtfile):
     debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
+    currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
     try:
         from mpi4py import MPI
@@ -26,27 +29,88 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
     # print("CHANGE ME TO THE PARALLEL VERSION")
     assert (erroutfile != interpolationdatafile)
     assert (valoutfile != interpolationdatafile)
+    with open (prevparamfile,'r') as f:
+        prevparamds = json.load(f)
 
-    #orc@19-03: os.path.isdir not good for multi procs
-    # DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(interpolationdatafile, wtfile,comm=comm)
-    # DATA = apprentice.io.readH5(interpolationdatafile)
-    # print(DATA)
-    # pnames = apprentice.io.readPnamesH5(interpolationdatafile, xfield="params")
-    if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
-        # YODA directory parsing here
-        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-            interpolationdatafile, "params.dat",
-            wtfile, storeAsH5=False, comm=comm)
-    else:
-        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
-            interpolationdatafile, wtfile, comm=comm)
+    Xtouse,Ytouse,Etouse = [],[],[]
+    if len(prevparamds["parameters"]) > 0:
+        k_ptype_done = []
+        for pno,param in enumerate(prevparamds["parameters"]):
+            pnoToRead = []
+            k = prevparamds["{}".format(pno)]["k"]
+            ptype = prevparamds["{}".format(pno)]["ptype"]
+            k_ptype_str = "k{}_ptype{}".format(k,ptype)
+            if k_ptype_str in k_ptype_done:
+                continue
 
-    #else:
-    #    print("{} neither directory nor file, exiting".format(args[0]))
-    #    exit(1)
+            pnoToRead.append(pno)
+
+            for pnoinner in range(pno+1,len(prevparamds["parameters"])):
+                kinner = prevparamds["{}".format(pno)]["k"]
+                ptypeinner = prevparamds["{}".format(pnoinner)]["ptype"]
+                k_ptype_str_inner = "k{}_ptype{}".format(kinner, ptypeinner)
+                if k_ptype_str_inner in k_ptype_done:
+                    continue
+                if k_ptype_str == k_ptype_str_inner:
+                    pnoToRead.append(pnoinner)
+
+            k_ptype_done.append(k_ptype_str)
+
+            MCoutprev = "logs/MCout_{}_k{}.h5".format(ptype,k)
+
+            if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+                # YODA directory parsing here
+                DATAprev, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+                    MCoutprev, "params_k{}.dat".format(k),
+                    wtfile, storeAsH5=False, comm=comm)
+            else:
+                DATAprev, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
+                    MCoutprev, wtfile, comm=comm)
+
+            X,Y,E = DATAprev[0]
+            Xl = X.tolist()
+            indexToRead = []
+            for no in pnoToRead:
+                indexToRead.append(Xl.index(prevparamds["parameters"][no]))
+
+            if len(Xtouse) == 0:
+                for num in range(len(DATAprev)):
+                    Xtouse.append([])
+                    Ytouse.append([])
+                    Etouse.append([])
+
+            for num, (X, Y, E) in  enumerate(DATAprev):
+                for index in indexToRead:
+                    Xtouse[num].append(X[index])
+                    Ytouse[num].append(Y[index])
+                    Etouse[num].append(E[index])
+
+    if len(prevparamds["parameters"]) < N_p:
+        if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+            # YODA directory parsing here
+            DATAnew, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+                interpolationdatafile, "params_k{}.dat".format(currIteration),
+                wtfile, storeAsH5=False, comm=comm)
+        else:
+            DATAnew, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
+                interpolationdatafile, wtfile, comm=comm)
+
+        if len(Xtouse) == 0:
+            for num in range(len(DATAnew)):
+                Xtouse.append([])
+                Ytouse.append([])
+                Etouse.append([])
+
+        for num, (X, Y, E) in enumerate(DATAnew):
+            for x in X:
+                Xtouse[num].append(x)
+            for y in Y:
+                Ytouse[num].append(y)
+            for e in E:
+                Etouse[num].append(e)
 
     comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
-    if debug: print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(DATA)))
+    if debug: print("[{}] will proceed to calculate approximations for {} objects".format(rank, len(Ytouse)))
     sys.stdout.flush()
 
     # idx = [i for i in range(len(DATA))]
@@ -59,19 +123,19 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
 
     # S = apprentice.Scaler(DATA[0][0])  # Let's assume that all X are the same for simplicity
     # print("Halfway reporting: before generating the output file --")
-    for num, (X, Y, E) in  enumerate(DATA):
+    for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
         thisBinId = binids[num]
         if debug:
             if rank == 0 or rank == size - 1:
                 if ((num + 1) % 5 == 0):
                     now = time.time()
                     tel = now - t4
-                    ttg = tel * (len(DATA) - num) / (num + 1)
+                    ttg = tel * (len(Ytouse) - num) / (num + 1)
                     eta = now + ttg
                     eta = datetime.datetime.fromtimestamp(now + ttg)
                     sys.stdout.write(
                         "{}[{}] {}/{} (elapsed: {:.1f}s, to go: {:.1f}s, ETA: {})\r".format(
-                            80 * " " if rank > 0 else "", rank, num + 1, len(DATA), tel, ttg,
+                            80 * " " if rank > 0 else "", rank, num + 1, len(Ytouse), tel, ttg,
                             eta.strftime('%Y-%m-%d %H:%M:%S')), )
                     sys.stdout.flush()
         # print(_X)
@@ -116,7 +180,7 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
         for k in a.keys():
             JD[k] = a[k]
         with open(valoutfile, "w") as f:
-            json.dump(JD, f)
+            json.dump(JD, f,indent=4)
 
         JD = OrderedDict()
         a = {}
@@ -125,7 +189,7 @@ def run_approx(memorymap,interpolationdatafile,valoutfile, erroutfile,expdatafil
         for k in a.keys():
             JD[k] = a[k]
         with open(erroutfile, "w") as f:
-            json.dump(JD, f)
+            json.dump(JD, f,indent=4)
 
         # print("Done --- approximation of {} objects written to {} and {}".format(
         #         len(idx), valoutfile, erroutfile))
@@ -194,9 +258,12 @@ if __name__ == "__main__":
     MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
     valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k)
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
+    prevparams_Np_k = "logs/prevparams_Np" + "_k{}.json".format(k)
+
     run_approx(
         memorymap,
         MCout_Np_k,
+        prevparams_Np_k,
         valapproxfile_k,
         errapproxfile_k,
         args.EXPDATA,
