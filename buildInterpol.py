@@ -143,7 +143,10 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
                     I_init[pcurrindex] = result
                     break
         factor+=1
-    print(p_init)
+    if debug:
+        print("P INIT")
+        print(p_init)
+        print("###############################################")
 
     ############################################################
     # polulate p_pool
@@ -173,10 +176,12 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
                     I_pool[pcurrindex] = False
                     break
 
-    print(p_pool)
-    print(I_pool)
-    print(p_pool_metadata)
-    print("###############################################")
+    if debug:
+        print("p_pool after initial discard")
+        print(p_pool)
+        print(I_pool)
+        print(p_pool_metadata)
+        print("###############################################")
 
     ############################################################
     # Find close matches from p_pool for points in p_init
@@ -193,11 +198,13 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
                     I_pool[ppno] = False
                     I_init[pino] = False
 
-        print(p_sel_prev)
-        print(p_sel_prev_metadata)
-        print(I_pool)
-        print(I_init)
-        print("###############################################")
+        if debug:
+            print("p_sel_prev after matching close matches")
+            print(p_sel_prev)
+            print(p_sel_prev_metadata)
+            print(I_pool)
+            print(I_init)
+            print("###############################################")
     ############################################################
     # If not enough points add points not used before or not in
     # minimum seperation distance from p_pool to p_sel_prev
@@ -205,7 +212,6 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     if p_sel_prev is not None and len(p_sel_prev) < N_p:
         for ppno, pp in enumerate(p_pool):
             if not I_pool[ppno]: continue
-            print(ppno)
             result = True
             for psprev in p_sel_prev:
                 result = checkifnotinminseperationdist(pp, psprev, mindist)
@@ -216,10 +222,13 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
                 p_sel_prev = addParamToSelPrev(pp, ppno, p_pool_metadata, p_sel_prev,
                                                p_sel_prev_metadata)
                 I_pool[ppno] = False
-        print(p_sel_prev)
-        print(p_sel_prev_metadata)
-        print(I_pool)
-        print("###############################################")
+
+        if debug:
+            print("p_sel_prev after adding points from p_pool")
+            print(p_sel_prev)
+            print(p_sel_prev_metadata)
+            print(I_pool)
+            print("###############################################")
 
     ############################################################
     # If not enough points add points not used before or not in
@@ -228,9 +237,11 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     if p_sel_prev is None or len(p_sel_prev) < N_p:
         (p_sel_new, I_init) = addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new, N_p, mindist)
 
-    print(p_sel_new)
-    print(I_init)
-    print("###############################################")
+    if debug:
+        print("p_sel_new is any are required")
+        print(p_sel_new)
+        print(I_init)
+        print("###############################################")
 
     ############################################################
     # Save data and exit
