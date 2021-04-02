@@ -34,7 +34,7 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
                                             errfile,
                                             debug=debug)
 
-    res = IO.minimizeMPI(nstart=5,nrestart=10,comm=comm)
+    res = IO.minimizeMPI(nstart=5,nrestart=10,comm=comm,saddlePointCheck=False)
     if rank == 0:
         SCLR = IO._AS._RA[0]
         outputdata = {
