@@ -9,7 +9,7 @@ import apprentice.tools as ato
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
     pass
-def run_approx(memorymap,interpolationdatafile,prevparamfile,valoutfile,
+def run_approx(memorymap,prevparamfile,valoutfile,
                erroutfile,expdatafile,wtfile):
     debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
@@ -27,8 +27,8 @@ def run_approx(memorymap,interpolationdatafile,prevparamfile,valoutfile,
 
     if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
-    assert (erroutfile != interpolationdatafile)
-    assert (valoutfile != interpolationdatafile)
+    # assert (erroutfile != interpolationdatafile)
+    # assert (valoutfile != interpolationdatafile)
     with open (prevparamfile,'r') as f:
         prevparamds = json.load(f)
 
@@ -56,14 +56,14 @@ def run_approx(memorymap,interpolationdatafile,prevparamfile,valoutfile,
 
             k_ptype_done.append(k_ptype_str)
 
-            MCoutprev = "logs/MCout_{}_k{}.h5".format(ptype,k)
-
             if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
                 # YODA directory parsing here
+                MCoutprev = "logs/pythia_{}_k{}".format(ptype,k)
                 DATAprev, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-                    MCoutprev, "params_k{}.dat".format(k),
-                    wtfile, storeAsH5=False, comm=comm)
+                    [MCoutprev], "params.dat",wtfile,
+                    storeAsH5=None, comm=comm)
             else:
+                MCoutprev = "logs/MCout_{}_k{}.h5".format(ptype, k)
                 DATAprev, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
                     MCoutprev, wtfile, comm=comm)
 
@@ -88,10 +88,12 @@ def run_approx(memorymap,interpolationdatafile,prevparamfile,valoutfile,
     if len(prevparamds["parameters"]) < N_p:
         if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
             # YODA directory parsing here
+            interpolationdatadir = "logs/pythia_Np" + "_k{}".format(currIteration)
             DATAnew, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-                interpolationdatafile, "params_k{}.dat".format(currIteration),
-                wtfile, storeAsH5=False, comm=comm)
+                [interpolationdatadir], "params.dat",
+                wtfile, storeAsH5=None, comm=comm)
         else:
+            interpolationdatafile = "logs/MCout_Np" + "_k{}.h5".format(currIteration)
             DATAnew, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
                 interpolationdatafile, wtfile, comm=comm)
 
@@ -262,7 +264,6 @@ if __name__ == "__main__":
 
     run_approx(
         memorymap,
-        MCout_Np_k,
         prevparams_Np_k,
         valapproxfile_k,
         errapproxfile_k,
