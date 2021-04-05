@@ -5,14 +5,25 @@ import apprentice
 import h5py
 import json
 import numpy as np
-from shutil import copyfile
+import shutil,errno
+
+def copyanything(src, dst):
+    try:
+        shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+    except OSError as exc:
+        if exc.errno == errno.ENOTDIR:
+            shutil.copy(src, dst)
+        else: raise
 
 def tr_update(memorymap,expdatafile,wtfile):
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     kpstarfile = "logs/newparams_1" + "_k{}.json".format(k)
-    kMCout = "logs/MCout_1" + "_k{}.h5".format(k)
+    kMCoutH5 = "logs/MCout_1" + "_k{}.h5".format(k)
+    kMCoutYODA = "logs/pythia_1" + "_k{}".format(k)
     kp1pstarfile = "logs/newparams_1" + "_k{}.json".format(k + 1)
-    kp1MCout = "logs/MCout_1" + "_k{}.h5".format(k + 1)
+    kp1MCoutH5 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
+    kp1MCoutYODA = "logs/pythia_1" + "_k{}".format(k + 1)
 
     valfile = "logs/valapprox" + "_k{}.json".format(k)
     errfile = "logs/errapprox" + "_k{}.json".format(k)
@@ -35,12 +46,19 @@ def tr_update(memorymap,expdatafile,wtfile):
                                             valfile,
                                             errfile)
     if not gradCond:
-        kDATA = apprentice.io.readH5(kMCout) #orc@19-03: parallel version doesn't like these readH5 funcs 
-        idx = [i for i in range(len(kDATA))]
-        with h5py.File(kMCout, "r") as f:
-            tmp = f.get("index")[idx]
-        mcbinids = [t.decode() for t in tmp]
-        kp1DATA = apprentice.io.readH5(kp1MCout) #orc@19-03: parallel version doesn't like these readH5 funcs
+        mcbinids = IO._binids
+        if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+            # kDATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+            #     [kMCoutYODA],"params.dat",wtfile)
+            # kp1DATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+            #     [kp1MCoutYODA], "params.dat", wtfile)
+            kDATA = apprentice.io.readSingleYODAFile(
+                [kMCoutYODA],"params.dat",wtfile)
+            kp1DATA = apprentice.io.readSingleYODAFile(
+                [kp1MCoutYODA], "params.dat", wtfile)
+        else:
+            kDATA = apprentice.io.readH5(kMCoutH5)
+            kp1DATA = apprentice.io.readH5(kp1MCoutH5)
 
         with open (kp1pstarfile,'r') as f:
             ds = json.load(f)
@@ -89,8 +107,11 @@ def tr_update(memorymap,expdatafile,wtfile):
             curr_p = kpstar
             trradmsg = "TR radius halved"
             trcentermsg = "TR center remains the same"
-            copyfile(kpstarfile,kp1pstarfile)
-            copyfile(kMCout,kp1MCout)
+            copyanything(kpstarfile,kp1pstarfile)
+            if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+                copyanything(kMCoutYODA, kp1MCoutYODA)
+            else:
+                copyanything(kMCoutH5,kp1MCoutH5)
         else:
             if debug: print("rho >= eta. New point accepted")
             tr_radius = min(tr_radius*2,tr_maxradius)
@@ -103,8 +124,11 @@ def tr_update(memorymap,expdatafile,wtfile):
         curr_p = kpstar
         trradmsg = "TR radius halved"
         trcentermsg = "TR center remains the same"
-        copyfile(kpstarfile,kp1pstarfile)
-        copyfile(kMCout,kp1MCout)
+        copyanything(kpstarfile,kp1pstarfile)
+        if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+            copyanything(kMCoutYODA, kp1MCoutYODA)
+        else:
+            copyanything(kMCoutH5,kp1MCoutH5)
     # put  tr_radius and curr_p in radius and center and write to algoparams
     # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
     #                    value=tr_radius)
