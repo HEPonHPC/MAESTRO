@@ -170,7 +170,7 @@ def tr_update(memorymap,expdatafile,wtfile):
     if status > 0:
         print("===terminating the workflow after", k+1, "iterations@TR_UPDATE===")
         sys.stdout.flush()
-        os._exit(0)
+        os._exit(status)
     return (status,tr_radius,curr_p)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
