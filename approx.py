@@ -46,7 +46,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
             pnoToRead.append(pno)
 
             for pnoinner in range(pno+1,len(prevparamds["parameters"])):
-                kinner = prevparamds["{}".format(pno)]["k"]
+                kinner = prevparamds["{}".format(pnoinner)]["k"]
                 ptypeinner = prevparamds["{}".format(pnoinner)]["ptype"]
                 k_ptype_str_inner = "k{}_ptype{}".format(kinner, ptypeinner)
                 if k_ptype_str_inner in k_ptype_done:
