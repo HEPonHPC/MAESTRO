@@ -68,11 +68,11 @@ def run_approx(memorymap,prevparamfile,valoutfile,
                     MCoutprev, wtfile, comm=comm)
 
             X,Y,E = DATAprev[0]
-            Xl = X.tolist()
+
             indexToRead = []
             for no in pnoToRead:
-                indexToRead.append(Xl.index(prevparamds["parameters"][no]))
-
+                indexToRead.append(next(i for i, _ in enumerate(X)
+                                        if np.all(np.isclose(_, prevparamds["parameters"][no]))))
             if len(Xtouse) == 0:
                 for num in range(len(DATAprev)):
                     Xtouse.append([])
