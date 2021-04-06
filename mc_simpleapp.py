@@ -101,6 +101,8 @@ def problem_main_program(paramfile,processcard=None,memorymap = None,
     with open(paramfile,'r') as f:
         ds = json.load(f)
     P = ds['parameters']
+    if len(P) == 0:
+        return 0
 
     HNAMES = np.array([b.split("#")[0]  for b in binids])
     FACTOR = np.array([int(b.split("#")[1])  for b in binids])

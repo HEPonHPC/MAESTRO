@@ -8,6 +8,12 @@ from subprocess import Popen, PIPE
 
 def problem_main_program(paramfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
+    with open(paramfile, 'r') as f:
+        pds = json.load(f)
+    PP = pds['parameters']
+    if len(PP) == 0:
+        return 0
+
     size = comm.Get_size()
     rank = comm.Get_rank()
     if isbebop:
@@ -57,6 +63,9 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
              str(fidelity), str(874673), "0", "1", newloc],
             stdin=PIPE, stdout=PIPE, stderr=PIPE)
         p.communicate(b"input data that is passed to subprocess' stdin")
+        if p.returncode != 0:
+            raise Exception("Running miniapp failed with return code {}".format(p.returncode))
+
     if debug==1 and rank==0:
         print("mc_miniapp done. Output written to %s" % outdir)
         sys.stdout.flush()
