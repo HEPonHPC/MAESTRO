@@ -180,7 +180,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
         print("p_pool after initial discard")
         print(p_pool)
         print(I_pool)
-        print(p_pool_metadata)
+        # print(p_pool_metadata)
         print("###############################################")
 
     ############################################################
@@ -201,7 +201,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
         if debug:
             print("p_sel_prev after matching close matches")
             print(p_sel_prev)
-            print(p_sel_prev_metadata)
+            # print(p_sel_prev_metadata)
             print(I_pool)
             print(I_init)
             print("###############################################")
@@ -209,24 +209,26 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     # If not enough points add points not used before or not in
     # minimum seperation distance from p_pool to p_sel_prev
     ############################################################
-    if p_sel_prev is not None and len(p_sel_prev) < N_p:
-        for ppno, pp in enumerate(p_pool):
-            if not I_pool[ppno]: continue
-            result = True
-            for psprev in p_sel_prev:
-                result = checkifnotinminseperationdist(pp, psprev, mindist)
-                if not result:
-                    break
+    if p_pool is not None:
+        if p_sel_prev is None or len(p_sel_prev) < N_p:
+            for ppno, pp in enumerate(p_pool):
+                if not I_pool[ppno]: continue
+                result = True
+                if p_sel_prev is not None:
+                    for psprev in p_sel_prev:
+                        result = checkifnotinminseperationdist(pp, psprev, mindist)
+                        if not result:
+                            break
 
-            if result:
-                p_sel_prev = addParamToSelPrev(pp, ppno, p_pool_metadata, p_sel_prev,
-                                               p_sel_prev_metadata)
-                I_pool[ppno] = False
+                if result:
+                    p_sel_prev = addParamToSelPrev(pp, ppno, p_pool_metadata, p_sel_prev,
+                                                   p_sel_prev_metadata)
+                    I_pool[ppno] = False
 
         if debug:
             print("p_sel_prev after adding points from p_pool")
             print(p_sel_prev)
-            print(p_sel_prev_metadata)
+            # print(p_sel_prev_metadata)
             print(I_pool)
             print("###############################################")
 
@@ -238,7 +240,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
         (p_sel_new, I_init) = addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new, N_p, mindist)
 
     if debug:
-        print("p_sel_new is any are required")
+        print("p_sel_new if any are required")
         print(p_sel_new)
         print(I_init)
         print("###############################################")
