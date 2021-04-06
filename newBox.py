@@ -28,7 +28,8 @@ def tr_update(memorymap,expdatafile,wtfile):
     valfile = "logs/valapprox" + "_k{}.json".format(k)
     errfile = "logs/errapprox" + "_k{}.json".format(k)
 
-    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    # debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    debug = True
     gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
 

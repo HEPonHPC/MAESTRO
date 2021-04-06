@@ -19,7 +19,6 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 	import apprentice.tools as ato
-
 	if args.CONTINUE:
 		(memorymap, pyhenson) = ato.readMemoryMap()
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
@@ -45,7 +44,8 @@ if __name__ == "__main__":
 				h.yield_()
 			else:
 				break
-
-		print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
+		if args.DEBUG:
+			print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
+	print("---------------Starting Iteration {}---------------".format(k + 1))
 	sys.stdout.flush()
 	os._exit(0)

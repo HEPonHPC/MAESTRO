@@ -233,7 +233,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
                                           value=gradCondToWrite)
     ato.writeMemoryMap(memorymap)
     #comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
-    print("BYE from approx", rank, gradCondToWrite)
+    if debug: print("BYE from approx", rank, gradCondToWrite)
     sys.stdout.flush()
 
 if __name__ == "__main__":
