@@ -6,7 +6,7 @@
 mkdir -p $3
 mkdir -p $3/conf
 mkdir -p $3/logs
-cp decaf-henson_miniapp.json $3/decaf-henson.json
+cp decaf-henson-miniapp.json $3/decaf-henson.json
 cp decaf-henson_python $3/.
 cp $2 $3/. #process.dat
 cp *.py $3/. #maybe give full path in JSON

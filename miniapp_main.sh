@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -r WD;
-sh cleanNrun.sh Parameters/Miniapp process.dat WD/Miniapp;
+sh cleanNrun_miniapp.sh Parameters/Miniapp process.dat WD/Miniapp;
 cd WD/Miniapp ||exit ;
 python orchestrator.py   -a conf/algoparams_bk.json;
 status=0;
