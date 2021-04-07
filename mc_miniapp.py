@@ -18,10 +18,8 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
     rank = comm.Get_rank()
     if isbebop:
         MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
-        raise Exception("MPATH not set for BEBOP yet")
     else:
-        MPATH = "/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp"
-
+        MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
     param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
     fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="fidelity")
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
