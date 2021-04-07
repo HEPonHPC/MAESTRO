@@ -8,5 +8,5 @@ weights
 WD*
 WD_bk
 !process.dat
-!decaf-henson.json
+!decaf-henson*
 json-error.py
