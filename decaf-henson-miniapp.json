@@ -13,7 +13,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 4,
-                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o initial",
+                "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o initial",
                 "func": "miniappinitial_py",
                 "inports": [],
                 "outports": []
@@ -29,7 +29,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 4,
-                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o multi",
+                "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o multi",
                 "func": "miniappmulti_py",
                 "inports": [],
                 "outports": []
@@ -53,7 +53,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 4,
-                "cmdline": "./mc_miniapp.py -e conf/data.json -c process.dat -o single",
+                "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o single",
                 "func": "miniappsingle_py",
                 "inports": [],
                 "outports": []

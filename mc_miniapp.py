@@ -19,7 +19,8 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
     if isbebop:
         MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
     else:
-        MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
+        MPATH = "/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp"
+
     param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
     fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="fidelity")
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
