@@ -9,7 +9,7 @@ until [ $status -ne 0 ]
 do
   python mc_miniapp.py -e conf/data.json -c process.dat -o initial
   python buildInterpol.py -c process.dat
-  mpirun -np 8 python mc_miniapp.py -e conf/data.json -c process.dat -o multi
+  mpirun -np 4 python mc_miniapp.py -e conf/data.json -c process.dat -o multi
   python approx.py -e conf/data.json -w conf/weights
   python chi2.py -e conf/data.json -w conf/weights -c process.dat
   python mc_miniapp.py -e conf/data.json -c process.dat -o single
