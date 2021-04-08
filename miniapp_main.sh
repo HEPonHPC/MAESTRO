@@ -1,17 +1,24 @@
 #!/bin/bash
 
+#USAGE
+#ON BEBOP
+# ./miniapp_main.sh WD -b
+#NOT ON BEBOP
+# ./miniapp_main.sh WD -b
+
+WDname=$1
 miniappParam="Parameters/Miniapp"
 processfile="process.dat"
-WDdir="WD/Miniapp"
+WDdir="../log/workflow/Miniapp/$WDname"
 
 bebop=""
 nprocs=8
-if [ "$1" = "-b" ]; then
+if [ "$2" = "-b" ]; then
   bebop="-b"
   nprocs=4
 fi
 
-rm -r WD;
+rm -r $WDdir;
 mkdir -p $WDdir
 mkdir -p $WDdir/conf
 mkdir -p $WDdir/logs
@@ -26,7 +33,8 @@ cp $miniappParam/data.json $WDdir/conf/data.json
 cp $miniappParam/weights $WDdir/conf/weights
 
 #sh cleanNrun_miniapp.sh Parameters/Miniapp process.dat WD/Miniapp;
-cd WD/Miniapp ||exit ;
+currDir=`pwd`
+cd $WDdir ||exit ;
 python orchestrator.py   -a conf/algoparams_bk.json;
 status=0;
 until [ $status -ne 0 ]
@@ -41,5 +49,5 @@ do
   status=$?
   python orchestrator.py  -c -a conf/algoparams_bk.json
 done
-cd ../..
+cd $currDir ||exit ;
 

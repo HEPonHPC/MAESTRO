@@ -8,14 +8,17 @@ from subprocess import Popen, PIPE
 
 def problem_main_program(paramfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
-    with open(paramfile, 'r') as f:
-        pds = json.load(f)
-    PP = pds['parameters']
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+    PP = None
+    if rank ==0:
+        with open(paramfile, 'r') as f:
+            pds = json.load(f)
+        PP = pds['parameters']
+    PP = comm.bcast(PP, root=0)
     if len(PP) == 0:
         return 0
 
-    size = comm.Get_size()
-    rank = comm.Get_rank()
     if isbebop:
         MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
     else:
@@ -65,7 +68,7 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
         if p.returncode != 0:
             raise Exception("Running miniapp failed with return code {}".format(p.returncode))
 
-    if debug==1 and rank==0:
+    if debug and rank==0:
         print("mc_miniapp done. Output written to %s" % outdir)
         sys.stdout.flush()
     return simulationBudgetUsed
@@ -114,8 +117,8 @@ if __name__ == "__main__":
         outdir  = "logs/pythia_1_k0"
 
         simulationBudgetUsed = 0
-        if k == 0 and rank==0 :
-            if debug:
+        if k == 0:
+            if debug and rank ==0:
                 with open(args.EXPDATA, 'r') as f:
                     expdata = json.load(f)
                 binids = [b for b in expdata]
@@ -133,9 +136,10 @@ if __name__ == "__main__":
 
                 sys.stdout.flush()
 
-            with open(paramfile, 'w') as f:
-                json.dump({"parameters": [tr_center]}, f, indent=4)
-            ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
+            if rank ==0:
+                with open(paramfile, 'w') as f:
+                    json.dump({"parameters": [tr_center]}, f, indent=4)
+                ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
                                  outdir)
 
             simulationBudgetUsed = problem_main_program(
@@ -145,15 +149,14 @@ if __name__ == "__main__":
                 outfile,
                 outdir
             )
-        else:
-            if debug:
-                print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
-                sys.stdout.flush()
-        if k == 0:
             simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
             ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                value=simulationBudgetUsed)
             ato.writeMemoryMap(memoryMap=memorymap)
+        else:
+            if debug and rank==0:
+                print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
+                sys.stdout.flush()
 
     else:
         MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
@@ -174,35 +177,24 @@ if __name__ == "__main__":
             paramfile = newparams_Np_k
             outfile = MCout_Np_k
             outdir = outdir_Np_k
-            if not gradCond:
-                simulationBudgetUsed = problem_main_program(
-                    paramfile,
-                    memorymap,
-                    args.BEBOP,
-                    outfile,
-                    outdir
-                )
-                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
-                                   value=simulationBudgetUsed)
-                ato.writeMemoryMap(memoryMap=memorymap)
-        else:
+        elif args.OPTION == "single":
             paramfile = newparams_1_kp1
             outfile = MCout_1_kp1
             outdir = outdir_1_kp1
-            simulationBudgetUsed = 0
-            if not gradCond:
-                if rank == 0:
-                    simulationBudgetUsed = problem_main_program(
-                        paramfile,
-                        memorymap,
-                        args.BEBOP,
-                        outfile,
-                        outdir
-                    )
-                simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
-                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
-                                   value=simulationBudgetUsed)
-                ato.writeMemoryMap(memoryMap=memorymap)
+        else:
+            raise Exception("Incorrect option {}. Only initial,single, or multi allowed".format(args.OPTION))
+
+        if not gradCond:
+            simulationBudgetUsed = problem_main_program(
+                paramfile,
+                memorymap,
+                args.BEBOP,
+                outfile,
+                outdir
+            )
+            ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                               value=simulationBudgetUsed)
+            ato.writeMemoryMap(memoryMap=memorymap)
 
 
 
