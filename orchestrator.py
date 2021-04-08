@@ -40,6 +40,7 @@ if __name__ == "__main__":
 				print("orchestrator: yielding to other tasks, at iter", k)
 			sys.stdout.flush()
 			if pyhenson:
+				print("---------------Starting Iteration {}---------------".format(k + 1))
 				import pyhenson as h
 				h.yield_()
 			else:
