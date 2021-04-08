@@ -68,7 +68,7 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
         if p.returncode != 0:
             raise Exception("Running miniapp failed with return code {}".format(p.returncode))
 
-    if debug and rank==0:
+    if debug:
         print("mc_miniapp done. Output written to %s" % outdir)
         sys.stdout.flush()
     return simulationBudgetUsed
@@ -149,14 +149,15 @@ if __name__ == "__main__":
                 outfile,
                 outdir
             )
+        else:
+            if debug:
+                print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
+                sys.stdout.flush()
+        if k == 0:
             simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
             ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                value=simulationBudgetUsed)
             ato.writeMemoryMap(memoryMap=memorymap)
-        else:
-            if debug and rank==0:
-                print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
-                sys.stdout.flush()
 
     else:
         MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
@@ -177,24 +178,35 @@ if __name__ == "__main__":
             paramfile = newparams_Np_k
             outfile = MCout_Np_k
             outdir = outdir_Np_k
-        elif args.OPTION == "single":
+            if not gradCond:
+                simulationBudgetUsed = problem_main_program(
+                    paramfile,
+                    memorymap,
+                    args.BEBOP,
+                    outfile,
+                    outdir
+                )
+                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                   value=simulationBudgetUsed)
+                ato.writeMemoryMap(memoryMap=memorymap)
+        else:
             paramfile = newparams_1_kp1
             outfile = MCout_1_kp1
             outdir = outdir_1_kp1
-        else:
-            raise Exception("Incorrect option {}. Only initial,single, or multi allowed".format(args.OPTION))
-
-        if not gradCond:
-            simulationBudgetUsed = problem_main_program(
-                paramfile,
-                memorymap,
-                args.BEBOP,
-                outfile,
-                outdir
-            )
-            ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
-                               value=simulationBudgetUsed)
-            ato.writeMemoryMap(memoryMap=memorymap)
+            simulationBudgetUsed = 0
+            if not gradCond:
+                if rank >= 0:
+                    simulationBudgetUsed = problem_main_program(
+                        paramfile,
+                        memorymap,
+                        args.BEBOP,
+                        outfile,
+                        outdir
+                    )
+                simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                   value=simulationBudgetUsed)
+                ato.writeMemoryMap(memoryMap=memorymap)
 
 
 
