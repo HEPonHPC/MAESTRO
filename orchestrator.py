@@ -40,7 +40,12 @@ if __name__ == "__main__":
 				print("orchestrator: yielding to other tasks, at iter", k)
 			sys.stdout.flush()
 			if pyhenson:
-				print("---------------Starting Iteration {}---------------".format(k + 1))
+				from mpi4py import MPI
+				comm = MPI.COMM_WORLD
+				size = comm.Get_size()
+				rank = comm.Get_rank()
+				if rank == 0:
+					print("---------------Starting Iteration {}---------------".format(k + 1))
 				import pyhenson as h
 				h.yield_()
 			else:
