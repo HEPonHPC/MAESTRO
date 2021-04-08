@@ -42,6 +42,10 @@ def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_meta
                                                            "k":iterno,"ptype":paramtype}
     return p_pool
 
+def addTrCenterToSelPrev(tr_center,file,iterno,p_sel_prev,p_sel_prev_metadata):
+    p_pool_metadata = {"0":{"file":file,"index":0,"k":iterno,"ptype":"1"}}
+    return addParamToSelPrev(tr_center,0,p_pool_metadata,p_sel_prev,p_sel_prev_metadata)
+
 def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_metadata):
     if p_sel_prev is None:
         p_sel_prev = np.array([param])
@@ -181,6 +185,18 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
         print(p_pool)
         print(I_pool)
         # print(p_pool_metadata)
+        print("###############################################")
+
+    ############################################################
+    # Add tr_center to p_sel_prev
+    ############################################################
+    tr_center_param = tr_center_param_fn + "_k{}.json".format(currIteration)
+    p_sel_prev = addTrCenterToSelPrev(tr_center,tr_center_param,currIteration,
+                                      p_sel_prev,p_sel_prev_metadata)
+    if debug:
+        print("p_sel_prev after adding tr_center")
+        print(p_sel_prev)
+        # print(p_sel_prev_metadata)
         print("###############################################")
 
     ############################################################
