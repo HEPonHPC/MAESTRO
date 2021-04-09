@@ -192,6 +192,7 @@ if __name__ == "__main__":
     size = comm.Get_size()
     rank = comm.Get_rank()
 
+    comm.barrier()
     (memorymap, pyhenson) = ato.readMemoryMap()
     status,radius,center = None,None,None
     if rank == 0:
