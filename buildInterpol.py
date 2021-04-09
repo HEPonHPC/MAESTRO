@@ -88,10 +88,13 @@ def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,N_p,mindist):
 def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="newp.json",
                              outdir=None,prevparamoutfile="oldp.json",fnamep="params.dat",
                              fnameg="generator.cmd"):
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.rank
+    comm.barrier()
     ############################################################
     # Get relevent algorithm parameters
     ############################################################
-    import sys
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     debug = ato.getFromMemoryMap(memoryMap=memoryMap, key="debug")
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
@@ -268,9 +271,6 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
                        value=False)  # gradCond -> NO
     ato.writeMemoryMap(memorymap)
 
-    from mpi4py import MPI
-    comm = MPI.COMM_WORLD
-    rank = comm.rank
     if rank ==0:
         if p_sel_new is None:
             p_sel_new = np.array([])

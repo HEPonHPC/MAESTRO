@@ -96,6 +96,7 @@ if __name__ == "__main__":
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
+    comm.barrier()
 
     (memorymap, pyhenson) = ato.readMemoryMap()
 

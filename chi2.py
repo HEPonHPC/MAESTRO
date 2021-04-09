@@ -21,6 +21,7 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
         print("Exception when trying to import mpi4py:", e)
         comm = None
         pass
+    comm.barrier()
 
     if rank == 0 and debug:
         print("Starting chi2 optimization --")

@@ -24,7 +24,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
         print("Exception when trying to import mpi4py:", e)
         comm = None
         pass
-
+    comm.barrier()
     if debug: print("Starting approximation --")
     # print("CHANGE ME TO THE PARALLEL VERSION")
     # assert (erroutfile != interpolationdatafile)
