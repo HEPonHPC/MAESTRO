@@ -28,6 +28,10 @@ if __name__ == "__main__":
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 		ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
 		k = currk + 1
+		# TEMP START
+		if ato.getFromMemoryMap(memoryMap=memorymap,key="tr_radius") < 10**-5:
+			ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=30)
+		# TEMP END
 		ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 		pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
 		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
@@ -36,6 +40,10 @@ if __name__ == "__main__":
 	else:
 		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
 		ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
+		# TEMP START
+		if ato.getFromMemoryMap(memoryMap=memorymap,key="tr_radius") < 10**-5:
+			ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=30)
+		# TEMP END
 		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
 			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 			pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
