@@ -10,9 +10,10 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
     pass
 def run_approx(memorymap,prevparamfile,valoutfile,
-               erroutfile,expdatafile,wtfile):
+               erroutfile,functionvaloutfile,expdatafile,wtfile):
     oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
     debug = True if "All" in oloptions else False
+    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
 
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
@@ -204,6 +205,26 @@ def run_approx(memorymap,prevparamfile,valoutfile,
         with open(erroutfile, "w") as f:
             json.dump(JD, f,indent=4)
 
+        if rank==0 and "MC_RA_functionValue" in oloptions:
+            str = ""
+            for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
+                thisBinId = binids[num]
+                str += "########################\n{}\n########################\n\n".format(thisBinId)
+                str += "P(dim = {})\t\t\tMC(P)\tr_v(P)\t\t\Delta MC(P)\tr_e(P)\n".format(dim)
+                for pno,P in enumerate(X):
+                    for p in P:
+                        str += "%.2E\t"%(p)
+                    str += "\t"
+                    str += "%.2E\t"%(Y[pno])
+                    str += "%.2E\t"%(apprentice.RationalApproximation(initDict=valapp[thisBinId])(P))
+                    str += "\t"
+                    str += "%.2E\t"%(E[pno])
+                    str += "%.2E\t"%(apprentice.RationalApproximation(initDict=errapp[thisBinId])(P))
+                    str += "\n"
+                str+="\n\n"
+            with open(functionvaloutfile, 'w') as f:
+                print(str, file=f)
+
         # print("Done --- approximation of {} objects written to {} and {}".format(
         #         len(idx), valoutfile, erroutfile))
 
@@ -272,12 +293,14 @@ if __name__ == "__main__":
     valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k)
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
     prevparams_Np_k = "logs/prevparams_Np" + "_k{}.json".format(k)
+    fnvalues_Np_k = "logs/functionvalues_Np" + "_k{}.json".format(k)
 
     run_approx(
         memorymap,
         prevparams_Np_k,
         valapproxfile_k,
         errapproxfile_k,
+        fnvalues_Np_k,
         args.EXPDATA,
         args.WEIGHTS
     )
