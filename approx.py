@@ -11,9 +11,9 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
     pass
 def run_approx(memorymap,prevparamfile,valoutfile,
                erroutfile,expdatafile,wtfile):
-    debug = True \
-        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
-        else False
+    oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
+    debug = True if "All" in oloptions else False
+
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
@@ -127,6 +127,15 @@ def run_approx(memorymap,prevparamfile,valoutfile,
 
     # S = apprentice.Scaler(DATA[0][0])  # Let's assume that all X are the same for simplicity
     # print("Halfway reporting: before generating the output file --")
+    if rank==0 and "interpolationPoints" in oloptions:
+        print("########################")
+        print("Interpolation Points")
+        print("########################")
+        for P in Xtouse[0]:
+            str = ""
+            for p in P:
+                str += "%.3E\t"%p
+            print(str)
     for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
         thisBinId = binids[num]
         if debug:
