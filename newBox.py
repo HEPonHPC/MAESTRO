@@ -130,7 +130,7 @@ def tr_update(memorymap,expdatafile,wtfile):
                       "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
             normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
             str += "%d\tF %.6E %.6E %s %.6E %.6E %.6E %.6E"\
-                  %(currIteration,tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,rho)
+                  %(currIteration+1,tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,rho)
             print(str)
     else:
         if debug: print("gradient condition failed")
@@ -151,7 +151,7 @@ def tr_update(memorymap,expdatafile,wtfile):
                       "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
             normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
             str += "%d\tT %.6E %.6E %s" \
-                   %(currIteration,tr_radius,normOfStep,trcenterstatus)
+                   %(currIteration+1,tr_radius,normOfStep,trcenterstatus)
             print(str)
     # put  tr_radius and curr_p in radius and center and write to algoparams
     # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
