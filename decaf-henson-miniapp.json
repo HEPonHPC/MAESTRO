@@ -4,7 +4,7 @@
         "nodes": [
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./orchestrator.py -o 10 -a conf/algoparams_bk.json",
                 "func": "orch_py",
                 "inports": [],
@@ -12,7 +12,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o initial",
                 "func": "miniappinitial_py",
                 "inports": [],
@@ -20,7 +20,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./buildInterpol.py -c process.dat",
                 "func": "inputPre_py",
                 "inports": [],
@@ -28,7 +28,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o multi",
                 "func": "miniappmulti_py",
                 "inports": [],
@@ -36,7 +36,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./approx.py -e conf/data.json -w conf/weights",
                 "func": "approx_py",
                 "inports": [],
@@ -44,7 +44,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./chi2.py -e conf/data.json -w conf/weights -c process.dat",
                 "func": "chi2_py",
                 "inports": [],
@@ -52,7 +52,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
                 "cmdline": "./mc_miniapp.py -b -e conf/data.json -c process.dat -o single",
                 "func": "miniappsingle_py",
                 "inports": [],
@@ -60,7 +60,7 @@
             },
             {
                 "start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 6,
              	"cmdline": "./newBox.py -w conf/weights -e conf/data.json",
                 "func": "newbox_py",
                 "inports": [],

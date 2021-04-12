@@ -15,7 +15,7 @@ bebop=""
 nprocs=8
 if [ "$2" = "-b" ]; then
   bebop="-b"
-  nprocs=4
+  nprocs=6
 fi
 
 rm -r $WDdir;
