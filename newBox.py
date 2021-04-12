@@ -28,9 +28,8 @@ def tr_update(memorymap,expdatafile,wtfile):
     valfile = "logs/valapprox" + "_k{}.json".format(k)
     errfile = "logs/errapprox" + "_k{}.json".format(k)
 
-    debug = True \
-        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
-        else False
+    oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
+    debug = True if "All" in oloptions else False
 
     gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
@@ -91,10 +90,10 @@ def tr_update(memorymap,expdatafile,wtfile):
                 continue
         # print("chi2_ra_k=\t{}\nchi2_ra_kp1=\t{}\nchi2_mc_k=\t{}\nchi2_mc_kp1=\t{}\n".format(chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1))
         if debug:
-            print("chi2/ra k\t= %.2E" % (chi2_ra_k))
-            print("chi2/ra k+1\t= %.2E" % (chi2_ra_kp1))
-            print("chi2/mc k\t= %.2E" % (chi2_mc_k))
-            print("chi2/mc k+1\t= %.2E" % (chi2_mc_kp1))
+            print("chi2/ra k\t= %.4E" % (chi2_ra_k))
+            print("chi2/ra k+1\t= %.4E" % (chi2_ra_kp1))
+            print("chi2/mc k\t= %.4E" % (chi2_mc_k))
+            print("chi2/mc k+1\t= %.4E" % (chi2_mc_kp1))
 
         rho = (chi2_mc_k - chi2_mc_kp1) / (chi2_ra_k - chi2_ra_kp1)
         # print("rho={}".format(rho))
@@ -103,7 +102,7 @@ def tr_update(memorymap,expdatafile,wtfile):
         tr_maxradius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_maxradius")
 
         # grad = IO.gradient(kpstar)
-        if debug: print("rho k\t\t= %.3f" % (rho))
+        if debug: print("rho k\t\t= %.4E" % (rho))
         if rho < tr_eta :
             if debug: print("rho < eta New point rejected")
             tr_radius /=2
@@ -137,9 +136,13 @@ def tr_update(memorymap,expdatafile,wtfile):
     #                    value=tr_radius)
     # ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
     #                    value=curr_p)
-    if debug: print("\Delta k+1 \t= %.2E (%s)"%(tr_radius,trradmsg))
+    if debug: print("\Delta k+1 \t= %.4E (%s)"%(tr_radius,trradmsg))
 
-    if debug: print("P k+1 \t\t= {} ({})".format(["%.3f"%(c) for c in curr_p],trcentermsg))
+    if debug: print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],trcentermsg))
+
+    if "NormOfStep" in oloptions:
+        normofstep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
+        print("Norm of Step \t= %.8E (%s)"%(normofstep,trcentermsg))
 
     # Stopping condition
     # get parameters
