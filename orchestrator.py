@@ -9,8 +9,8 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Orchestrator for the workflow',
 			formatter_class=SaneFormatter)
-	parser.add_argument("-v", "--debug", dest="DEBUG", default=False, action="store_true",
-			help="Turn on some debug messages")
+	parser.add_argument("-o", "--outlevel", dest="OUTLEVEL", type=int, default=0,
+			help="Output level")
 	parser.add_argument("-c", "--continue", dest="CONTINUE", default=False, action="store_true",
 						help="Continue from previous iteration. Required only for local runs. "
 							 "Use false in first iteration and true in subsequent iterations.")
@@ -22,21 +22,21 @@ if __name__ == "__main__":
 	if args.CONTINUE:
 		(memorymap, pyhenson) = ato.readMemoryMap()
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
-		ato.putInMemoryMap(memoryMap=memorymap, key="debug", value=args.DEBUG)
+		ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
 		k = currk + 1
 		ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 		pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
-		if ato.getFromMemoryMap(memoryMap=memorymap, key="debug"):
+		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 			print("orchestrator: yielding to other tasks, at iter", k)
 
 	else:
 		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
-		ato.putInMemoryMap(memoryMap=memorymap, key="debug", value=args.DEBUG)
+		ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
 		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
 			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 			pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
 
-			if ato.getFromMemoryMap(memoryMap=memorymap,key="debug"):
+			if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 				print("orchestrator: yielding to other tasks, at iter", k)
 			sys.stdout.flush()
 			if pyhenson:
@@ -45,13 +45,13 @@ if __name__ == "__main__":
 				size = comm.Get_size()
 				rank = comm.Get_rank()
 				if rank == 0:
-					print("---------------Starting Iteration {}---------------".format(k + 1))
+					print("--------------- Iteration {} ---------------".format(k + 1))
 				import pyhenson as h
 				h.yield_()
 			else:
 				break
-		if args.DEBUG:
+		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 			print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
-	print("---------------Starting Iteration {}---------------".format(k + 1))
+	print("--------------- Iteration {} ---------------".format(k + 1))
 	sys.stdout.flush()
 	os._exit(0)

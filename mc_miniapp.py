@@ -28,7 +28,9 @@ def problem_main_program(paramfile,memorymap = None,isbebop=False,
     fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="fidelity")
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
 
-    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
 
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
@@ -101,7 +103,9 @@ if __name__ == "__main__":
     (memorymap, pyhenson) = ato.readMemoryMap()
 
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
-    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")

@@ -11,7 +11,9 @@ def mkCov(yerrs):
 
 def run_chi2_optimization(processcard,memorymap,valfile,errfile,
                           expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
-    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
 
     try:
         from mpi4py import MPI

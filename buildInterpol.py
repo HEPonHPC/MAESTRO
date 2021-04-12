@@ -96,7 +96,9 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     # Get relevent algorithm parameters
     ############################################################
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
-    debug = ato.getFromMemoryMap(memoryMap=memoryMap, key="debug")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")

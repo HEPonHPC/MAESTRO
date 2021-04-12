@@ -11,7 +11,9 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
     pass
 def run_approx(memorymap,prevparamfile,valoutfile,
                erroutfile,expdatafile,wtfile):
-    debug = ato.getFromMemoryMap(memoryMap=memorymap, key="debug")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
