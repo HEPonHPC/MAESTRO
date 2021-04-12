@@ -19,6 +19,10 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 	import apprentice.tools as ato
+	from mpi4py import MPI
+	comm = MPI.COMM_WORLD
+	size = comm.Get_size()
+	rank = comm.Get_rank()
 	if args.CONTINUE:
 		(memorymap, pyhenson) = ato.readMemoryMap()
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
@@ -40,11 +44,7 @@ if __name__ == "__main__":
 				print("orchestrator: yielding to other tasks, at iter", k)
 			sys.stdout.flush()
 			if pyhenson:
-				from mpi4py import MPI
-				comm = MPI.COMM_WORLD
-				size = comm.Get_size()
-				rank = comm.Get_rank()
-				if rank == 0:
+				if rank == 0 and "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 					print("--------------- Iteration {} ---------------".format(k + 1))
 				import pyhenson as h
 				h.yield_()
@@ -52,6 +52,7 @@ if __name__ == "__main__":
 				break
 		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 			print("===terminating the workflow after", k+1, "iterations@ORCHESTRATOR===")
-	print("--------------- Iteration {} ---------------".format(k + 1))
+	if rank==0 and "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
+		print("--------------- Iteration {} ---------------".format(k + 1))
 	sys.stdout.flush()
 	os._exit(0)

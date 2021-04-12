@@ -160,7 +160,7 @@ def tr_update(memorymap,expdatafile,wtfile):
     #                    value=curr_p)
     if debug: print("\Delta k+1 \t= %.4E (%s)"%(tr_radius,trradmsg))
 
-    if debug: print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],trcentermsg))
+    if debug or "DeltaKp1" in oloptions: print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],trcentermsg))
 
     if "NormOfStep" in oloptions:
         normofstep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))

@@ -5,7 +5,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 2,
-                "cmdline": "./orchestrator.py -v -a conf/algoparams_bk.json",
+                "cmdline": "./orchestrator.py -o 10 -a conf/algoparams_bk.json",
                 "func": "orch_py",
                 "inports": [],
                 "outports": []

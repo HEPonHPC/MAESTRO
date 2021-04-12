@@ -173,7 +173,6 @@ def run_approx(memorymap,prevparamfile,valoutfile,
     t5 = time.time()
     gradCondToWrite = False
     if rank == 0:
-        print()
         if debug: print("Approximation calculation took {} seconds".format(t5 - t4))
         sys.stdout.flush()
 
