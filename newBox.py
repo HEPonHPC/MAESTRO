@@ -33,6 +33,7 @@ def tr_update(memorymap,expdatafile,wtfile):
 
     gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
     if debug: print("inside tr update w gradcond", gradCond)
     import sys
@@ -109,6 +110,7 @@ def tr_update(memorymap,expdatafile,wtfile):
             curr_p = kpstar
             trradmsg = "TR radius halved"
             trcentermsg = "TR center remains the same"
+            trcenterstatus = "H"
             copyanything(kpstarfile,kp1pstarfile)
             if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
                 copyanything(kMCoutYODA, kp1MCoutYODA)
@@ -120,17 +122,37 @@ def tr_update(memorymap,expdatafile,wtfile):
             curr_p = kp1pstar
             trradmsg = "TR radius doubled"
             trcentermsg = "TR center moved to the SP amin"
+            trcenterstatus = "D"
+        if rank==0 and "1lineoutput" in oloptions:
+            str = ""
+            if currIteration %10 == 0:
+                str = "iter\tGC \Delta_k+1" \
+                      "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
+            normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
+            str += "%d\tF %.6E %.6E %s %.6E %.6E %.6E %.6E"\
+                  %(currIteration,tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,rho)
+            print(str)
     else:
         if debug: print("gradient condition failed")
         tr_radius /= 2
         curr_p = kpstar
         trradmsg = "TR radius halved"
         trcentermsg = "TR center remains the same"
+        trcenterstatus = "H"
         copyanything(kpstarfile,kp1pstarfile)
         if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
             copyanything(kMCoutYODA, kp1MCoutYODA)
         else:
             copyanything(kMCoutH5,kp1MCoutH5)
+        if rank==0 and "1lineoutput" in oloptions:
+            str = ""
+            if currIteration %10 == 0:
+                str = "iter\tGC \Delta_k+1" \
+                      "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
+            normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
+            str += "%d\tT %.6E %.6E %s" \
+                   %(currIteration,tr_radius,normOfStep,trcenterstatus)
+            print(str)
     # put  tr_radius and curr_p in radius and center and write to algoparams
     # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
     #                    value=tr_radius)
