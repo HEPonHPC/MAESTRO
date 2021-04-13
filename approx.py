@@ -9,6 +9,12 @@ import apprentice.tools as ato
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
     pass
+
+def projection(X,MIN,MAX):
+    return np.array([
+        min(max(x,mi),ma) for x,mi,ma in zip(X,MIN,MAX)
+    ])
+
 def run_approx(memorymap,prevparamfile,valoutfile,
                erroutfile,functionvaloutfile,expdatafile,wtfile):
     oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
@@ -242,7 +248,13 @@ def run_approx(memorymap,prevparamfile,valoutfile,
             IO._AS.setRecurrence(tr_radius)
             IO._EAS.setRecurrence(tr_radius)
             grad = IO.gradient(tr_center)
-            if np.linalg.norm(grad) <= tr_sigma * tr_radius:
+            min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                    key="min_param_bounds")
+            max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                                    key="max_param_bounds")
+            pgrad = projection(tr_center-grad,min_param_bounds,max_param_bounds)-tr_center
+            pgradnorm = np.linalg.norm(pgrad)
+            if pgradnorm <= tr_sigma * tr_radius:
                 # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                 #                    value=True)
                 gradCondToWrite = True
@@ -251,10 +263,11 @@ def run_approx(memorymap,prevparamfile,valoutfile,
                 # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                 #                value=False)
             if debug: print(
-                "||grad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
+                "||pgrad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
         except:
             # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
             #                    value=False)
+            pgradnorm = 1.0
             gradCondToWrite = False
             pass
 
@@ -262,6 +275,8 @@ def run_approx(memorymap,prevparamfile,valoutfile,
     gradCondToWrite = comm.bcast(gradCondToWrite, root=0)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                                           value=gradCondToWrite)
+    ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientNorm",
+                       value=pgradnorm)
     ato.writeMemoryMap(memorymap)
     #comm.barrier() # Maybe redundant. Remove this if testing shows that this is not required
     if debug: print("BYE from approx", rank, gradCondToWrite)
