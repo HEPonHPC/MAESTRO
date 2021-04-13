@@ -7,6 +7,13 @@ import json
 import numpy as np
 import shutil,errno
 
+def isclose(a, b, rel_tol=1e-03, abs_tol=0.0):
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+def getInfNorm(param):
+    distarr = [np.abs(p) for p in param]
+    infn = max(distarr)
+    return infn
+
 def copyanything(src, dst):
     try:
         shutil.rmtree(dst)
@@ -110,7 +117,7 @@ def tr_update(memorymap,expdatafile,wtfile):
             curr_p = kpstar
             trradmsg = "TR radius halved"
             trcentermsg = "TR center remains the same"
-            trcenterstatus = "H"
+            trcenterstatus = "R"
             copyanything(kpstarfile,kp1pstarfile)
             if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
                 copyanything(kMCoutYODA, kp1MCoutYODA)
@@ -118,19 +125,25 @@ def tr_update(memorymap,expdatafile,wtfile):
                 copyanything(kMCoutH5,kp1MCoutH5)
         else:
             if debug: print("rho >= eta. New point accepted")
-            tr_radius = min(tr_radius*2,tr_maxradius)
+            if isclose(getInfNorm(np.array(kp1pstar)-np.array(tr_center)),tr_radius):
+                tr_radius = min(tr_radius*2,tr_maxradius)
+                trradmsg = "TR radius doubled"
+                trcenterstatus = "A"
+            else:
+                trradmsg = "TR radius stays the same"
+                trcenterstatus = "M"
             curr_p = kp1pstar
-            trradmsg = "TR radius doubled"
             trcentermsg = "TR center moved to the SP amin"
-            trcenterstatus = "D"
         if rank==0 and "1lineoutput" in oloptions:
+            pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
+            old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
             str = ""
             if currIteration %10 == 0:
-                str = "iter\tGC \Delta_k+1" \
-                      "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
-            normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
-            str += "%d\tF %.6E %.6E %s %.6E %.6E %.6E %.6E"\
-                  %(currIteration+1,tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,rho)
+                str = "iter\tGC     PG       \Delta_k" \
+                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
+            normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
+            str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.6E"\
+                  %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,rho)
             print(str)
     else:
         if debug: print("gradient condition failed")
@@ -138,20 +151,22 @@ def tr_update(memorymap,expdatafile,wtfile):
         curr_p = kpstar
         trradmsg = "TR radius halved"
         trcentermsg = "TR center remains the same"
-        trcenterstatus = "H"
+        trcenterstatus = "R"
         copyanything(kpstarfile,kp1pstarfile)
         if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
             copyanything(kMCoutYODA, kp1MCoutYODA)
         else:
             copyanything(kMCoutH5,kp1MCoutH5)
         if rank==0 and "1lineoutput" in oloptions:
+            pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
+            old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
             str = ""
             if currIteration %10 == 0:
-                str = "iter\tGC \Delta_k+1" \
-                      "   NormOfStep  S  C2_RA(P_k) C2_RA(P_{k+1}) C2_MC(P_k)    \\rho\n"
-            normOfStep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
-            str += "%d\tT %.6E %.6E %s" \
-                   %(currIteration+1,tr_radius,normOfStep,trcenterstatus)
+                str = "iter\tGC     PG       \Delta_k" \
+                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
+            normOfStep = 0.
+            str += "%d\tT %.6E %.6E %.6E %s" \
+                   %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus)
             print(str)
     # put  tr_radius and curr_p in radius and center and write to algoparams
     # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
