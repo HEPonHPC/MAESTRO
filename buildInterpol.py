@@ -278,7 +278,8 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
             p_sel_new = np.array([])
         ato.writePythiaFiles(processcard, param_names, p_sel_new, outdir, fnamep, fnameg)
         ds = {
-            "parameters": p_sel_new.tolist()
+            "parameters": p_sel_new.tolist(),
+            "at fidelity": [0.]*len(p_sel_new)
         }
         with open(newparamoutfile,'w') as f:
             json.dump(ds, f, indent=4)

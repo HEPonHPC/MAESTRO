@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
             if rank ==0:
                 with open(paramfile, 'w') as f:
-                    json.dump({"parameters": [tr_center]}, f, indent=4)
+                    json.dump({"parameters": [tr_center],"at fidelity":[0.]}, f, indent=4)
                 ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
                                  outdir)
 
