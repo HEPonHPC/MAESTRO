@@ -177,7 +177,7 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
 
     currfidelity = {}
     for num, (d,ofi,of,atfid) in enumerate(zip(rankDirs,rankorigfileindex,rankorigfile,rankatfidelity)):
-        cfd = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*tr_radius,fidelity=fidelity,
+        cfd = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
                                     maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
                                     usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH)
         currfidelity["{}_{}".format(of,ofi)] = cfd
