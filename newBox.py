@@ -62,10 +62,14 @@ def tr_update(memorymap,expdatafile,wtfile):
             #     [kMCoutYODA],"params.dat",wtfile)
             # kp1DATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
             #     [kp1MCoutYODA], "params.dat", wtfile)
+            import glob
+            INDIRSLIST = glob.glob(os.path.join(kMCoutYODA, "*"))
             kDATA = apprentice.io.readSingleYODAFile(
-                [kMCoutYODA],"params.dat",wtfile)
+                INDIRSLIST[0],"params.dat",wtfile)
+
+            INDIRSLIST = glob.glob(os.path.join(kp1MCoutYODA, "*"))
             kp1DATA = apprentice.io.readSingleYODAFile(
-                [kp1MCoutYODA], "params.dat", wtfile)
+                INDIRSLIST[0], "params.dat", wtfile)
         else:
             kDATA = apprentice.io.readH5(kMCoutH5)
             kp1DATA = apprentice.io.readH5(kp1MCoutH5)
