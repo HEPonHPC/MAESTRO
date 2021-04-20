@@ -298,10 +298,8 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
             json.dump(ds, f, indent=4)
         if p_sel_prev is None:
             p_sel_prev_metadata["parameters"] = []
-            p_sel_prev_metadata["at fidelity"] = []
         else:
             p_sel_prev_metadata["parameters"] = p_sel_prev.tolist()
-            p_sel_prev_metadata["at fidelity"] = [0.]*len(p_sel_prev)
         with open(prevparamoutfile,'w') as f:
             json.dump(p_sel_prev_metadata, f, indent=4)
 
