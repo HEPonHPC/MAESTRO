@@ -12,7 +12,7 @@ def readParamFile(file):
     import json
     with open(file, 'r') as f:
         ds = json.load(f)
-        return ds['parameters']
+        return ds['parameters'], ds['at fidelity']
 
 def checkIfPointInTR(point, tr_center, tr_radius):
     distarr = [np.abs(point[vno] - tr_center[vno]) for vno in range(len(point))]
@@ -27,23 +27,27 @@ def checkIfSamePoint(point1,point2):
             return False
     return True
 
-def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_metadata):
-    params = readParamFile(file)
+def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_at_fidelity,p_pool_metadata):
+    (params,at_fidelity) = readParamFile(file)
     for pno,p in enumerate(params):
         if checkIfPointInTR(p, tr_center, tr_radius):
             if not checkIfSamePoint(p, tr_center):
                 if p_pool is None:
                     p_pool = np.array([p])
-                    p_pool_metadata["0"]={"file":file,"index":pno,
+                    p_pool_metadata["0"]={"file":file,"fidelity to reuse":at_fidelity[pno],"index":pno,
                                             "k":iterno,"ptype":paramtype}
                 else:
                     p_pool = np.concatenate((p_pool, np.array([p])))
-                    p_pool_metadata[str(len(p_pool)-1)] = {"file": file, "index": pno,
-                                                           "k":iterno,"ptype":paramtype}
-    return p_pool
+                    p_pool_metadata[str(len(p_pool)-1)] = {"file": file,
+                                                           "fidelity to reuse":at_fidelity[pno],
+                                                           "index": pno, "k":iterno,"ptype":paramtype}
+                p_pool_at_fidelity.append(at_fidelity[pno])
+    return p_pool,p_pool_at_fidelity
 
 def addTrCenterToSelPrev(tr_center,file,iterno,p_sel_prev,p_sel_prev_metadata):
-    p_pool_metadata = {"0":{"file":file,"index":0,"k":iterno,"ptype":"1"}}
+    (params,at_fidelity) = readParamFile(file)
+    p_pool_metadata = {"0":{"file":file,"fidelity to reuse":at_fidelity[0],
+                            "index":0,"k":iterno,"ptype":"1"}}
     return addParamToSelPrev(tr_center,0,p_pool_metadata,p_sel_prev,p_sel_prev_metadata)
 
 def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_metadata):
@@ -123,6 +127,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
 
     p_init = np.array([])
     p_pool = None
+    p_pool_at_fidelity = []
     p_pool_metadata = {}
     p_sel_prev = None
     p_sel_prev_metadata = {}
@@ -164,11 +169,12 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     prev_np_param_fn = "logs/newparams_Np" #+ "_k{}.json".format(k)
     for k in range(currIteration):
         tr_center_param = tr_center_param_fn + "_k{}.json".format(k)
-        p_pool = addParamsToPool(tr_center_param,k,"1",tr_center,tr_radius,p_pool,p_pool_metadata)
+        (p_pool,p_pool_at_fidelity) = addParamsToPool(tr_center_param,k,"1",tr_center,tr_radius,
+                                                    p_pool,p_pool_at_fidelity,p_pool_metadata)
 
         prev_np_param =  prev_np_param_fn + "_k{}.json".format(k)
-        p_pool = addParamsToPool(prev_np_param,k,"Np", tr_center, tr_radius, p_pool,p_pool_metadata)
-
+        (p_pool,p_pool_at_fidelity) = addParamsToPool(prev_np_param,k,"Np", tr_center, tr_radius,
+                                                    p_pool,p_pool_at_fidelity,p_pool_metadata)
 
     if p_pool is not None:
         I_pool = [True for i in p_pool]
@@ -188,6 +194,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     if debug:
         print("p_pool after initial discard")
         print(p_pool)
+        print(p_pool_at_fidelity)
         print(I_pool)
         # print(p_pool_metadata)
         print("###############################################")
@@ -207,11 +214,14 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     ############################################################
     # Find close matches from p_pool for points in p_init
     # and add to p_sel_prev
+    # Sort the p_pool by descending order of p_pool_at_fidelity first
     ############################################################
     if p_pool is not None:
+        ppf_order = np.argsort(-1*np.array(p_pool_at_fidelity))[:len(p_pool_at_fidelity)]
         for pino,pi in enumerate(p_init):
             if not I_init[pino]: continue
-            for ppno,pp in enumerate(p_pool):
+            for ppno in ppf_order:
+                pp = p_pool[ppno]
                 if not I_pool[ppno]: continue
                 result = checkifnotinminseperationdist(pi, pp, equivalencedist)
                 if not result:
@@ -229,10 +239,13 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     ############################################################
     # If not enough points add points not used before or not in
     # minimum seperation distance from p_pool to p_sel_prev
+    # Sort the p_pool by descending order of p_pool_at_fidelity first
     ############################################################
     if p_pool is not None:
+        ppf_order = np.argsort(-1*np.array(p_pool_at_fidelity))[:len(p_pool_at_fidelity)]
         if p_sel_prev is None or len(p_sel_prev) < N_p:
-            for ppno, pp in enumerate(p_pool):
+            for ppno in ppf_order:
+                pp = p_pool[ppno]
                 if not I_pool[ppno]: continue
                 result = True
                 if p_sel_prev is not None:
@@ -278,7 +291,8 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
             p_sel_new = np.array([])
         ato.writePythiaFiles(processcard, param_names, p_sel_new, outdir, fnamep, fnameg)
         ds = {
-            "parameters": p_sel_new.tolist()
+            "parameters": p_sel_new.tolist(),
+            "at fidelity": [0.]*len(p_sel_new)
         }
         with open(newparamoutfile,'w') as f:
             json.dump(ds, f, indent=4)

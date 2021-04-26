@@ -49,7 +49,8 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
             json.dump(outputdata,f,indent=4)
 
         outds = {
-            "parameters": [outputdata['x']]
+            "parameters": [outputdata['x']],
+            "at fidelity":[0.]
         }
         if debug: print("\\SP amin \t= {}".format(["%.3f"%(c) for c in res['x']]))
         with open(pstarfile,'w') as f:
