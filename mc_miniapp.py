@@ -90,7 +90,7 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
 
     if isbebop:
         MPATH = "/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp"
-        YPATH = None
+        YPATH = "/home/oyildiz/mohan/mc_miniapp/YODA-1.8.1/bin/yodamerge"
     else:
         MPATH = "/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp"
         YPATH = "/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge"
