@@ -11,7 +11,7 @@ from shutil import copyfile
 def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
     if maxsigma is None or usefixedfidelity: return fidelity
     diff = maxsigma-bound
-    newfidelity = (currfidelity/maxsigma)*diff
+    newfidelity = int((currfidelity/maxsigma)*diff)
     newfidelity = max(minfidelity,newfidelity)
     if currfidelity+newfidelity > maxfidelity:
         return maxfidelity-currfidelity
@@ -33,8 +33,6 @@ def mergeyoda(yodafiles,OUTFILE,RBD):
                 file1=OUTFILE
                 file2=yodafiles[filenum+1]
             process = Popen([RBD,'-o',OUTFILE,file1,file2],stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            if process.returncode != 0:
-                raise Exception("Running yodamerge failed with return code {}".format(process.returncode))
             process.communicate()
 
 def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
@@ -56,11 +54,9 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
         maxsigma = max(sigma)
         sys.stdout.flush()
-    iii = 0
     while(maxsigma is None or maxsigma > bound):
-        iii += 1
         newfidelity = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,50,maxfidelity)
-        newloc = os.path.join(d, "out_i{}.yoda".format(iii))
+        newloc = os.path.join(d, "out_temp.yoda")
         p = Popen(
             [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
              str(newfidelity), str(np.random.randint(1,9999999)), "0", "1", newloc],
@@ -69,13 +65,16 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         if p.returncode != 0:
             raise Exception("Running miniapp failed with return code {}".format(p.returncode))
         yodafiles = []
-        basefile = os.path.join(d, "out_i0.yoda")
+        mainfile = os.path.join(d, "out_i0.yoda")
         if maxsigma is not None:
-            yodafiles.append(basefile)
+            yodafiles.append(mainfile)
         yodafiles.append(newloc)
-        mergeyoda(yodafiles,basefile,YPATH)
+        outfile = os.path.join(d, "out.yoda")
+        mergeyoda(yodafiles,outfile,YPATH)
         currfidelity += newfidelity
         os.remove(newloc)
+        copyfile(outfile,mainfile)
+        os.remove(outfile)
         DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
         sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
         maxsigma = max(sigma)
