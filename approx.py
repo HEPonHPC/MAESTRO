@@ -178,6 +178,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
     ALLERRAPP = comm.gather(errapp, root=0)
     t5 = time.time()
     gradCondToWrite = False
+    pgradnorm = 1.0
     if rank == 0:
         if debug: print("Approximation calculation took {} seconds".format(t5 - t4))
         sys.stdout.flush()
@@ -273,6 +274,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
 
         sys.stdout.flush()
     gradCondToWrite = comm.bcast(gradCondToWrite, root=0)
+    pgradnorm = comm.bcast(pgradnorm, root=0)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                                           value=gradCondToWrite)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientNorm",
