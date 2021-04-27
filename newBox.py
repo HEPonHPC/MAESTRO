@@ -143,7 +143,7 @@ def tr_update(memorymap,expdatafile,wtfile):
             old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
             str = ""
             if currIteration %10 == 0:
-                str = "iter\tGC     PG       \Delta_k" \
+                str = "iter\tGC   PGNorm     \Delta_k" \
                       "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
             normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
             str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.6E"\
@@ -166,7 +166,7 @@ def tr_update(memorymap,expdatafile,wtfile):
             old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
             str = ""
             if currIteration %10 == 0:
-                str = "iter\tGC     PG       \Delta_k" \
+                str = "iter\tGC   PGNorm     \Delta_k" \
                       "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
             normOfStep = 0.
             str += "%d\tT %.6E %.6E %.6E %s" \
