@@ -77,6 +77,7 @@ def tr_update(memorymap,expdatafile,wtfile):
         with open (kp1pstarfile,'r') as f:
             ds = json.load(f)
         kp1pstar = ds['parameters'][0]
+        fidelityused = ds['at fidelity'][0]
 
         chi2_ra_k = IO.objective(kpstar)
         chi2_ra_kp1 = IO.objective(kp1pstar)
@@ -144,10 +145,10 @@ def tr_update(memorymap,expdatafile,wtfile):
             str = ""
             if currIteration %10 == 0:
                 str = "iter\tGC   PGNorm     \Delta_k" \
-                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
+                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
             normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
-            str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.6E"\
-                  %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,rho)
+            str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E"\
+                  %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,fidelityused,rho)
             print(str)
     else:
         if debug: print("gradient condition failed")
@@ -167,7 +168,7 @@ def tr_update(memorymap,expdatafile,wtfile):
             str = ""
             if currIteration %10 == 0:
                 str = "iter\tGC   PGNorm     \Delta_k" \
-                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1})    \\rho\n"
+                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
             normOfStep = 0.
             str += "%d\tT %.6E %.6E %.6E %s" \
                    %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus)
