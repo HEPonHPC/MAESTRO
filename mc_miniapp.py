@@ -11,7 +11,7 @@ from shutil import copyfile
 def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
     if maxsigma is None or usefixedfidelity: return fidelity
     diff = maxsigma-bound
-    newfidelity = int((currfidelity/maxsigma)*diff)
+    newfidelity = int(np.ceil((currfidelity/maxsigma)*diff))
     newfidelity = max(minfidelity,newfidelity)
     if currfidelity+newfidelity > maxfidelity:
         return maxfidelity-currfidelity
@@ -39,6 +39,8 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
                                usefixedfidelity,MPATH,YPATH):
     re_pfname = re.compile(pfname) if pfname else None
     currfidelity = atfidelity
+    if currfidelity >= maxfidelity:
+        return currfidelity
     sys.stdout.flush()
     files = glob.glob(os.path.join(d, "*"))
     param = None
