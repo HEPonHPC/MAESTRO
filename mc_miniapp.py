@@ -326,13 +326,14 @@ if __name__ == "__main__":
         outdir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
 
         gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+        status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
 
         if args.OPTION == "multi":
             prevparamfile = "logs/prevparams_Np" + "_k{}.json".format(k)
             paramfile = newparams_Np_k
             outfile = MCout_Np_k
             outdir = outdir_Np_k
-            if not gradCond:
+            if not gradCond and status == 0:
                 simulationBudgetUsed = problem_main_program(
                     paramfile,
                     prevparamfile,
@@ -351,7 +352,7 @@ if __name__ == "__main__":
             outfile = MCout_1_kp1
             outdir = outdir_1_kp1
             simulationBudgetUsed = 0
-            if not gradCond:
+            if not gradCond and status == 0:
                 if rank >= 0:
                     simulationBudgetUsed = problem_main_program(
                         paramfile,

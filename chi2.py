@@ -87,6 +87,7 @@ if __name__ == "__main__":
     (memorymap, pyhenson) = ato.readMemoryMap()
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+    status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
 
     newparams_1_kp1 = "logs/newparams_1" + "_k{}.json".format(k + 1)
     valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k) 
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     resultoutfile_k = "logs/chi2result" + "_k{}.json".format(k)
     pythiadir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
 
-    if not gradCond:
+    if not gradCond and status == 0:
         run_chi2_optimization(
             args.PROCESSCARD,
             memorymap,

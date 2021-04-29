@@ -39,12 +39,11 @@ def tr_update(memorymap,expdatafile,wtfile):
     debug = True if "All" in oloptions else False
 
     gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+    status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
-    if debug: print("inside tr update w gradcond", gradCond)
     import sys
-    sys.stdout.flush()
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
 
     with open(kpstarfile, 'r') as f:
@@ -55,70 +54,107 @@ def tr_update(memorymap,expdatafile,wtfile):
                                             expdatafile,
                                             valfile,
                                             errfile)
-    if not gradCond:
-        mcbinids = IO._binids
-        if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
-            # kDATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-            #     [kMCoutYODA],"params.dat",wtfile)
-            # kp1DATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-            #     [kp1MCoutYODA], "params.dat", wtfile)
-            import glob
-            INDIRSLIST = glob.glob(os.path.join(kMCoutYODA, "*"))
-            kDATA = apprentice.io.readSingleYODAFile(
-                INDIRSLIST[0],"params.dat",wtfile)
+    if status == 0:
+        if debug: print("inside tr update w gradcond", gradCond)
+        sys.stdout.flush()
+        if not gradCond:
+            mcbinids = IO._binids
+            if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+                # kDATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+                #     [kMCoutYODA],"params.dat",wtfile)
+                # kp1DATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
+                #     [kp1MCoutYODA], "params.dat", wtfile)
+                import glob
+                INDIRSLIST = glob.glob(os.path.join(kMCoutYODA, "*"))
+                kDATA = apprentice.io.readSingleYODAFile(
+                    INDIRSLIST[0],"params.dat",wtfile)
 
-            INDIRSLIST = glob.glob(os.path.join(kp1MCoutYODA, "*"))
-            kp1DATA = apprentice.io.readSingleYODAFile(
-                INDIRSLIST[0], "params.dat", wtfile)
+                INDIRSLIST = glob.glob(os.path.join(kp1MCoutYODA, "*"))
+                kp1DATA = apprentice.io.readSingleYODAFile(
+                    INDIRSLIST[0], "params.dat", wtfile)
+            else:
+                kDATA = apprentice.io.readH5(kMCoutH5)
+                kp1DATA = apprentice.io.readH5(kp1MCoutH5)
+
+            with open (kp1pstarfile,'r') as f:
+                ds = json.load(f)
+            kp1pstar = ds['parameters'][0]
+            fidelityused = ds['at fidelity'][0]
+
+            chi2_ra_k = IO.objective(kpstar)
+            chi2_ra_kp1 = IO.objective(kp1pstar)
+
+            chi2_mc_k = 0.
+            chi2_mc_kp1 = 0.
+            # print(mcbinids)
+            # print(IO._binids)
+            for mcnum, (_X, _Y, _E) in enumerate(kDATA):
+                if mcbinids[mcnum] in IO._binids:
+                    ionum = IO._binids.index(mcbinids[mcnum])
+                    # print(_Y[0], IO._Y[ionum])
+                    chi2_mc_k += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
+                else:
+                    continue
+
+            for mcnum, (_X, _Y, _E) in enumerate(kp1DATA):
+                if mcbinids[mcnum] in IO._binids:
+                    ionum = IO._binids.index(mcbinids[mcnum])
+                    # print(_Y[0], IO._Y[ionum])
+                    chi2_mc_kp1 += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
+                else:
+                    continue
+            # print("chi2_ra_k=\t{}\nchi2_ra_kp1=\t{}\nchi2_mc_k=\t{}\nchi2_mc_kp1=\t{}\n".format(chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1))
+            if debug:
+                print("chi2/ra k\t= %.4E" % (chi2_ra_k))
+                print("chi2/ra k+1\t= %.4E" % (chi2_ra_kp1))
+                print("chi2/mc k\t= %.4E" % (chi2_mc_k))
+                print("chi2/mc k+1\t= %.4E" % (chi2_mc_kp1))
+
+            rho = (chi2_mc_k - chi2_mc_kp1) / (chi2_ra_k - chi2_ra_kp1)
+            # print("rho={}".format(rho))
+
+            tr_eta = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_eta")
+            tr_maxradius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_maxradius")
+
+            # grad = IO.gradient(kpstar)
+            if debug: print("rho k\t\t= %.4E" % (rho))
+            if rho < tr_eta :
+                if debug: print("rho < eta New point rejected")
+                tr_radius /=2
+                curr_p = kpstar
+                trradmsg = "TR radius halved"
+                trcentermsg = "TR center remains the same"
+                trcenterstatus = "R"
+                copyanything(kpstarfile,kp1pstarfile)
+                if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
+                    copyanything(kMCoutYODA, kp1MCoutYODA)
+                else:
+                    copyanything(kMCoutH5,kp1MCoutH5)
+            else:
+                if debug: print("rho >= eta. New point accepted")
+                if isclose(getInfNorm(np.array(kp1pstar)-np.array(tr_center)),tr_radius):
+                    tr_radius = min(tr_radius*2,tr_maxradius)
+                    trradmsg = "TR radius doubled"
+                    trcenterstatus = "A"
+                else:
+                    trradmsg = "TR radius stays the same"
+                    trcenterstatus = "M"
+                curr_p = kp1pstar
+                trcentermsg = "TR center moved to the SP amin"
+            if rank==0 and "1lineoutput" in oloptions:
+                pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
+                old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+                str = ""
+                if currIteration %10 == 0:
+                    str = "iter\tGC   PGNorm     \Delta_k" \
+                          "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
+                normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
+                str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E"\
+                      %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,fidelityused,rho)
+                print(str)
         else:
-            kDATA = apprentice.io.readH5(kMCoutH5)
-            kp1DATA = apprentice.io.readH5(kp1MCoutH5)
-
-        with open (kp1pstarfile,'r') as f:
-            ds = json.load(f)
-        kp1pstar = ds['parameters'][0]
-        fidelityused = ds['at fidelity'][0]
-
-        chi2_ra_k = IO.objective(kpstar)
-        chi2_ra_kp1 = IO.objective(kp1pstar)
-
-        chi2_mc_k = 0.
-        chi2_mc_kp1 = 0.
-        # print(mcbinids)
-        # print(IO._binids)
-        for mcnum, (_X, _Y, _E) in enumerate(kDATA):
-            if mcbinids[mcnum] in IO._binids:
-                ionum = IO._binids.index(mcbinids[mcnum])
-                # print(_Y[0], IO._Y[ionum])
-                chi2_mc_k += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
-            else:
-                continue
-
-        for mcnum, (_X, _Y, _E) in enumerate(kp1DATA):
-            if mcbinids[mcnum] in IO._binids:
-                ionum = IO._binids.index(mcbinids[mcnum])
-                # print(_Y[0], IO._Y[ionum])
-                chi2_mc_kp1 += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
-            else:
-                continue
-        # print("chi2_ra_k=\t{}\nchi2_ra_kp1=\t{}\nchi2_mc_k=\t{}\nchi2_mc_kp1=\t{}\n".format(chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1))
-        if debug:
-            print("chi2/ra k\t= %.4E" % (chi2_ra_k))
-            print("chi2/ra k+1\t= %.4E" % (chi2_ra_kp1))
-            print("chi2/mc k\t= %.4E" % (chi2_mc_k))
-            print("chi2/mc k+1\t= %.4E" % (chi2_mc_kp1))
-
-        rho = (chi2_mc_k - chi2_mc_kp1) / (chi2_ra_k - chi2_ra_kp1)
-        # print("rho={}".format(rho))
-
-        tr_eta = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_eta")
-        tr_maxradius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_maxradius")
-
-        # grad = IO.gradient(kpstar)
-        if debug: print("rho k\t\t= %.4E" % (rho))
-        if rho < tr_eta :
-            if debug: print("rho < eta New point rejected")
-            tr_radius /=2
+            if debug: print("gradient condition failed")
+            tr_radius /= 2
             curr_p = kpstar
             trradmsg = "TR radius halved"
             trcentermsg = "TR center remains the same"
@@ -128,88 +164,48 @@ def tr_update(memorymap,expdatafile,wtfile):
                 copyanything(kMCoutYODA, kp1MCoutYODA)
             else:
                 copyanything(kMCoutH5,kp1MCoutH5)
-        else:
-            if debug: print("rho >= eta. New point accepted")
-            if isclose(getInfNorm(np.array(kp1pstar)-np.array(tr_center)),tr_radius):
-                tr_radius = min(tr_radius*2,tr_maxradius)
-                trradmsg = "TR radius doubled"
-                trcenterstatus = "A"
-            else:
-                trradmsg = "TR radius stays the same"
-                trcenterstatus = "M"
-            curr_p = kp1pstar
-            trcentermsg = "TR center moved to the SP amin"
-        if rank==0 and "1lineoutput" in oloptions:
-            pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
-            old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-            str = ""
-            if currIteration %10 == 0:
-                str = "iter\tGC   PGNorm     \Delta_k" \
-                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
-            normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
-            str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E"\
-                  %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,fidelityused,rho)
-            print(str)
+            if rank==0 and "1lineoutput" in oloptions:
+                pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
+                old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+                str = ""
+                if currIteration %10 == 0:
+                    str = "iter\tGC   PGNorm     \Delta_k" \
+                          "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
+                normOfStep = 0.
+                str += "%d\tT %.6E %.6E %.6E %s" \
+                       %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus)
+                print(str)
+        # put  tr_radius and curr_p in radius and center and write to algoparams
+        # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
+        #                    value=tr_radius)
+        # ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
+        #                    value=curr_p)
+        if debug: print("\Delta k+1 \t= %.4E (%s)"%(tr_radius,trradmsg))
+
+        if debug or "PKp1" in oloptions: print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],trcentermsg))
+
+        if "NormOfStep" in oloptions:
+            normofstep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
+            print("Norm of Step \t= %.8E (%s)"%(normofstep,trcentermsg))
+
+        # Stopping condition
+        # get parameters
+        max_iteration = ato.getFromMemoryMap(memoryMap=memorymap, key="max_iteration")
+        max_simulationBudget = ato.getFromMemoryMap(memoryMap=memorymap, key="max_simulationBudget")
+
+        # get budget
+        simulationbudgetused = ato.getFromMemoryMap(memoryMap=memorymap, key="simulationbudgetused")
+
+        if k >= max_iteration-1:
+            status = 2
+        elif simulationbudgetused >= max_simulationBudget:
+            status = 3
+        else: status = 0
+        if debug: print("Status\t\t= {} : {}".format(status,ato.getStatusDef(status)))
+
+        return (status,tr_radius,curr_p)
     else:
-        if debug: print("gradient condition failed")
-        tr_radius /= 2
-        curr_p = kpstar
-        trradmsg = "TR radius halved"
-        trcentermsg = "TR center remains the same"
-        trcenterstatus = "R"
-        copyanything(kpstarfile,kp1pstarfile)
-        if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
-            copyanything(kMCoutYODA, kp1MCoutYODA)
-        else:
-            copyanything(kMCoutH5,kp1MCoutH5)
-        if rank==0 and "1lineoutput" in oloptions:
-            pgnorm = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientNorm")
-            old_tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-            str = ""
-            if currIteration %10 == 0:
-                str = "iter\tGC   PGNorm     \Delta_k" \
-                      "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
-            normOfStep = 0.
-            str += "%d\tT %.6E %.6E %.6E %s" \
-                   %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus)
-            print(str)
-    # put  tr_radius and curr_p in radius and center and write to algoparams
-    # ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
-    #                    value=tr_radius)
-    # ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
-    #                    value=curr_p)
-    if debug: print("\Delta k+1 \t= %.4E (%s)"%(tr_radius,trradmsg))
-
-    if debug or "PKp1" in oloptions: print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],trcentermsg))
-
-    if "NormOfStep" in oloptions:
-        normofstep = np.linalg.norm(np.array(curr_p)-np.array(tr_center))
-        print("Norm of Step \t= %.8E (%s)"%(normofstep,trcentermsg))
-
-    # Stopping condition
-    # get parameters
-    max_iteration = ato.getFromMemoryMap(memoryMap=memorymap, key="max_iteration")
-    min_gradientNorm = ato.getFromMemoryMap(memoryMap=memorymap, key="min_gradientNorm")
-    max_simulationBudget = ato.getFromMemoryMap(memoryMap=memorymap, key="max_simulationBudget")
-
-    # get budget
-    simulationbudgetused = ato.getFromMemoryMap(memoryMap=memorymap, key="simulationbudgetused")
-
-    # get gradient of model at current point
-    IO._AS.setRecurrence(curr_p)
-    IO._EAS.setRecurrence(curr_p)
-    grad = IO.gradient(curr_p)
-
-    if np.linalg.norm(grad) <= min_gradientNorm:
-        status = 1
-    elif k >= max_iteration-1:
-        status = 2
-    elif simulationbudgetused >= max_simulationBudget:
-        status = 3
-    else: status = 0
-    if debug: print("Status\t\t= {} : {}".format(status,ato.getStatusDef(status)))
-
-    return (status,tr_radius,curr_p)
+        return (status,tr_radius,tr_center)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):

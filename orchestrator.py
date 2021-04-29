@@ -11,7 +11,7 @@ def checkStatus(memorymap):
 			sys.stdout.flush()
 		os._exit(status)
 	else:
-		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
+		if rank == 0 and "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 			print("--------------- Iteration {} ---------------".format(iterno + 1))
 			sys.stdout.flush()
 
@@ -46,14 +46,15 @@ if __name__ == "__main__":
 	rank = comm.Get_rank()
 	if args.CONTINUE:
 		(memorymap, pyhenson) = ato.readMemoryMap()
+		memorymap = addOutLevel(memorymap)
 		checkStatus(memorymap)
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 		k = currk + 1
 		ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
-		memorymap = addOutLevel(memorymap)
 		ato.writeMemoryMap(memoryMap=memorymap)
 	else:
 		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
+		memorymap = addOutLevel(memorymap)
 		checkStatus(memorymap)
 		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
 			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)

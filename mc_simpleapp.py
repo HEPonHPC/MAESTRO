@@ -260,8 +260,9 @@ if __name__ == "__main__":
 
 
         gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+        status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
         simulationBudgetUsed = 0
-        if not gradCond and rank == 0:
+        if not gradCond and rank == 0 and status == 0:
             simulationBudgetUsed = problem_main_program(
                                     paramfile,
                                     args.PROCESSCARD,

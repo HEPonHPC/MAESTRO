@@ -23,6 +23,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
 
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    min_gradientNorm = ato.getFromMemoryMap(memoryMap=memorymap, key="min_gradientNorm")
 
     try:
         from mpi4py import MPI
@@ -179,6 +180,7 @@ def run_approx(memorymap,prevparamfile,valoutfile,
     t5 = time.time()
     gradCondToWrite = False
     pgradnorm = 1.0
+    statusToWrite = 0
     if rank == 0:
         if debug: print("Approximation calculation took {} seconds".format(t5 - t4))
         sys.stdout.flush()
@@ -255,28 +257,27 @@ def run_approx(memorymap,prevparamfile,valoutfile,
                                                     key="max_param_bounds")
             pgrad = projection(tr_center-grad,min_param_bounds,max_param_bounds)-tr_center
             pgradnorm = np.linalg.norm(pgrad)
+            if pgradnorm <= min_gradientNorm:
+                statusToWrite = 1
             if pgradnorm <= tr_sigma * tr_radius:
-                # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                #                    value=True)
                 gradCondToWrite = True
             else:
                 gradCondToWrite = False
-                # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-                #                value=False)
             if debug: print(
                 "||pgrad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
         except:
-            # ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
-            #                    value=False)
             pgradnorm = 1.0
             gradCondToWrite = False
             pass
 
         sys.stdout.flush()
     gradCondToWrite = comm.bcast(gradCondToWrite, root=0)
+    statusToWrite = comm.bcast(statusToWrite, root=0)
     pgradnorm = comm.bcast(pgradnorm, root=0)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientCondition",
                                           value=gradCondToWrite)
+    ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                       value=statusToWrite)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_gradientNorm",
                        value=pgradnorm)
     ato.writeMemoryMap(memorymap)
