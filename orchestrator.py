@@ -54,11 +54,10 @@ if __name__ == "__main__":
 		ato.writeMemoryMap(memoryMap=memorymap)
 	else:
 		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
-		memorymap = addOutLevel(memorymap)
-		checkStatus(memorymap)
 		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
 			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
 			memorymap = addOutLevel(memorymap)
+			checkStatus(memorymap)
 			pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
 			if pyhenson:
 				if rank == 0 and "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
