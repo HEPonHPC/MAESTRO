@@ -15,8 +15,8 @@ def checkStatus(memorymap):
 			print("--------------- Iteration {} ---------------".format(iterno + 1))
 			sys.stdout.flush()
 
-def addOutLevel(memorymap):
-	ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
+def addOutLevel(memorymap, level):
+	ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=level)
 	# TEMP START
 	if ato.getFromMemoryMap(memoryMap=memorymap,key="tr_radius") < 10**-5:
 		ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=30)
@@ -44,9 +44,10 @@ if __name__ == "__main__":
 	comm = MPI.COMM_WORLD
 	size = comm.Get_size()
 	rank = comm.Get_rank()
+	level = args.OUTLEVEL
 	if args.CONTINUE:
 		(memorymap, pyhenson) = ato.readMemoryMap()
-		memorymap = addOutLevel(memorymap)
+		memorymap = addOutLevel(memorymap, level)
 		checkStatus(memorymap)
 		currk = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 		k = currk + 1
@@ -56,7 +57,7 @@ if __name__ == "__main__":
 		memorymap = ato.putInMemoryMap(memoryMap=None, key="file", value=args.ALGOPARAMS)
 		for k in range(ato.getFromMemoryMap(memoryMap=memorymap,key="max_iteration")):
 			ato.putInMemoryMap(memoryMap=memorymap, key="iterationNo", value=k)
-			memorymap = addOutLevel(memorymap)
+			memorymap = addOutLevel(memorymap, level)
 			checkStatus(memorymap)
 			pyhenson = ato.writeMemoryMap(memoryMap=memorymap)
 			if pyhenson:
