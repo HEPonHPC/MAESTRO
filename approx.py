@@ -15,8 +15,7 @@ def projection(X,MIN,MAX):
         min(max(x,mi),ma) for x,mi,ma in zip(X,MIN,MAX)
     ])
 
-def run_approx(memorymap,prevparamfile,valoutfile,
-               erroutfile,functionvaloutfile,expdatafile,wtfile):
+def run_approx(memorymap,expdatafile,wtfile):
     oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
     debug = True if "All" in oloptions else False
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
@@ -24,6 +23,13 @@ def run_approx(memorymap,prevparamfile,valoutfile,
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
     min_gradientNorm = ato.getFromMemoryMap(memoryMap=memorymap, key="min_gradientNorm")
+    max_fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="maxfidelity")
+
+    valoutfile = "logs/valapprox" + "_k{}.json".format(currIteration)
+    erroutfile = "logs/errapprox" + "_k{}.json".format(currIteration)
+    prevparamfile = "logs/prevparams_Np" + "_k{}.json".format(currIteration)
+    functionvaloutfile = "logs/functionvalues_Np" + "_k{}.json".format(currIteration)
+    kpstarfile = "logs/newparams_1" + "_k{}.json".format(currIteration)
 
     try:
         from mpi4py import MPI
@@ -257,7 +263,10 @@ def run_approx(memorymap,prevparamfile,valoutfile,
                                                     key="max_param_bounds")
             pgrad = projection(tr_center-grad,min_param_bounds,max_param_bounds)-tr_center
             pgradnorm = np.linalg.norm(pgrad)
-            if pgradnorm <= min_gradientNorm:
+            with open(kpstarfile,'r') as f:
+                ds = json.load(f)
+            atfidelity = ds["at fidelity"][0]
+            if pgradnorm <= min_gradientNorm and atfidelity >= max_fidelity:
                 statusToWrite = 1
             if pgradnorm <= tr_sigma * tr_radius:
                 gradCondToWrite = True
@@ -306,18 +315,8 @@ if __name__ == "__main__":
     (memorymap, pyhenson) = ato.readMemoryMap()
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
 
-    MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
-    valapproxfile_k = "logs/valapprox" + "_k{}.json".format(k)
-    errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
-    prevparams_Np_k = "logs/prevparams_Np" + "_k{}.json".format(k)
-    fnvalues_Np_k = "logs/functionvalues_Np" + "_k{}.json".format(k)
-
     run_approx(
         memorymap,
-        prevparams_Np_k,
-        valapproxfile_k,
-        errapproxfile_k,
-        fnvalues_Np_k,
         args.EXPDATA,
         args.WEIGHTS
     )
