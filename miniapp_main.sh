@@ -46,8 +46,8 @@ do
   python chi2.py -e conf/data.json -w conf/weights -c process.dat
   python mc_miniapp.py -e conf/data.json -c process.dat -o single $bebop
   python newBox.py -w conf/weights -e conf/data.json
-  status=$?
   python orchestrator.py -o 10 -c -a conf/algoparams_bk.json
+  status=$?
 done
 cd $currDir ||exit ;
 
