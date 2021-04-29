@@ -13,7 +13,7 @@ def checkStatus(memorymap):
 	else:
 		if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")):
 			print("--------------- Iteration {} ---------------".format(iterno + 1))
-		sys.stdout.flush()
+			sys.stdout.flush()
 
 def addOutLevel(memorymap):
 	ato.putInMemoryMap(memoryMap=memorymap, key="outputlevel", value=args.OUTLEVEL)
