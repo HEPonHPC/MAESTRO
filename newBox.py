@@ -202,23 +202,13 @@ def tr_update(memorymap,expdatafile,wtfile):
 
     if np.linalg.norm(grad) <= min_gradientNorm:
         status = 1
-        if debug: print("STOP\t\t= Norm of the gradient too small {}".format(np.linalg.norm(grad)))
     elif k >= max_iteration-1:
         status = 2
-        if debug: print("STOP\t\t= Max iterations reached")
     elif simulationbudgetused >= max_simulationBudget:
         status = 3
-        if debug: print("STOP\t\t= Simulation budget depleted")
     else: status = 0
-    if debug: print("Status\t\t= {}".format(status))
-    # ato.putInMemoryMap(memoryMap=memorymap, key="status",
-    #                    value=status)
-    # ato.writeMemoryMap(memorymap, forceFileWrite=True)
+    if debug: print("Status\t\t= {} : {}".format(status,ato.getStatusDef(status)))
 
-    if status > 0:
-        print("===terminating the workflow after", k+1, "iterations@TR_UPDATE===")
-        sys.stdout.flush()
-        os._exit(status)
     return (status,tr_radius,curr_p)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
