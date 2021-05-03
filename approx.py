@@ -170,7 +170,7 @@ def run_approx(memorymap,expdatafile,wtfile):
         try:
             # print("\n\n\n\n")
             # print(_X,_Y,_E)
-            val = apprentice.RationalApproximation(X, Y, order=(2, 0), pnames=pnames)
+            val = apprentice.RationalApproximation(X, Y, order=(3, 0), pnames=pnames)
             # val._vmin = val.fmin(nsamples=100,nrestart=20)
             # val._vmax = val.fmax(nsamples=100, nrestart=20)
             val._xmin = xmin[num]
