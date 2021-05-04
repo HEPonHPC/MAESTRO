@@ -314,9 +314,11 @@ if __name__ == "__main__":
 
     (memorymap, pyhenson) = ato.readMemoryMap()
     k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
 
-    run_approx(
-        memorymap,
-        args.EXPDATA,
-        args.WEIGHTS
-    )
+    if status == 0:
+        run_approx(
+            memorymap,
+            args.EXPDATA,
+            args.WEIGHTS
+        )
