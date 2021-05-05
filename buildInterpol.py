@@ -59,7 +59,7 @@ def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_meta
         p_sel_prev_metadata[str(len(p_sel_prev)-1)] = p_pool_metadata[str(poolindex)]
     return p_sel_prev
 
-def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,N_p,mindist):
+def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,Np,mindist):
     for pino, pi in enumerate(p_init):
         if not I_init[pino]: continue
         result = True
@@ -85,7 +85,7 @@ def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,N_p,mindist):
             psnewlength = len(p_sel_new)
         if p_sel_prev is not None:
             psprevlength = len(p_sel_prev)
-        if psnewlength + psprevlength == N_p:
+        if psnewlength + psprevlength == Np:
             break
     return p_sel_new,I_init
 
@@ -118,7 +118,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     ############################################################
     # Data Structures
     ############################################################
-    np_remain = N_p
+    nptoget = 2 * N_p
     minarr = [max(tr_center[d] - tr_radius, min_param_bounds[d]) for d in range(dim)]
     maxarr = [min(tr_center[d] + tr_radius, max_param_bounds[d]) for d in range(dim)]
     mindist = theta * tr_radius
@@ -137,11 +137,11 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
 
 
     factor = 1
-    while(len(p_init[I_init])<N_p):
+    while(len(p_init[I_init]) < nptoget):
         ############################################################
         # Inititalize p_init and I_init
         ############################################################
-        p_init = ato.getLHSsamples(dim=dim,npoints=factor*N_p,criterion="maximin",minarr=minarr,maxarr=maxarr)
+        p_init = ato.getLHSsamples(dim=dim,npoints=factor*nptoget,criterion="maximin",minarr=minarr,maxarr=maxarr)
         I_init = [True for i in p_init]
 
         ############################################################
@@ -243,7 +243,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     ############################################################
     if p_pool is not None:
         ppf_order = np.argsort(-1*np.array(p_pool_at_fidelity))[:len(p_pool_at_fidelity)]
-        if p_sel_prev is None or len(p_sel_prev) < N_p:
+        if p_sel_prev is None or len(p_sel_prev) < nptoget:
             for ppno in ppf_order:
                 pp = p_pool[ppno]
                 if not I_pool[ppno]: continue
@@ -270,8 +270,8 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     # If not enough points add points not used before or not in
     # minimum seperation distance from p_init to p_sel_new
     ############################################################
-    if p_sel_prev is None or len(p_sel_prev) < N_p:
-        (p_sel_new, I_init) = addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new, N_p, mindist)
+    if p_sel_prev is None or len(p_sel_prev) < nptoget:
+        (p_sel_new, I_init) = addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new, nptoget, mindist)
 
     if debug:
         print("p_sel_new if any are required")

@@ -1,3 +1,5 @@
+import shutil
+
 import numpy as np
 import json
 import argparse
@@ -36,7 +38,7 @@ def mergeyoda(yodafiles,OUTFILE,RBD):
             process.communicate()
 
 def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
-                               usefixedfidelity,MPATH,YPATH):
+                               usefixedfidelity,MPATH,YPATH,debug):
     re_pfname = re.compile(pfname) if pfname else None
     currfidelity = atfidelity
     if currfidelity >= maxfidelity:
@@ -48,7 +50,8 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         if re_pfname and re_pfname.search(os.path.basename(f)):
             param = apprentice.io.read_paramsfile(f)
     if param is None:
-        raise Exception("Something went wrong. Cannot get parameter")
+        if debug:print("Something went wrong. Cannot get parameter")
+        return currfidelity,-1
     pp = [param[pn] for pn in param_names]
     maxsigma = None
     if currfidelity > 0:
@@ -65,7 +68,8 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
             stdin=PIPE, stdout=PIPE, stderr=PIPE)
         p.communicate(b"input data that is passed to subprocess' stdin")
         if p.returncode != 0:
-            raise Exception("Running miniapp failed with return code {}".format(p.returncode))
+            if debug:print("Running miniapp failed with return code {}".format(p.returncode))
+            return currfidelity,p.returncode
         yodafiles = []
         mainfile = os.path.join(d, "out_i0.yoda")
         if maxsigma is not None:
@@ -83,7 +87,27 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
 
         if currfidelity >= maxfidelity:
             break
-    return currfidelity
+    return currfidelity,0
+
+def removeYodaDir(rmdirname):
+    import os,shutil
+    based = os.path.dirname(rmdirname)
+    INDIRSLIST = glob.glob(os.path.join(based, "*"))
+    dirlist = sorted(INDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
+    found = False
+    for dno,d in enumerate(dirlist):
+        if rmdirname == d:
+            found = True
+        if not found: continue
+        else:
+            douter = d
+            for dnoinner in range(dno+1,len(dirlist)):
+                dinner = dirlist[dnoinner]
+                shutil.rmtree(douter)
+                shutil.copytree(dinner, douter)
+                douter = dinner
+            shutil.rmtree(douter)
+            break
 
 def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
@@ -103,6 +127,10 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
     usefixedfidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="usefixedfidelity")
     kappa = ato.getFromMemoryMap(memoryMap=memorymap, key="kappa")
     maxfidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="maxfidelity")
+    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
+    successParams = 0
+    currParamIndex = 0
+    totalparams = 0
 
     debug = True \
         if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
@@ -118,16 +146,15 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
             raise Exception("Starting TR center along dimension {} is not within parameter bound "
                                 "[{}, {}]".format(d+1,min_param_bounds[d],max_param_bounds[d]))
 
-    indirs = None
-    origfileindex = None
-    origfile = None
-    atfidelity = None
-    re_pfname = re.compile(pfname) if pfname else None
     if rank == 0:
-        indirs = []
-        origfileindex = []
-        origfile = []
-        atfidelity = []
+        # Following DS only in rank 0
+        re_pfname = re.compile(pfname) if pfname else None
+        indirsAll = []
+        origfileindexAll = []
+        origfileAll = []
+        atfidelityAll = []
+        removedata = {}
+        keepdata = {}
         if not usefixedfidelity and prevparamfile is not None:
             with open(prevparamfile,'r') as f:
                 prevparamds = json.load(f)
@@ -139,8 +166,8 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
                     INDIRSLIST = glob.glob(os.path.join(prevdir, "*"))
                     dirlist = sorted(INDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
                     previndex = prevparamds[str(pno)]["index"]
-                    atfidelity.append(prevparamds[str(pno)]["fidelity to reuse"])
-                    indirs.append(dirlist[previndex])
+                    atfidelityAll.append(prevparamds[str(pno)]["fidelity to reuse"])
+                    indirsAll.append(dirlist[previndex])
                     pfm = None
                     files = glob.glob(os.path.join(dirlist[previndex], "*"))
                     for f in files:
@@ -151,73 +178,149 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
                     pp = [pfm[pn] for pn in param_names]
                     if not np.all(np.isclose(param, pp)):
                         raise Exception("Something went wrong. Parameters don't match.\n{}\n{}".format(param,pp))
-                    origfile.append(prevparamds[str(pno)]["file"])
-                    origfileindex.append(previndex)
+                    origfileAll.append(prevparamds[str(pno)]["file"])
+                    origfileindexAll.append(previndex)
         newINDIRSLIST = glob.glob(os.path.join(outdir, "*"))
         dirlist = sorted(newINDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
         for dno,d in enumerate(dirlist):
-            indirs.append(d)
-            origfileindex.append(dno)
-            origfile.append(paramfile)
-            atfidelity.append(0)
+            indirsAll.append(d)
+            origfileindexAll.append(dno)
+            origfileAll.append(paramfile)
+            atfidelityAll.append(0)
+        totalparams = len(atfidelityAll)
+    totalparams = comm.bcast(totalparams, root=0)
 
-    indirs = comm.bcast(indirs, root=0)
-    origfileindex = comm.bcast(origfileindex, root=0)
-    origfile = comm.bcast(origfile, root=0)
-    atfidelity = comm.bcast(atfidelity, root=0)
+    simulationBudgetUsed = 0
+    while successParams < N_p:
+        if currParamIndex == totalparams:
+            break
+        indirs = None
+        origfileindex = None
+        origfile = None
+        atfidelity = None
+        if rank == 0:
+            indirs = []
+            origfileindex = []
+            origfile = []
+            atfidelity = []
+            for i in range(currParamIndex,min(totalparams,currParamIndex+N_p-successParams)):
+                indirs.append(indirsAll[i])
+                origfileindex.append(origfileindexAll[i])
+                origfile.append(origfileAll[i])
+                atfidelity.append(atfidelityAll[i])
+            currParamIndex = min(totalparams,currParamIndex+N_p-successParams)
 
-    rankDirs = ato.chunkIt(indirs, size) if rank == 0 else None
-    rankorigfileindex = ato.chunkIt(origfileindex, size) if rank == 0 else None
-    rankorigfile = ato.chunkIt(origfile, size) if rank == 0 else None
-    rankatfidelity = ato.chunkIt(atfidelity, size) if rank == 0 else None
+        currParamIndex = comm.bcast(currParamIndex, root=0)
+        indirs = comm.bcast(indirs, root=0)
+        origfileindex = comm.bcast(origfileindex, root=0)
+        origfile = comm.bcast(origfile, root=0)
+        atfidelity = comm.bcast(atfidelity, root=0)
 
-    rankDirs = comm.scatter(rankDirs, root=0)
-    rankorigfileindex = comm.scatter(rankorigfileindex, root=0)
-    rankorigfile = comm.scatter(rankorigfile, root=0)
-    rankatfidelity = comm.scatter(rankatfidelity, root=0)
+        rankDirs = ato.chunkIt(indirs, size) if rank == 0 else None
+        rankorigfileindex = ato.chunkIt(origfileindex, size) if rank == 0 else None
+        rankorigfile = ato.chunkIt(origfile, size) if rank == 0 else None
+        rankatfidelity = ato.chunkIt(atfidelity, size) if rank == 0 else None
 
-    currfidelity = {}
-    for num, (d,ofi,of,atfid) in enumerate(zip(rankDirs,rankorigfileindex,rankorigfile,rankatfidelity)):
-        cfd = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
-                                    maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
-                                    usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH)
-        currfidelity["{}_{}".format(of,ofi)] = cfd
-    currfidelityr0 = comm.gather(currfidelity, root=0)
-    simulationBudgetUsed = None
-    if rank==0:
-        allcurrfidelity = {}
-        for cf in currfidelityr0:
-            allcurrfidelity.update(cf)
+        rankDirs = comm.scatter(rankDirs, root=0)
+        rankorigfileindex = comm.scatter(rankorigfileindex, root=0)
+        rankorigfile = comm.scatter(rankorigfile, root=0)
+        rankatfidelity = comm.scatter(rankatfidelity, root=0)
 
-        simulationBudgetUsed = 0
-        of_done = []
-        for num, (d,ofi,of,atfid) in enumerate(zip(indirs,origfileindex,origfile,atfidelity)):
-            if of in of_done:
-                continue
-            with open(of,'r') as f:
-                ds = json.load(f)
-            ds["at fidelity"][ofi] = allcurrfidelity["{}_{}".format(of,ofi)]
-            simulationBudgetUsed += allcurrfidelity["{}_{}".format(of,ofi)] - atfid
-            for numinner in range(num+1,len(origfile)):
-                ofinner = origfile[numinner]
-                if ofinner in of_done:
+        currfidelity = {}
+        for num, (d,ofi,of,atfid) in enumerate(zip(rankDirs,rankorigfileindex,rankorigfile,rankatfidelity)):
+            (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
+                                        maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
+                                        usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH,debug=debug)
+            currfidelity["{}_{}".format(of,ofi)] = {"cfd":cfd,"rc":rc}
+        currfidelityr0 = comm.gather(currfidelity, root=0)
+
+        if rank==0:
+            allcurrfidelity = {}
+            for cf in currfidelityr0:
+                allcurrfidelity.update(cf)
+
+            of_done = []
+            for num, (d,ofi,of,atfid) in enumerate(zip(indirs,origfileindex,origfile,atfidelity)):
+                if of in of_done:
                     continue
-                if ofinner == of:
-                    ofiinner = origfileindex[numinner]
-                    atfidinner = atfidelity[numinner]
-                    ds["at fidelity"][ofiinner] = allcurrfidelity["{}_{}".format(ofinner,ofiinner)]
-                    simulationBudgetUsed += allcurrfidelity["{}_{}".format(ofinner,ofiinner)] - atfidinner
+                with open(of,'r') as f:
+                    ds = json.load(f)
+                if allcurrfidelity["{}_{}".format(of,ofi)]["rc"] == 0:
+                    ds["at fidelity"][ofi] = allcurrfidelity["{}_{}".format(of,ofi)]["cfd"]
+                    simulationBudgetUsed += allcurrfidelity["{}_{}".format(of,ofi)]["cfd"] - atfid
+                    successParams += 1
+                    if of in keepdata:
+                        keepdata[of]["ofi"].append(ofi)
+                        keepdata[of]["d"].append(d)
+                    else:
+                        keepdata[of] = {"ofi":[ofi],"d":[d]}
+                else:
+                    if of in removedata:
+                        removedata[of]["ofi"].append(ofi)
+                        removedata[of]["d"].append(d)
+                    else:
+                        removedata[of] = {"ofi":[ofi],"d":[d]}
 
-            with open(of,'w') as f:
+                for numinner in range(num+1,len(origfile)):
+                    ofinner = origfile[numinner]
+                    if ofinner in of_done:
+                        continue
+                    if ofinner == of:
+                        ofiinner = origfileindex[numinner]
+                        atfidinner = atfidelity[numinner]
+                        dinner = indirs[numinner]
+                        if allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["rc"] == 0:
+                            ds["at fidelity"][ofiinner] = allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["cfd"]
+                            simulationBudgetUsed += allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["cfd"] - atfidinner
+                            successParams += 1
+                            if ofinner in keepdata:
+                                keepdata[ofinner]["ofi"].append(ofiinner)
+                                keepdata[ofinner]["d"].append(dinner)
+                            else:
+                                keepdata[ofinner] = {"ofi":[ofiinner],"d":[dinner]}
+                        else:
+                            if ofinner in removedata:
+                                removedata[ofinner]["ofi"].append(ofiinner)
+                                removedata[ofinner]["d"].append(dinner)
+                            else:
+                                removedata[ofinner] = {"ofi":[ofiinner],"d":[dinner]}
+                with open(of,'w') as f:
+                    json.dump(ds,f,indent=4)
+                of_done.append(of)
+                if successParams >= N_p:
+                    with open(paramfile,'r') as f:
+                        newds = json.load(f)
+                    if len(newds["parameters"]) >0:
+                        startindex = 0
+                        if paramfile in keepdata:
+                            arr = [int(i) for i in keepdata[paramfile]["ofi"]]
+                            startindex = max(arr)+1
+                        for i in range(startindex,len(newds["parameters"])):
+                            for d,of,ofi in zip(indirsAll,origfileAll,origfileindexAll):
+                                if of == paramfile and ofi == i:
+                                    if paramfile in removedata:
+                                        removedata[paramfile]["ofi"].append(i)
+                                        removedata[paramfile]["d"].append(d)
+                                    else:
+                                        removedata[paramfile] = {"ofi":[i],"d":[d]}
+        successParams = comm.bcast(successParams, root=0)
+        simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+
+    if rank == 0:
+        for pf in removedata.keys():
+            with open (pf,'r') as f:
+                ds = json.load(f)
+            for ofi,d in zip(reversed(removedata[pf]["ofi"]),reversed(removedata[pf]["d"])):
+                del ds["parameters"][ofi]
+                del ds["at fidelity"][ofi]
+                removeYodaDir(d)
+            with open(pf,'w') as f:
                 json.dump(ds,f,indent=4)
-            of_done.append(of)
-
-    simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
-
     if debug:
         print("mc_miniapp done.")
         sys.stdout.flush()
-    return simulationBudgetUsed
+
+    return simulationBudgetUsed,successParams
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -268,6 +371,7 @@ if __name__ == "__main__":
         outdir  = "logs/pythia_1_k0"
 
         simulationBudgetUsed = 0
+        successParams = 0
         if k == 0:
             if debug and rank ==0:
                 with open(args.EXPDATA, 'r') as f:
@@ -293,7 +397,7 @@ if __name__ == "__main__":
                 ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
                                  outdir)
 
-            simulationBudgetUsed = problem_main_program(
+            (simulationBudgetUsed,successParams) = problem_main_program(
                 paramfile,
                 prevparamfile,
                 args.WEIGHTS,
@@ -307,9 +411,12 @@ if __name__ == "__main__":
                 print("Skipping the initial MC run since k (neq 0) = {} or rank (neq 0) = {}".format(k,rank))
                 sys.stdout.flush()
         if k == 0:
+            statusToWrite = 4 if successParams < 1 else 0
             simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
             ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                value=simulationBudgetUsed)
+            ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                               value=statusToWrite)
             ato.writeMemoryMap(memoryMap=memorymap)
 
     else:
@@ -334,7 +441,7 @@ if __name__ == "__main__":
             outfile = MCout_Np_k
             outdir = outdir_Np_k
             if not gradCond and status == 0:
-                simulationBudgetUsed = problem_main_program(
+                (simulationBudgetUsed,successParams) = problem_main_program(
                     paramfile,
                     prevparamfile,
                     args.WEIGHTS,
@@ -343,8 +450,11 @@ if __name__ == "__main__":
                     outfile,
                     outdir
                 )
+                statusToWrite = 4 if successParams < N_p else 0
                 ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                    value=simulationBudgetUsed)
+                ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                                   value=statusToWrite)
                 ato.writeMemoryMap(memoryMap=memorymap)
         else:
             prevparamfile = None
@@ -352,9 +462,10 @@ if __name__ == "__main__":
             outfile = MCout_1_kp1
             outdir = outdir_1_kp1
             simulationBudgetUsed = 0
+            successParams = 0
             if not gradCond and status == 0:
                 if rank >= 0:
-                    simulationBudgetUsed = problem_main_program(
+                    (simulationBudgetUsed,successParams) = problem_main_program(
                         paramfile,
                         prevparamfile,
                         args.WEIGHTS,
@@ -363,9 +474,12 @@ if __name__ == "__main__":
                         outfile,
                         outdir
                     )
+                statusToWrite = 4 if successParams < 1 else 0
                 simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
                 ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
                                    value=simulationBudgetUsed)
+                ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                                   value=statusToWrite)
                 ato.writeMemoryMap(memoryMap=memorymap)
 
 

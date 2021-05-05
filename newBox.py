@@ -46,15 +46,16 @@ def tr_update(memorymap,expdatafile,wtfile):
     import sys
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
 
-    with open(kpstarfile, 'r') as f:
-        ds = json.load(f)
-    kpstar = ds['parameters'][0]
-
-    IO = apprentice.appset.TuningObjective2(wtfile,
-                                            expdatafile,
-                                            valfile,
-                                            errfile)
     if status == 0:
+        with open(kpstarfile, 'r') as f:
+            ds = json.load(f)
+        kpstar = ds['parameters'][0]
+
+        IO = apprentice.appset.TuningObjective2(wtfile,
+                                                expdatafile,
+                                                valfile,
+                                                errfile)
+
         if debug: print("inside tr update w gradcond", gradCond)
         sys.stdout.flush()
         if not gradCond:
