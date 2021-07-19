@@ -35,6 +35,8 @@ def tr_update(memorymap,expdatafile,wtfile):
     valfile = "logs/valapprox" + "_k{}.json".format(k)
     errfile = "logs/errapprox" + "_k{}.json".format(k)
 
+    scalerfile = "logs/scaler" + "_k{}.json".format(k)
+
     oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
     debug = True if "All" in oloptions else False
 
@@ -81,9 +83,11 @@ def tr_update(memorymap,expdatafile,wtfile):
                 ds = json.load(f)
             kp1pstar = ds['parameters'][0]
             fidelityused = ds['at fidelity'][0]
-
-            chi2_ra_k = IO.objective(kpstar)
-            chi2_ra_kp1 = IO.objective(kp1pstar)
+            with open(scalerfile,'r') as f:
+                sclrdict = json.load(f)
+            Sc = apprentice.Scaler(sclrdict)
+            chi2_ra_k = IO.objective(Sc.scale(kpstar))
+            chi2_ra_kp1 = IO.objective(Sc.scale(kp1pstar))
 
             chi2_mc_k = 0.
             chi2_mc_kp1 = 0.
