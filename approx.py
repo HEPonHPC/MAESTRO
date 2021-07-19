@@ -32,6 +32,10 @@ def run_approx(memorymap,expdatafile,wtfile):
     kpstarfile = "logs/newparams_1" + "_k{}.json".format(currIteration)
     scaleroutfile = "logs/scaler" + "_k{}.json".format(currIteration)
 
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
+
     try:
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
@@ -175,8 +179,13 @@ def run_approx(memorymap,expdatafile,wtfile):
         try:
             # print("\n\n\n\n")
             # print(_X,_Y,_E)
+            order = (3,0)
+            if tr_radius < 10**-1:
+                order = (2,0)
+            if tr_radius < 10**-3:
+                order = (1,0)
             X = [Sc.scale(x) for x in X]
-            val = apprentice.RationalApproximation(X, Y, order=(3, 0), pnames=pnames)
+            val = apprentice.RationalApproximation(X, Y, order=order, pnames=pnames)
             # val._vmin = val.fmin(nsamples=100,nrestart=20)
             # val._vmax = val.fmax(nsamples=100, nrestart=20)
             val._xmin = xmin[num]
@@ -249,9 +258,6 @@ def run_approx(memorymap,expdatafile,wtfile):
         # print("Done --- approximation of {} objects written to {} and {}".format(
         #         len(idx), valoutfile, erroutfile))
 
-        tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-        tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
-        tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
 
 
         #print("BYE from approx")
