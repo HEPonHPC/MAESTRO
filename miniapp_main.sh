@@ -4,7 +4,7 @@
 #ON BEBOP
 # ./miniapp_main.sh WD -b
 #NOT ON BEBOP
-# ./miniapp_main.sh WD -b
+# ./miniapp_main.sh WD
 
 WDname=$1
 miniappParam="Parameters/Miniapp"
@@ -16,6 +16,11 @@ nprocs=8
 if [ "$2" = "-b" ]; then
   bebop="-b"
   nprocs=5
+  source /home/oyildiz/mohan/mc_miniapp/local/rivetenv.sh;
+  source /home/oyildiz/mohan/mc_miniapp/YODA-1.8.1/yodaenv.sh
+else
+  source /Users/mkrishnamoorthy/Research/Code/3Dminiapp/local/rivetenv.sh;
+  source /Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/yodaenv.sh
 fi
 
 rm -r $WDdir;

@@ -10,7 +10,7 @@ def mkCov(yerrs):
     return np.atleast_2d(yerrs).T * np.atleast_2d(yerrs) * np.eye(yerrs.shape[0])
 
 def run_chi2_optimization(processcard,memorymap,valfile,errfile,
-                          expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
+                          expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir,scalerfile):
     debug = True \
         if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
         else False
@@ -39,11 +39,16 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
 
     res = IO.minimizeMPI(nstart=5,nrestart=10,comm=comm,saddlePointCheck=False)
     if rank == 0:
+        with open(scalerfile,'r') as f:
+            sclrdict = json.load(f)
+        Sc = apprentice.Scaler(sclrdict)
+        unscaledX = Sc.unscale(res['x'])
         SCLR = IO._AS._RA[0]
         outputdata = {
-            "x": res['x'].tolist(),
+            "x": unscaledX.tolist(),
             "fun" : res['fun'],
-            "scaler":SCLR.asDict
+            "ra_scaler":SCLR.asDict,
+            "p_scaler" :sclrdict
         }
         with open(chi2resultoutfile,'w') as f:
             json.dump(outputdata,f,indent=4)
@@ -52,7 +57,7 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
             "parameters": [outputdata['x']],
             "at fidelity":[0.]
         }
-        if debug: print("\\SP amin \t= {}".format(["%.3f"%(c) for c in res['x']]))
+        if debug:print("\\SP amin \t= {}".format(["%.3f"%(c) for c in outputdata['x']]))
         with open(pstarfile,'w') as f:
             json.dump(outds,f,indent=4)
         ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
@@ -94,6 +99,7 @@ if __name__ == "__main__":
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
     resultoutfile_k = "logs/chi2result" + "_k{}.json".format(k)
     pythiadir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
+    scalerfile_k = "logs/scaler" + "_k{}.json".format(k)
 
     if not gradCond and status == 0:
         run_chi2_optimization(
@@ -105,7 +111,8 @@ if __name__ == "__main__":
             args.WEIGHTS,
             resultoutfile_k,
             newparams_1_kp1,
-            pythiadir_1_kp1
+            pythiadir_1_kp1,
+            scalerfile_k
         )
 
 class SaneFormatter(argparse.RawTextHelpFormatter,

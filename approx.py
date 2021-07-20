@@ -30,6 +30,11 @@ def run_approx(memorymap,expdatafile,wtfile):
     prevparamfile = "logs/prevparams_Np" + "_k{}.json".format(currIteration)
     functionvaloutfile = "logs/functionvalues_Np" + "_k{}.json".format(currIteration)
     kpstarfile = "logs/newparams_1" + "_k{}.json".format(currIteration)
+    scaleroutfile = "logs/scaler" + "_k{}.json".format(currIteration)
+
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
 
     try:
         from mpi4py import MPI
@@ -150,6 +155,10 @@ def run_approx(memorymap,expdatafile,wtfile):
             for p in P:
                 str += "%.3E\t"%p
             print(str)
+    Sc = apprentice.Scaler(Xtouse[0],pnames=pnames)
+    if rank == 0:
+        with open(scaleroutfile,'w') as f:
+            json.dump(Sc.asDict,f,indent=4)
     for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
         thisBinId = binids[num]
         if debug:
@@ -170,7 +179,13 @@ def run_approx(memorymap,expdatafile,wtfile):
         try:
             # print("\n\n\n\n")
             # print(_X,_Y,_E)
-            val = apprentice.RationalApproximation(X, Y, order=(3, 0), pnames=pnames)
+            order = (3,0)
+            if tr_radius < 10**-1:
+                order = (2,0)
+            if tr_radius < 10**-3:
+                order = (1,0)
+            X = [Sc.scale(x) for x in X]
+            val = apprentice.RationalApproximation(X, Y, order=order, pnames=pnames)
             # val._vmin = val.fmin(nsamples=100,nrestart=20)
             # val._vmax = val.fmax(nsamples=100, nrestart=20)
             val._xmin = xmin[num]
@@ -225,6 +240,7 @@ def run_approx(memorymap,expdatafile,wtfile):
                 thisBinId = binids[num]
                 str += "########################\n{}\n########################\n\n".format(thisBinId)
                 str += "P(dim = {})\t\t\tMC(P)\tr_v(P)\t\t\Delta MC(P)\tr_e(P)\n".format(dim)
+                X = [Sc.scale(x) for x in X]
                 for pno,P in enumerate(X):
                     for p in P:
                         str += "%.2E\t"%(p)
@@ -242,9 +258,6 @@ def run_approx(memorymap,expdatafile,wtfile):
         # print("Done --- approximation of {} objects written to {} and {}".format(
         #         len(idx), valoutfile, erroutfile))
 
-        tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-        tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
-        tr_sigma = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_sigma")
 
 
         #print("BYE from approx")
@@ -256,12 +269,11 @@ def run_approx(memorymap,expdatafile,wtfile):
                                                     erroutfile, debug=debug)
             IO._AS.setRecurrence(tr_radius)
             IO._EAS.setRecurrence(tr_radius)
-            grad = IO.gradient(tr_center)
-            min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
-                                                    key="min_param_bounds")
-            max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
-                                                    key="max_param_bounds")
-            pgrad = projection(tr_center-grad,min_param_bounds,max_param_bounds)-tr_center
+            grad = IO.gradient(tr_center,set_cache=True)
+            min_param_bounds = Sc.box_scaled[:,0]
+            max_param_bounds = Sc.box_scaled[:,1]
+            tr_center_scaled = Sc.scale(tr_center)
+            pgrad = projection(tr_center_scaled-grad,min_param_bounds,max_param_bounds)-tr_center_scaled
             pgradnorm = np.linalg.norm(pgrad)
             with open(kpstarfile,'r') as f:
                 ds = json.load(f)
