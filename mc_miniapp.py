@@ -11,14 +11,29 @@ from subprocess import Popen, PIPE
 from shutil import copyfile
 
 def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
-    if maxsigma is None or usefixedfidelity: return fidelity
+    if maxsigma is None or usefixedfidelity: return chunkfidelity(fidelity,minfidelity)
     diff = maxsigma-bound
     newfidelity = int(np.ceil((currfidelity/maxsigma)*diff))
     newfidelity = max(minfidelity,newfidelity)
     if currfidelity+newfidelity > maxfidelity:
-        return maxfidelity-currfidelity
+        newfidelity = maxfidelity-currfidelity
+    return chunkfidelity(newfidelity,minfidelity)
+
+def chunkfidelity(newfidelity,minfidelity):
+    size = comm.Get_size()
+    splitfidelity = np.ceil(newfidelity/size)
+    if splitfidelity >minfidelity:
+        newfidelityArr = [int(splitfidelity)] * size
     else:
-        return newfidelity
+        newfidelityArr = [0] * size
+        fidremain = newfidelity
+        for rank in range(size):
+            if fidremain < minfidelity:
+                newfidelityArr[rank] = minfidelity
+                break
+            newfidelityArr[rank] = minfidelity
+            fidremain -= minfidelity
+    return newfidelityArr
 
 def mergeyoda(yodafiles,OUTFILE,RBD):
     from subprocess import Popen, PIPE
@@ -39,55 +54,132 @@ def mergeyoda(yodafiles,OUTFILE,RBD):
 
 def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
                                usefixedfidelity,MPATH,YPATH,debug):
-    re_pfname = re.compile(pfname) if pfname else None
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+    maxsigma = None
+    pp=None
     currfidelity = atfidelity
     if currfidelity >= maxfidelity:
         return currfidelity
-    sys.stdout.flush()
-    files = glob.glob(os.path.join(d, "*"))
-    param = None
-    for f in files:
-        if re_pfname and re_pfname.search(os.path.basename(f)):
-            param = apprentice.io.read_paramsfile(f)
-    if param is None:
-        if debug:print("Something went wrong. Cannot get parameter")
-        return currfidelity,-1
-    pp = [param[pn] for pn in param_names]
-    maxsigma = None
-    if currfidelity > 0:
-        DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-        maxsigma = max(sigma)
-        sys.stdout.flush()
+    if rank == 0:
+        re_pfname = re.compile(pfname) if pfname else None
+        files = glob.glob(os.path.join(d, "*"))
+        param = None
+        for f in files:
+            if re_pfname and re_pfname.search(os.path.basename(f)):
+                param = apprentice.io.read_paramsfile(f)
+        # if param is None:
+        #     if debug:print("Something went wrong. Cannot get parameter")
+        #     return currfidelity,-1
+        pp = [param[pn] for pn in param_names]
+        if currfidelity > 0:
+            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+            maxsigma = max(sigma)
+            sys.stdout.flush()
+    maxsigma = comm.bcast(maxsigma, root=0)
+    pp = comm.bcast(pp, root=0)
+
+    returncodes = np.zeros(size)
     while(maxsigma is None or maxsigma > bound):
-        newfidelity = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,50,maxfidelity)
-        newloc = os.path.join(d, "out_temp.yoda")
+        newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
+        newfidelityArr = None
+        if rank == 0:
+            newfidelityArr = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,100,maxfidelity)
+        newfidelityArr = comm.bcast(newfidelityArr, root=0)
+        if newfidelityArr[rank] !=0:
+            p = Popen(
+                [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
+                 str(newfidelityArr[rank]), str(np.random.randint(1,9999999)), "0", "1", newloc],
+                stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p.communicate(b"input data that is passed to subprocess' stdin")
+            if p.returncode != 0:
+                if debug:print("Running miniapp failed with return code {}".format(p.returncode))
+            returncodes[rank] = p.returncode
+        if not np.all((returncodes == 0)):
+            break
+        comm.barrier()
+
+        if rank == 0:
+            yodafiles = []
+            mainfile = os.path.join(d, "out_i0.yoda")
+            if maxsigma is not None:
+                yodafiles.append(mainfile)
+            for idx,f in enumerate(newfidelityArr):
+                if f != 0:
+                    newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                    yodafiles.append(newloc)
+            outfile = os.path.join(d, "out.yoda")
+            mergeyoda(yodafiles,outfile,YPATH)
+            currfidelity += sum(newfidelityArr)
+            for idx,f in enumerate(newfidelityArr):
+                if f != 0:
+                    newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                    os.remove(newloc)
+            copyfile(outfile,mainfile)
+            os.remove(outfile)
+            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+            maxsigma = max(sigma)
+        maxsigma = comm.bcast(maxsigma, root=0)
+        currfidelity = comm.bcast(currfidelity, root=0)
+        if currfidelity >= maxfidelity or usefixedfidelity:
+            break
+    return currfidelity,returncodes
+
+def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,MPATH,YPATH,debug):
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+    pp=None
+    currfidelity = atfidelity
+    if currfidelity >= runatfidelity:
+        return currfidelity
+    if rank == 0:
+        re_pfname = re.compile(pfname) if pfname else None
+        files = glob.glob(os.path.join(d, "*"))
+        param = None
+        for f in files:
+            if re_pfname and re_pfname.search(os.path.basename(f)):
+                param = apprentice.io.read_paramsfile(f)
+        pp = [param[pn] for pn in param_names]
+    pp = comm.bcast(pp, root=0)
+    returncodes = np.zeros(size)
+    newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
+    newfidelityArr = None
+    if rank == 0:
+        newfidelityArr = chunkfidelity(runatfidelity,100)
+    newfidelityArr = comm.bcast(newfidelityArr, root=0)
+    if newfidelityArr[rank] !=0:
         p = Popen(
             [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
-             str(newfidelity), str(np.random.randint(1,9999999)), "0", "1", newloc],
+             str(newfidelityArr[rank]), str(np.random.randint(1,9999999)), "0", "1", newloc],
             stdin=PIPE, stdout=PIPE, stderr=PIPE)
         p.communicate(b"input data that is passed to subprocess' stdin")
         if p.returncode != 0:
             if debug:print("Running miniapp failed with return code {}".format(p.returncode))
-            return currfidelity,p.returncode
+        returncodes[rank] = p.returncode
+    comm.barrier()
+
+    if rank == 0:
         yodafiles = []
         mainfile = os.path.join(d, "out_i0.yoda")
-        if maxsigma is not None:
+        if currfidelity > 0:
             yodafiles.append(mainfile)
-        yodafiles.append(newloc)
+        for idx,f in enumerate(newfidelityArr):
+            if f != 0:
+                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                yodafiles.append(newloc)
         outfile = os.path.join(d, "out.yoda")
         mergeyoda(yodafiles,outfile,YPATH)
-        currfidelity += newfidelity
-        os.remove(newloc)
+        currfidelity += sum(newfidelityArr)
+        for idx,f in enumerate(newfidelityArr):
+            if f != 0:
+                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                os.remove(newloc)
         copyfile(outfile,mainfile)
         os.remove(outfile)
-        DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-        maxsigma = max(sigma)
-
-        if currfidelity >= maxfidelity:
-            break
-    return currfidelity,0
+    currfidelity = comm.bcast(currfidelity, root=0)
+    return currfidelity,returncodes
 
 def removeYodaDir(rmdirname):
     import os,shutil
@@ -111,7 +203,6 @@ def removeYodaDir(rmdirname):
 
 def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
-    size = comm.Get_size()
     rank = comm.Get_rank()
 
     if isbebop:
@@ -129,8 +220,12 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
     maxfidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="maxfidelity")
     N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
     successParams = 0
-    currParamIndex = 0
     totalparams = 0
+    indirsAll = None
+    atfidelityAll = None
+    origfileAll = None
+    origfileindexAll = None
+    simulationBudgetUsed = 0
 
     debug = True \
         if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
@@ -189,124 +284,71 @@ def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop
             atfidelityAll.append(0)
         totalparams = len(atfidelityAll)
     totalparams = comm.bcast(totalparams, root=0)
+    indirsAll = comm.bcast(indirsAll, root=0)
+    atfidelityAll = comm.bcast(atfidelityAll, root=0)
+    origfileAll = comm.bcast(origfileAll, root=0)
+    origfileindexAll = comm.bcast(origfileindexAll, root=0)
 
-    simulationBudgetUsed = 0
-    while successParams < N_p:
-        if currParamIndex == totalparams:
+    runatfidelity = None
+    runatfidelityFound = False
+    for currParamIndex in range(totalparams):
+        if successParams >= N_p:
             break
-        indirs = None
-        origfileindex = None
-        origfile = None
-        atfidelity = None
+        d = indirsAll[currParamIndex]
+        atfid = atfidelityAll[currParamIndex]
+        of = origfileAll[currParamIndex]
+        ofi = origfileindexAll[currParamIndex]
+        if not runatfidelityFound:
+            (cfd,returncodes) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
+                                                  maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
+                                                  usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH,debug=debug)
+            if np.all(returncodes==0):
+                runatfidelity = cfd
+                runatfidelityFound = True
+        else:
+            (cfd,returncodes) = runMCAtFidelity(d,atfidelity=atfid,runatfidelity=runatfidelity,
+                                                pfname=pfname,MPATH=MPATH,YPATH=YPATH,debug=debug)
         if rank == 0:
-            indirs = []
-            origfileindex = []
-            origfile = []
-            atfidelity = []
-            for i in range(currParamIndex,min(totalparams,currParamIndex+N_p-successParams)):
-                indirs.append(indirsAll[i])
-                origfileindex.append(origfileindexAll[i])
-                origfile.append(origfileAll[i])
-                atfidelity.append(atfidelityAll[i])
-            currParamIndex = min(totalparams,currParamIndex+N_p-successParams)
-
-        currParamIndex = comm.bcast(currParamIndex, root=0)
-        indirs = comm.bcast(indirs, root=0)
-        origfileindex = comm.bcast(origfileindex, root=0)
-        origfile = comm.bcast(origfile, root=0)
-        atfidelity = comm.bcast(atfidelity, root=0)
-
-        rankDirs = ato.chunkIt(indirs, size) if rank == 0 else None
-        rankorigfileindex = ato.chunkIt(origfileindex, size) if rank == 0 else None
-        rankorigfile = ato.chunkIt(origfile, size) if rank == 0 else None
-        rankatfidelity = ato.chunkIt(atfidelity, size) if rank == 0 else None
-
-        rankDirs = comm.scatter(rankDirs, root=0)
-        rankorigfileindex = comm.scatter(rankorigfileindex, root=0)
-        rankorigfile = comm.scatter(rankorigfile, root=0)
-        rankatfidelity = comm.scatter(rankatfidelity, root=0)
-
-        currfidelity = {}
-        for num, (d,ofi,of,atfid) in enumerate(zip(rankDirs,rankorigfileindex,rankorigfile,rankatfidelity)):
-            (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
-                                        maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
-                                        usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH,debug=debug)
-            currfidelity["{}_{}".format(of,ofi)] = {"cfd":cfd,"rc":rc}
-        currfidelityr0 = comm.gather(currfidelity, root=0)
-
-        if rank==0:
-            allcurrfidelity = {}
-            for cf in currfidelityr0:
-                allcurrfidelity.update(cf)
-
-            of_done = []
-            for num, (d,ofi,of,atfid) in enumerate(zip(indirs,origfileindex,origfile,atfidelity)):
-                if of in of_done:
-                    continue
+            if np.all(returncodes==0):
                 with open(of,'r') as f:
                     ds = json.load(f)
-                if allcurrfidelity["{}_{}".format(of,ofi)]["rc"] == 0:
-                    ds["at fidelity"][ofi] = allcurrfidelity["{}_{}".format(of,ofi)]["cfd"]
-                    simulationBudgetUsed += allcurrfidelity["{}_{}".format(of,ofi)]["cfd"] - atfid
-                    successParams += 1
-                    if of in keepdata:
-                        keepdata[of]["ofi"].append(ofi)
-                        keepdata[of]["d"].append(d)
-                    else:
-                        keepdata[of] = {"ofi":[ofi],"d":[d]}
+                ds["at fidelity"][ofi] = cfd
+                if of in keepdata:
+                    keepdata[of]["ofi"].append(ofi)
+                    keepdata[of]["d"].append(d)
                 else:
-                    if of in removedata:
-                        removedata[of]["ofi"].append(ofi)
-                        removedata[of]["d"].append(d)
-                    else:
-                        removedata[of] = {"ofi":[ofi],"d":[d]}
-
-                for numinner in range(num+1,len(origfile)):
-                    ofinner = origfile[numinner]
-                    if ofinner in of_done:
-                        continue
-                    if ofinner == of:
-                        ofiinner = origfileindex[numinner]
-                        atfidinner = atfidelity[numinner]
-                        dinner = indirs[numinner]
-                        if allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["rc"] == 0:
-                            ds["at fidelity"][ofiinner] = allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["cfd"]
-                            simulationBudgetUsed += allcurrfidelity["{}_{}".format(ofinner,ofiinner)]["cfd"] - atfidinner
-                            successParams += 1
-                            if ofinner in keepdata:
-                                keepdata[ofinner]["ofi"].append(ofiinner)
-                                keepdata[ofinner]["d"].append(dinner)
-                            else:
-                                keepdata[ofinner] = {"ofi":[ofiinner],"d":[dinner]}
-                        else:
-                            if ofinner in removedata:
-                                removedata[ofinner]["ofi"].append(ofiinner)
-                                removedata[ofinner]["d"].append(dinner)
-                            else:
-                                removedata[ofinner] = {"ofi":[ofiinner],"d":[dinner]}
+                    keepdata[of] = {"ofi":[ofi],"d":[d]}
                 with open(of,'w') as f:
                     json.dump(ds,f,indent=4)
-                of_done.append(of)
-                if successParams >= N_p:
-                    with open(paramfile,'r') as f:
-                        newds = json.load(f)
-                    if len(newds["parameters"]) >0:
-                        startindex = 0
-                        if paramfile in keepdata:
-                            arr = [int(i) for i in keepdata[paramfile]["ofi"]]
-                            startindex = max(arr)+1
-                        for i in range(startindex,len(newds["parameters"])):
-                            for d,of,ofi in zip(indirsAll,origfileAll,origfileindexAll):
-                                if of == paramfile and ofi == i:
-                                    if paramfile in removedata:
-                                        removedata[paramfile]["ofi"].append(i)
-                                        removedata[paramfile]["d"].append(d)
-                                    else:
-                                        removedata[paramfile] = {"ofi":[i],"d":[d]}
-        successParams = comm.bcast(successParams, root=0)
-        simulationBudgetUsed = comm.bcast(simulationBudgetUsed, root=0)
+            else:
+                if of in removedata:
+                    removedata[of]["ofi"].append(ofi)
+                    removedata[of]["d"].append(d)
+                else:
+                    removedata[of] = {"ofi":[ofi],"d":[d]}
+
+        if np.all(returncodes==0):
+            simulationBudgetUsed = simulationBudgetUsed + cfd - atfid
+            successParams += 1
 
     if rank == 0:
+        with open(paramfile,'r') as f:
+            newds = json.load(f)
+        if len(newds["parameters"]) >0:
+            startindex = 0
+            if paramfile in keepdata:
+                arr = [int(i) for i in keepdata[paramfile]["ofi"]]
+                startindex = max(arr)+1
+            for i in range(startindex,len(newds["parameters"])):
+                for d,of,ofi in zip(indirsAll,origfileAll,origfileindexAll):
+                    if of == paramfile and ofi == i:
+                        if paramfile in removedata:
+                            if i not in removedata[paramfile]["ofi"] and d not in removedata[paramfile]["d"]:
+                                removedata[paramfile]["ofi"].append(i)
+                                removedata[paramfile]["d"].append(d)
+                        else:
+                            removedata[paramfile] = {"ofi":[i],"d":[d]}
+
         for pf in removedata.keys():
             with open (pf,'r') as f:
                 ds = json.load(f)
