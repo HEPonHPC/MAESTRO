@@ -10,7 +10,7 @@ def mkCov(yerrs):
     return np.atleast_2d(yerrs).T * np.atleast_2d(yerrs) * np.eye(yerrs.shape[0])
 
 def run_chi2_optimization(processcard,memorymap,valfile,errfile,
-                          expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir,scalerfile):
+                          expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
     debug = True \
         if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
         else False
@@ -39,16 +39,11 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
 
     res = IO.minimizeMPI(nstart=5,nrestart=10,comm=comm,saddlePointCheck=False)
     if rank == 0:
-        with open(scalerfile,'r') as f:
-            sclrdict = json.load(f)
-        Sc = apprentice.Scaler(sclrdict)
-        unscaledX = Sc.unscale(res['x'])
         SCLR = IO._AS._RA[0]
         outputdata = {
-            "x": unscaledX.tolist(),
+            "x": res['x'].tolist(),
             "fun" : res['fun'],
-            "ra_scaler":SCLR.asDict,
-            "p_scaler" :sclrdict
+            "scaler":SCLR.asDict
         }
         with open(chi2resultoutfile,'w') as f:
             json.dump(outputdata,f,indent=4)
@@ -99,7 +94,6 @@ if __name__ == "__main__":
     errapproxfile_k = "logs/errapprox" + "_k{}.json".format(k)
     resultoutfile_k = "logs/chi2result" + "_k{}.json".format(k)
     pythiadir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
-    scalerfile_k = "logs/scaler" + "_k{}.json".format(k)
 
     if not gradCond and status == 0:
         run_chi2_optimization(
@@ -111,8 +105,7 @@ if __name__ == "__main__":
             args.WEIGHTS,
             resultoutfile_k,
             newparams_1_kp1,
-            pythiadir_1_kp1,
-            scalerfile_k
+            pythiadir_1_kp1
         )
 
 class SaneFormatter(argparse.RawTextHelpFormatter,

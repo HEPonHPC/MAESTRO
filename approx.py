@@ -27,10 +27,11 @@ def run_approx(memorymap,expdatafile,wtfile):
 
     valoutfile = "logs/valapprox" + "_k{}.json".format(currIteration)
     erroutfile = "logs/errapprox" + "_k{}.json".format(currIteration)
+    valscaledoutfile = "logs/valapproxscaled" + "_k{}.json".format(currIteration)
+    errscaledoutfile = "logs/errapproxscaled" + "_k{}.json".format(currIteration)
     prevparamfile = "logs/prevparams_Np" + "_k{}.json".format(currIteration)
     functionvaloutfile = "logs/functionvalues_Np" + "_k{}.json".format(currIteration)
     kpstarfile = "logs/newparams_1" + "_k{}.json".format(currIteration)
-    scaleroutfile = "logs/scaler" + "_k{}.json".format(currIteration)
 
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
@@ -139,6 +140,8 @@ def run_approx(memorymap,expdatafile,wtfile):
     # idx = [i for i in range(len(DATA))]
     valapp = {}
     errapp = {}
+    valappscaled = {}
+    errappscaled = {}
 
     import time
     t4 = time.time()
@@ -155,10 +158,7 @@ def run_approx(memorymap,expdatafile,wtfile):
             for p in P:
                 str += "%.3E\t"%p
             print(str)
-    Sc = apprentice.Scaler(Xtouse[0],pnames=pnames)
-    if rank == 0:
-        with open(scaleroutfile,'w') as f:
-            json.dump(Sc.asDict,f,indent=4)
+    Sclocal = apprentice.Scaler(Xtouse[0],pnames=pnames)
     for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
         thisBinId = binids[num]
         if debug:
@@ -184,20 +184,24 @@ def run_approx(memorymap,expdatafile,wtfile):
                 order = (2,0)
             if tr_radius < 10**-3:
                 order = (1,0)
-            X = [Sc.scale(x) for x in X]
+            Xscaled = [Sclocal.scale(x) for x in X]
             val = apprentice.RationalApproximation(X, Y, order=order, pnames=pnames)
-            # val._vmin = val.fmin(nsamples=100,nrestart=20)
-            # val._vmax = val.fmax(nsamples=100, nrestart=20)
             val._xmin = xmin[num]
             val._xmax = xmax[num]
-
             err = apprentice.RationalApproximation(X, E, order=(1, 0), pnames=pnames)
+
+            valscaled = apprentice.RationalApproximation(Xscaled, Y, order=(1,0), pnames=pnames)
+            errscaled = apprentice.RationalApproximation(Xscaled, E, order=(1, 0), pnames=pnames)
         except AssertionError as error:
             print(error)
         valapp[thisBinId] = val.asDict
         errapp[thisBinId] = err.asDict
+        valappscaled[thisBinId] = valscaled.asDict
+        errappscaled[thisBinId] = errscaled.asDict
     ALLVALAPP = comm.gather(valapp, root=0)
     ALLERRAPP = comm.gather(errapp, root=0)
+    ALLVALAPPSCALED = comm.gather(valappscaled, root=0)
+    ALLERRAPPSCALED = comm.gather(errappscaled, root=0)
     t5 = time.time()
     gradCondToWrite = False
     pgradnorm = 1.0
@@ -234,13 +238,30 @@ def run_approx(memorymap,expdatafile,wtfile):
         with open(erroutfile, "w") as f:
             json.dump(JD, f,indent=4)
 
+        JD = OrderedDict()
+        a = {}
+        for apps in ALLVALAPPSCALED:
+            a.update(apps)
+        for k in a.keys():
+            JD[k] = a[k]
+        with open(valscaledoutfile, "w") as f:
+            json.dump(JD, f,indent=4)
+
+        JD = OrderedDict()
+        a = {}
+        for apps in ALLERRAPPSCALED:
+            a.update(apps)
+        for k in a.keys():
+            JD[k] = a[k]
+        with open(errscaledoutfile, "w") as f:
+            json.dump(JD, f,indent=4)
+
         if rank==0 and "MC_RA_functionValue" in oloptions:
             str = ""
             for num, (X, Y, E) in  enumerate(zip(Xtouse, Ytouse, Etouse)):
                 thisBinId = binids[num]
                 str += "########################\n{}\n########################\n\n".format(thisBinId)
                 str += "P(dim = {})\t\t\tMC(P)\tr_v(P)\t\t\Delta MC(P)\tr_e(P)\n".format(dim)
-                X = [Sc.scale(x) for x in X]
                 for pno,P in enumerate(X):
                     for p in P:
                         str += "%.2E\t"%(p)
@@ -263,16 +284,18 @@ def run_approx(memorymap,expdatafile,wtfile):
         #print("BYE from approx")
         #sys.stdout.flush()
         try:
+
             IO = apprentice.appset.TuningObjective2(wtfile,
                                                     expdatafile,
-                                                    valoutfile,
-                                                    erroutfile, debug=debug)
-            IO._AS.setRecurrence(tr_radius)
-            IO._EAS.setRecurrence(tr_radius)
-            grad = IO.gradient(tr_center,set_cache=True)
-            min_param_bounds = Sc.box_scaled[:,0]
-            max_param_bounds = Sc.box_scaled[:,1]
-            tr_center_scaled = Sc.scale(tr_center)
+                                                    valscaledoutfile,
+                                                    errscaledoutfile,
+                                                    debug=debug)
+            tr_center_scaled = Sclocal.scale(tr_center)
+            IO._AS.setRecurrence(tr_center_scaled)
+            IO._EAS.setRecurrence(tr_center_scaled)
+            grad = IO.gradient(tr_center_scaled,set_cache=True)
+            min_param_bounds = Sclocal.box_scaled[:,0]
+            max_param_bounds = Sclocal.box_scaled[:,1]
             pgrad = projection(tr_center_scaled-grad,min_param_bounds,max_param_bounds)-tr_center_scaled
             pgradnorm = np.linalg.norm(pgrad)
             with open(kpstarfile,'r') as f:
@@ -285,7 +308,7 @@ def run_approx(memorymap,expdatafile,wtfile):
             else:
                 gradCondToWrite = False
             if debug: print(
-                "||pgrad|| \t= %.3f <=> %.3f" % (np.linalg.norm(grad), tr_sigma * tr_radius))
+                "||pgrad|| \t= %.3f <=> %.3f" % (pgradnorm, tr_sigma * tr_radius))
         except:
             pgradnorm = 1.0
             gradCondToWrite = False
