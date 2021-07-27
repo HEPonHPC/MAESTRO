@@ -15,7 +15,7 @@ bebop=""
 nprocs=8
 if [ "$2" = "-b" ]; then
   bebop="-b"
-  nprocs=5
+  nprocs=35
   source /home/oyildiz/mohan/mc_miniapp/local/rivetenv.sh;
   source /home/oyildiz/mohan/mc_miniapp/YODA-1.8.1/yodaenv.sh
 else
