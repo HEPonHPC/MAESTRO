@@ -10,31 +10,7 @@ import glob,os,re
 from subprocess import Popen, PIPE
 from shutil import copyfile
 
-def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
-    if maxsigma is None or usefixedfidelity: return chunkfidelity(fidelity,minfidelity)
-    diff = maxsigma-bound
-    newfidelity = int(np.ceil((currfidelity/maxsigma)*diff))
-    newfidelity = max(minfidelity,newfidelity)
-    if currfidelity+newfidelity > maxfidelity:
-        newfidelity = maxfidelity-currfidelity
-    return chunkfidelity(newfidelity,minfidelity)
-
-def chunkfidelity(newfidelity,minfidelity):
-    size = comm.Get_size()
-    splitfidelity = np.ceil(newfidelity/size)
-    if splitfidelity >minfidelity:
-        newfidelityArr = [int(splitfidelity)] * size
-    else:
-        newfidelityArr = [0] * size
-        fidremain = newfidelity
-        for rank in range(size):
-            if fidremain < minfidelity:
-                newfidelityArr[rank] = minfidelity
-                break
-            newfidelityArr[rank] = minfidelity
-            fidremain -= minfidelity
-    return newfidelityArr
-
+# Keep at outermost level
 def mergeyoda(yodafiles,OUTFILE,RBD):
     from subprocess import Popen, PIPE
     if len(yodafiles) == 1:
@@ -52,135 +28,32 @@ def mergeyoda(yodafiles,OUTFILE,RBD):
             process = Popen([RBD,'-o',OUTFILE,file1,file2],stdin=PIPE, stdout=PIPE, stderr=PIPE)
             process.communicate()
 
-def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
-                               usefixedfidelity,MPATH,YPATH,debug):
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-    maxsigma = None
-    pp=None
-    currfidelity = atfidelity
-    if currfidelity >= maxfidelity:
-        return currfidelity
-    if rank == 0:
-        re_pfname = re.compile(pfname) if pfname else None
-        files = glob.glob(os.path.join(d, "*"))
-        param = None
-        for f in files:
-            if re_pfname and re_pfname.search(os.path.basename(f)):
-                param = apprentice.io.read_paramsfile(f)
-        # if param is None:
-        #     if debug:print("Something went wrong. Cannot get parameter")
-        #     return currfidelity,-1
-        pp = [param[pn] for pn in param_names]
-        if currfidelity > 0:
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-            sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-            maxsigma = max(sigma)
-            sys.stdout.flush()
-    maxsigma = comm.bcast(maxsigma, root=0)
-    pp = comm.bcast(pp, root=0)
+# Keep at outermost level
+def getParameters(d, pfname):
+    re_pfname = re.compile(pfname) if pfname else None
+    files = glob.glob(os.path.join(d, "*"))
+    param = None
+    for f in files:
+        if re_pfname and re_pfname.search(os.path.basename(f)):
+            param = apprentice.io.read_paramsfile(f)
+    # if param is None:
+    #     if debug:print("Something went wrong. Cannot get parameter")
+    #     return currfidelity,-1
+    pp = [param[pn] for pn in param_names]
+    return pp
 
-    returncodes = np.zeros(size)
-    while(maxsigma is None or maxsigma > bound):
-        newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
-        newfidelityArr = None
-        if rank == 0:
-            newfidelityArr = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,100,maxfidelity)
-        newfidelityArr = comm.bcast(newfidelityArr, root=0)
-        if newfidelityArr[rank] !=0:
-            p = Popen(
-                [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
-                 str(newfidelityArr[rank]), str(np.random.randint(1,9999999)), "0", "1", newloc],
-                stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            p.communicate(b"input data that is passed to subprocess' stdin")
-            if p.returncode != 0:
-                if debug:print("Running miniapp failed with return code {}".format(p.returncode))
-            returncodes[rank] = p.returncode
-        if not np.all((returncodes == 0)):
-            break
-        comm.barrier()
+# Keep at outermost level
+def MCcmd(pp,fidelity,loc,MPATH):
+    p = Popen(
+        [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
+         str(fidelity), str(np.random.randint(1,9999999)), "0", "1", loc],
+        stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    p.communicate(b"input data that is passed to subprocess' stdin")
+    if p.returncode != 0:
+        if debug:print("Running miniapp failed with return code {}".format(p.returncode))
+    return p.returncode
 
-        if rank == 0:
-            yodafiles = []
-            mainfile = os.path.join(d, "out_i0.yoda")
-            if maxsigma is not None:
-                yodafiles.append(mainfile)
-            for idx,f in enumerate(newfidelityArr):
-                if f != 0:
-                    newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
-                    yodafiles.append(newloc)
-            outfile = os.path.join(d, "out.yoda")
-            mergeyoda(yodafiles,outfile,YPATH)
-            currfidelity += sum(newfidelityArr)
-            for idx,f in enumerate(newfidelityArr):
-                if f != 0:
-                    newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
-                    os.remove(newloc)
-            copyfile(outfile,mainfile)
-            os.remove(outfile)
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-            sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-            maxsigma = max(sigma)
-        maxsigma = comm.bcast(maxsigma, root=0)
-        currfidelity = comm.bcast(currfidelity, root=0)
-        if currfidelity >= maxfidelity or usefixedfidelity:
-            break
-    return currfidelity,returncodes
-
-def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,MPATH,YPATH,debug):
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-    pp=None
-    currfidelity = atfidelity
-    if currfidelity >= runatfidelity:
-        return currfidelity
-    if rank == 0:
-        re_pfname = re.compile(pfname) if pfname else None
-        files = glob.glob(os.path.join(d, "*"))
-        param = None
-        for f in files:
-            if re_pfname and re_pfname.search(os.path.basename(f)):
-                param = apprentice.io.read_paramsfile(f)
-        pp = [param[pn] for pn in param_names]
-    pp = comm.bcast(pp, root=0)
-    returncodes = np.zeros(size)
-    newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
-    newfidelityArr = None
-    if rank == 0:
-        newfidelityArr = chunkfidelity(runatfidelity,100)
-    newfidelityArr = comm.bcast(newfidelityArr, root=0)
-    if newfidelityArr[rank] !=0:
-        p = Popen(
-            [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
-             str(newfidelityArr[rank]), str(np.random.randint(1,9999999)), "0", "1", newloc],
-            stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        p.communicate(b"input data that is passed to subprocess' stdin")
-        if p.returncode != 0:
-            if debug:print("Running miniapp failed with return code {}".format(p.returncode))
-        returncodes[rank] = p.returncode
-    comm.barrier()
-
-    if rank == 0:
-        yodafiles = []
-        mainfile = os.path.join(d, "out_i0.yoda")
-        if currfidelity > 0:
-            yodafiles.append(mainfile)
-        for idx,f in enumerate(newfidelityArr):
-            if f != 0:
-                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
-                yodafiles.append(newloc)
-        outfile = os.path.join(d, "out.yoda")
-        mergeyoda(yodafiles,outfile,YPATH)
-        currfidelity += sum(newfidelityArr)
-        for idx,f in enumerate(newfidelityArr):
-            if f != 0:
-                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
-                os.remove(newloc)
-        copyfile(outfile,mainfile)
-        os.remove(outfile)
-    currfidelity = comm.bcast(currfidelity, root=0)
-    return currfidelity,returncodes
-
+# Keep at outermost level
 def removeYodaDir(rmdirname):
     import os,shutil
     based = os.path.dirname(rmdirname)
@@ -201,8 +74,124 @@ def removeYodaDir(rmdirname):
             shutil.rmtree(douter)
             break
 
-def problem_main_program(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
+# Keep at outermost level
+def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
+    # Keep at parallel on Ne level (main fn)
+    def chunkfidelity(newfidelity,minfidelity):
+        size = comm.Get_size()
+        splitfidelity = np.ceil(newfidelity/size)
+        if splitfidelity >minfidelity:
+            newfidelityArr = [int(splitfidelity)] * size
+        else:
+            newfidelityArr = [0] * size
+            fidremain = newfidelity
+            for rank in range(size):
+                if fidremain < minfidelity:
+                    newfidelityArr[rank] = minfidelity
+                    break
+                newfidelityArr[rank] = minfidelity
+                fidremain -= minfidelity
+        return newfidelityArr
+
+    # Keep at parallel on Ne level (main fn)
+    def selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists,YPATH):
+        yodafiles = []
+        mainfile = os.path.join(d, "out_i0.yoda")
+        if mainfileexists:
+            yodafiles.append(mainfile)
+        for idx,f in enumerate(newfidelityArr):
+            if f != 0:
+                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                yodafiles.append(newloc)
+        outfile = os.path.join(d, "out.yoda")
+        mergeyoda(yodafiles,outfile,YPATH)
+        for idx,f in enumerate(newfidelityArr):
+            if f != 0:
+                newloc = os.path.join(d, "out_temp_r{}.yoda".format(idx))
+                os.remove(newloc)
+        copyfile(outfile,mainfile)
+        os.remove(outfile)
+
+    # Keep at parallel on Ne level (main fn)
+    def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
+                                   usefixedfidelity,MPATH,YPATH,debug):
+        def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
+            if maxsigma is None or usefixedfidelity: return chunkfidelity(fidelity,minfidelity)
+            diff = maxsigma-bound
+            newfidelity = int(np.ceil((currfidelity/maxsigma)*diff))
+            newfidelity = max(minfidelity,newfidelity)
+            if currfidelity+newfidelity > maxfidelity:
+                newfidelity = maxfidelity-currfidelity
+            return chunkfidelity(newfidelity,minfidelity)
+
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+        maxsigma = None
+        pp=None
+        currfidelity = atfidelity
+        if currfidelity >= maxfidelity:
+            return currfidelity
+        if rank == 0:
+            pp = getParameters(d,pfname)
+            if currfidelity > 0:
+                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+                maxsigma = max(sigma)
+                sys.stdout.flush()
+        maxsigma = comm.bcast(maxsigma, root=0)
+        pp = comm.bcast(pp, root=0)
+
+        returncodes = np.zeros(size)
+        while(maxsigma is None or maxsigma > bound):
+            newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
+            newfidelityArr = None
+            if rank == 0:
+                newfidelityArr = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,100,maxfidelity)
+            newfidelityArr = comm.bcast(newfidelityArr, root=0)
+            if newfidelityArr[rank] !=0:
+                returncodes[rank] = MCcmd(pp,fidelity=newfidelityArr[rank],loc=newloc,MPATH=MPATH)
+            if not np.all((returncodes == 0)):
+                break
+            comm.barrier()
+
+            if rank == 0:
+                currfidelity += sum(newfidelityArr)
+                selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=maxsigma is not None,YPATH=YPATH)
+                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+                maxsigma = max(sigma)
+            maxsigma = comm.bcast(maxsigma, root=0)
+            currfidelity = comm.bcast(currfidelity, root=0)
+            if currfidelity >= maxfidelity or usefixedfidelity:
+                break
+        return currfidelity,returncodes
+
+    # Keep at parallel on Ne level (main fn)
+    def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,MPATH,YPATH,debug):
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+        pp=None
+        currfidelity = atfidelity
+        if currfidelity >= runatfidelity:
+            return currfidelity
+        if rank == 0: pp = getParameters(d,pfname)
+        pp = comm.bcast(pp, root=0)
+        returncodes = np.zeros(size)
+        newloc = os.path.join(d, "out_temp_r{}.yoda".format(rank))
+        newfidelityArr = None
+        if rank == 0:
+            newfidelityArr = chunkfidelity(runatfidelity,100)
+        newfidelityArr = comm.bcast(newfidelityArr, root=0)
+        if newfidelityArr[rank] !=0: returncodes[rank] = MCcmd(pp,fidelity=newfidelityArr[rank],loc=newloc,MPATH=MPATH)
+        comm.barrier()
+
+        if rank == 0:
+            currfidelity += sum(newfidelityArr)
+            selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=currfidelity>0,YPATH=YPATH)
+        currfidelity = comm.bcast(currfidelity, root=0)
+        return currfidelity,returncodes
+
     rank = comm.Get_rank()
 
     if isbebop:
@@ -439,7 +428,7 @@ if __name__ == "__main__":
                 ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
                                  outdir)
 
-            (simulationBudgetUsed,successParams) = problem_main_program(
+            (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
                 paramfile,
                 prevparamfile,
                 args.WEIGHTS,
@@ -483,7 +472,7 @@ if __name__ == "__main__":
             outfile = MCout_Np_k
             outdir = outdir_Np_k
             if not gradCond and status == 0:
-                (simulationBudgetUsed,successParams) = problem_main_program(
+                (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
                     paramfile,
                     prevparamfile,
                     args.WEIGHTS,
@@ -507,7 +496,7 @@ if __name__ == "__main__":
             successParams = 0
             if not gradCond and status == 0:
                 if rank >= 0:
-                    (simulationBudgetUsed,successParams) = problem_main_program(
+                    (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
                         paramfile,
                         prevparamfile,
                         args.WEIGHTS,
