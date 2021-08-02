@@ -356,6 +356,18 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
 # Keep at outermost level
 def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
+    def selectFilesAndYodaMerge(d,loc,mainfileexists,YPATH):
+        yodafiles = []
+        mainfile = os.path.join(d, "out_i0.yoda")
+        if mainfileexists:
+            yodafiles.append(mainfile)
+        yodafiles.append(loc)
+        outfile = os.path.join(d, "out.yoda")
+        mergeyoda(yodafiles,outfile,YPATH)
+
+        os.remove(loc)
+        copyfile(outfile,mainfile)
+        os.remove(outfile)
     def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wtfile,
                                    usefixedfidelity,MPATH,YPATH,debug):
         def incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,minfidelity,maxfidelity):
@@ -389,17 +401,8 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
             rc = MCcmd(pp,fidelity=newfidelity,loc=newloc,MPATH=MPATH)
             if rc != 0:
                 return currfidelity,rc
-            yodafiles = []
-            mainfile = os.path.join(d, "out_i0.yoda")
-            if maxsigma is not None:
-                yodafiles.append(mainfile)
-            yodafiles.append(newloc)
-            outfile = os.path.join(d, "out.yoda")
-            mergeyoda(yodafiles,outfile,YPATH)
             currfidelity += newfidelity
-            os.remove(newloc)
-            copyfile(outfile,mainfile)
-            os.remove(outfile)
+            selectFilesAndYodaMerge(d,newloc,maxsigma is not None,YPATH)
             DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             maxsigma = max(sigma)
@@ -408,6 +411,18 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
                 break
         return currfidelity,0
 
+    def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,MPATH,YPATH,debug):
+        currfidelity = atfidelity
+        if currfidelity >= runatfidelity:
+            return currfidelity
+        pp = getParameters(d,pfname)
+        newloc = os.path.join(d, "out_temp.yoda")
+        rc = MCcmd(pp,fidelity=runatfidelity,loc=newloc,MPATH=MPATH)
+        if rc != 0:
+            return currfidelity,rc
+        currfidelity += runatfidelity
+        selectFilesAndYodaMerge(d,newloc,currfidelity>0,YPATH)
+        return currfidelity,0
 
     size = comm.Get_size()
     rank = comm.Get_rank()
@@ -525,10 +540,19 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
         rankatfidelity = comm.scatter(rankatfidelity, root=0)
 
         currfidelity = {}
+        runatfidelity = None
+        runatfidelityFound = False
         for num, (d,ofi,of,atfid) in enumerate(zip(rankDirs,rankorigfileindex,rankorigfile,rankatfidelity)):
-            (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
-                                                  maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
-                                                  usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH,debug=debug)
+            if not runatfidelityFound:
+                (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
+                                                      maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
+                                                      usefixedfidelity=usefixedfidelity, MPATH=MPATH,YPATH=YPATH,debug=debug)
+                if rc == 0:
+                    runatfidelity = cfd
+                    runatfidelityFound = True
+            else:
+                (cfd,rc) = runMCAtFidelity(d,atfidelity=atfid,runatfidelity=runatfidelity,pfname=pfname,
+                                                      MPATH=MPATH,YPATH=YPATH,debug=debug)
             currfidelity["{}_{}".format(of,ofi)] = {"cfd":cfd,"rc":rc}
         currfidelityr0 = comm.gather(currfidelity, root=0)
 
