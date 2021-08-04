@@ -42,6 +42,8 @@ def tr_update(memorymap,expdatafile,wtfile):
     status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
     tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
     currIteration = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    no_iters_at_max_fidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="no_iters_at_max_fidelity")
+    radius_at_which_max_fidelity_reached = ato.getFromMemoryMap(memoryMap=memorymap, key="radius_at_which_max_fidelity_reached")
 
     import sys
     tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
@@ -58,6 +60,8 @@ def tr_update(memorymap,expdatafile,wtfile):
 
         if debug: print("inside tr update w gradcond", gradCond)
         sys.stdout.flush()
+        fidelityused = None
+        old_tr_radius = None
         if not gradCond:
             mcbinids = IO._binids
             if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
@@ -118,9 +122,10 @@ def tr_update(memorymap,expdatafile,wtfile):
 
             # grad = IO.gradient(kpstar)
             if debug: print("rho k\t\t= %.4E" % (rho))
+            normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
             if rho < tr_eta :
                 if debug: print("rho < eta New point rejected")
-                tr_radius /=2
+                tr_radius = min(tr_radius,normOfStep)/2
                 curr_p = kpstar
                 trradmsg = "TR radius halved"
                 trcentermsg = "TR center remains the same"
@@ -148,11 +153,11 @@ def tr_update(memorymap,expdatafile,wtfile):
                 if currIteration %10 == 0:
                     str = "iter\tGC   PGNorm     \Delta_k" \
                           "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
-                normOfStep = getInfNorm(np.array(kp1pstar)-np.array(tr_center))
                 str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E"\
                       %(currIteration+1,pgnorm,old_tr_radius,normOfStep,trcenterstatus,chi2_ra_k,chi2_ra_kp1,chi2_mc_k,chi2_mc_kp1,fidelityused,rho)
                 print(str)
         else:
+            fidelityused = None
             if debug: print("gradient condition failed")
             tr_radius /= 2
             curr_p = kpstar
@@ -192,20 +197,37 @@ def tr_update(memorymap,expdatafile,wtfile):
         # get parameters
         max_iteration = ato.getFromMemoryMap(memoryMap=memorymap, key="max_iteration")
         max_simulationBudget = ato.getFromMemoryMap(memoryMap=memorymap, key="max_simulationBudget")
+        maxfidelity = ato.getFromMemoryMap(memoryMap=memorymap, key="maxfidelity")
+        max_fidelity_iteration = ato.getFromMemoryMap(memoryMap=memorymap, key="max_fidelity_iteration")
 
-        # get budget
+        # get budget/current metrics
         simulationbudgetused = ato.getFromMemoryMap(memoryMap=memorymap, key="simulationbudgetused")
+
+        if not gradCond and fidelityused is not None:
+            if fidelityused >= maxfidelity:
+                no_iters_at_max_fidelity += 1
+                if radius_at_which_max_fidelity_reached == 0:
+                    radius_at_which_max_fidelity_reached = old_tr_radius
+            else:
+                no_iters_at_max_fidelity = 0
+
+        def orderOfMagnitude(number):
+            return np.floor(np.log10(number))
 
         if k >= max_iteration-1:
             status = 2
         elif simulationbudgetused >= max_simulationBudget:
             status = 3
+        elif radius_at_which_max_fidelity_reached > 0 and orderOfMagnitude(old_tr_radius) <= orderOfMagnitude(radius_at_which_max_fidelity_reached)-2:
+            status = 5
+        elif no_iters_at_max_fidelity >= max_fidelity_iteration:
+            status = 6
         else: status = 0
         if debug: print("Status\t\t= {} : {}".format(status,ato.getStatusDef(status)))
 
-        return (status,tr_radius,curr_p)
+        return (status,tr_radius,curr_p,no_iters_at_max_fidelity,radius_at_which_max_fidelity_reached)
     else:
-        return (status,tr_radius,tr_center)
+        return (status,tr_radius,tr_center,no_iters_at_max_fidelity,radius_at_which_max_fidelity_reached)
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
@@ -227,9 +249,9 @@ if __name__ == "__main__":
 
     comm.barrier()
     (memorymap, pyhenson) = ato.readMemoryMap()
-    status,radius,center = None,None,None
+    status,radius,center,no_iters_at_max_fidelity,radius_at_which_max_fidelity_reached = None,None,None,None,None
     if rank == 0:
-        (status,radius,center) = tr_update(
+        (status,radius,center,no_iters_at_max_fidelity,radius_at_which_max_fidelity_reached) = tr_update(
             memorymap,
             args.EXPDATA,
             args.WEIGHTS
@@ -237,10 +259,16 @@ if __name__ == "__main__":
     status = comm.bcast(status, root=0)
     radius = comm.bcast(radius, root=0)
     center = comm.bcast(center, root=0)
+    no_iters_at_max_fidelity = comm.bcast(no_iters_at_max_fidelity, root=0)
+    radius_at_which_max_fidelity_reached = comm.bcast(radius_at_which_max_fidelity_reached, root=0)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_radius",
                        value=radius)
     ato.putInMemoryMap(memoryMap=memorymap, key="tr_center",
                        value=center)
     ato.putInMemoryMap(memoryMap=memorymap, key="status",
                        value=status)
+    ato.putInMemoryMap(memoryMap=memorymap, key="no_iters_at_max_fidelity",
+                       value=no_iters_at_max_fidelity)
+    ato.putInMemoryMap(memoryMap=memorymap, key="radius_at_which_max_fidelity_reached",
+                       value=radius_at_which_max_fidelity_reached)
     ato.writeMemoryMap(memorymap, forceFileWrite=True)
