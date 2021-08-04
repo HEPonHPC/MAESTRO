@@ -131,7 +131,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         pp=None
         currfidelity = atfidelity
         if currfidelity >= maxfidelity:
-            return currfidelity
+            return currfidelity,np.zeros(size)
         if rank == 0:
             pp = getParameters(d,pfname)
             if currfidelity > 0:
@@ -174,7 +174,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         pp=None
         currfidelity = atfidelity
         if currfidelity >= runatfidelity:
-            return currfidelity
+            return currfidelity,np.zeros(size)
         if rank == 0: pp = getParameters(d,pfname)
         pp = comm.bcast(pp, root=0)
         returncodes = np.zeros(size)
@@ -382,7 +382,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
 
         currfidelity = atfidelity
         if currfidelity >= maxfidelity:
-            return currfidelity
+            return currfidelity,0
         pp = getParameters(d,pfname)
         maxsigma = None
         if currfidelity > 0:
@@ -414,7 +414,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
     def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,MPATH,YPATH,debug):
         currfidelity = atfidelity
         if currfidelity >= runatfidelity:
-            return currfidelity
+            return currfidelity,0
         pp = getParameters(d,pfname)
         newloc = os.path.join(d, "out_temp.yoda")
         rc = MCcmd(pp,fidelity=runatfidelity,loc=newloc,MPATH=MPATH)
