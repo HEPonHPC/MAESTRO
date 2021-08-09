@@ -655,8 +655,8 @@ if __name__ == "__main__":
                         help="Experimental data file (JSON)")
     parser.add_argument("-o", dest="OPTION", type=str, default=None,
                         help="Option (initial,single, or multi)")
-    parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
-                        help="Process Card location")
+    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
+                        help="Process Card location(s) (seperated by a space)")
     parser.add_argument("-b", "--bebop", dest="BEBOP", default=False, action="store_true",
                         help="Running on BEBOP")
     parser.add_argument("-w", dest="WEIGHTS", type=str, default="conf/weights",
@@ -716,7 +716,7 @@ if __name__ == "__main__":
             if rank ==0:
                 with open(paramfile, 'w') as f:
                     json.dump({"parameters": [tr_center],"at fidelity":[0.]}, f, indent=4)
-                ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
+                ato.writePythiaFiles(args.PROCESSCARDS, param_names, [tr_center],
                                  outdir)
 
             (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
