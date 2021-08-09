@@ -649,7 +649,7 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
     pass
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Simulation (with noise added)',
+    parser = argparse.ArgumentParser(description='Run Simulation',
                                      formatter_class=SaneFormatter)
     parser.add_argument("-e", dest="EXPDATA", type=str, default=None,
                         help="Experimental data file (JSON)")
