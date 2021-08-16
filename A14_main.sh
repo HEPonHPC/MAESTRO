@@ -17,10 +17,10 @@ bebop=""
 nprocs=8
 if [ "$2" = "-b" ]; then
   bebop="-b"
-  nprocs=100
+  nprocs=36
 else
   echo "Cannot run A14 main locally"
-  exit;
+#  exit;
 fi
 
 rm -r $WDdir;
@@ -41,16 +41,18 @@ cp $A14Param/weights $WDdir/conf/weights
 
 currDir=`pwd`
 cd $WDdir ||exit ;
-python orchestrator.py -o 10 -a conf/algoparams_bk.json;
+python orchestrator.py -o 50 -a conf/algoparams_bk.json;
 status=0;
 until [ $status -ne 0 ]
 do
-  mpirun -np $nprocs python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o initial $bebop
+
+  python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o initial $bebop -n $nprocs
+exit;
   python buildInterpol.py -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd
-  mpirun -np $nprocs python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o multi $bebop
+  python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o multi $bebop -n $nprocs
   mpirun -np $nprocs python approx.py -e conf/data.json -w conf/weights
   mpirun -np $nprocs python chi2.py -e conf/data.json -w conf/weights -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd
-  mpirun -np $nprocs python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o single $bebop
+  python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o single $bebop -n $nprocs
   python newBox.py -w conf/weights -e conf/data.json
   python orchestrator.py -o 10 -c -a conf/algoparams_bk.json
   status=$?

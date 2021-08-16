@@ -17,4 +17,4 @@ cp $1/data.json $5/conf/data.json
 cp $1/weights $5/conf/weights
 
 cd $5
-mpirun -np 5 ./decaf-henson_python
+mpirun -np 36 ./decaf-henson_python
