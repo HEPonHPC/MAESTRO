@@ -20,7 +20,9 @@ def MCcmd(d,fidelity,loc,numprocs,MPATH):
 
     rivettanalysis = {
         "qcd":["ATLAS_2011_S8924791", "ATLAS_2011_S8971293","ATLAS_2011_I919017","ATLAS_2011_S9128077","ATLAS_2012_I1125575","ATLAS_2014_I1298811","ATLAS_2012_I1094564"],
+        # "qcd":["ATLAS_2011_S8924791"], #shortened
         "z":["ATLAS_2011_S9131140","ATLAS_2014_I1300647"],
+        # "z":["ATLAS_2011_S9131140"], #shortened
         "ttbar":["ATLAS_2012_I1094568","ATLAS_2013_I1243871"]
     }
 
@@ -35,21 +37,46 @@ def MCcmd(d,fidelity,loc,numprocs,MPATH):
         for ra in rivettanalysis[r]:
             argarr.append("-a")
             argarr.append(ra)
-        print(argarr)
-        sys.stdout.flush()
-        # import subprocess
-        # p = subprocess.run(argarr,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        # print("##########")
-        # print(p.stdout)
-        # print("##########")
+        # print(argarr)
+        # sys.stdout.flush()
+        #### UNCOMMENT 1 START ###
+    #     import subprocess
+    #     p = subprocess.run(argarr,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    #     print("##########")
+    #     print(p.stdout)
+    #     print(p.returncode)
+    #     print("##########")
+    # exit(1)
+        #### UNCOMMENT 1 END ###
+
+        #### OR UNCOMMENT 2 START ###
+        if debug: print("Running directory: {}           \r".format(d))
         p = Popen(argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
         p.communicate(b"input data that is passed to subprocess' stdin")
         rc = processreturncode(p,r)
 
         if rc == 0:
             continue
-        else: return rc
-
+        else:
+            if debug:
+                print("rc was non zero ({}) for argument array:".format(rc))
+                print(argarr)
+            return rc
+        #### UNCOMMENT 2 END ###
+    with open(loc, 'w') as outfile:
+        for rno,r in enumerate(rivettanalysis.keys()):
+            fname = "{}.{}".format(loc,r)
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+            outfile.write("\n")
+            # os.remove(fname) #UNCOKMENT ME
+    # exit(1)
+    # print(d)
+    # YPATH = "/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge"
+    # # mergeyoda([os.path.join(d,"out_temp_qcd.yoda"),os.path.join(d,"out_temp_qcd1.yoda")],os.path.join(d,"yodamerge.yoda"),YPATH)
+    # mergeyoda([loc,loc],os.path.join(d,"yodamerge.yoda"),YPATH)
+    # exit(1)
     return 0
 
 def mergeyoda(yodafiles,OUTFILE,RBD):
@@ -129,8 +156,6 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         newfidelity = incrementfidelity(maxsigma,bound,usefixedfidelity,currfidelity,fidelity,100,maxfidelity)
         rc = MCcmd(d,fidelity=newfidelity,loc=newloc,numprocs=numprocs,MPATH=MPATH)
         if not rc == 0:
-            print(rc)
-            exit(1)
             break
 
         currfidelity += newfidelity
@@ -140,6 +165,18 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         maxsigma = max(sigma)
         if currfidelity >= maxfidelity or usefixedfidelity:
             break
+    return currfidelity,rc
+
+def runMCAtFidelity(d,atfidelity,runatfidelity,pfname,numprocs,MPATH,YPATH,debug):
+    currfidelity = atfidelity
+    if currfidelity >= runatfidelity:
+        return currfidelity,0
+    newloc = os.path.join(d, "out_temp.yoda")
+    rc = MCcmd(d,fidelity=runatfidelity,loc=newloc,numprocs=numprocs,MPATH=MPATH)
+    if rc != 0:
+        return currfidelity,rc
+    selectFilesAndYodaMerge(d,newloc,mainfileexists=atfidelity>0,YPATH=YPATH)
+    currfidelity += runatfidelity
     return currfidelity,rc
 
 def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
@@ -229,18 +266,17 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         atfid = atfidelityAll[currParamIndex]
         of = origfileAll[currParamIndex]
         ofi = origfileindexAll[currParamIndex]
-        # TODO reuse fidelity for 2nd parameter onward
-        # if not runatfidelityFound:
-        (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
+        if not runatfidelityFound:
+            (cfd,rc) = runMCForAcceptableFidelity(d,atfidelity=atfid,bound=kappa*(tr_radius**2),fidelity=fidelity,
                                               maxfidelity=maxfidelity,pfname=pfname,wtfile=wtfile,
                                               usefixedfidelity=usefixedfidelity, numprocs=numprocs,
                                               MPATH=MPATH, YPATH=YPATH,debug=debug)
-            # if rc == 0:
-            #     runatfidelity = cfd
-            #     runatfidelityFound = True
-        # else:
-        #     (cfd,rc) = runMCAtFidelity(d,atfidelity=atfid,runatfidelity=runatfidelity,
-        #                                         pfname=pfname,MPATH=MPATH,debug=debug)
+            if rc == 0:
+                runatfidelity = cfd
+                runatfidelityFound = True
+        else:
+            (cfd,rc) = runMCAtFidelity(d,atfidelity=atfid,runatfidelity=runatfidelity,pfname=pfname,
+                                       numprocs=numprocs,MPATH=MPATH,YPATH=YPATH,debug=debug)
         if rc == 0:
             with open(of,'r') as f:
                 ds = json.load(f)
@@ -381,5 +417,66 @@ if __name__ == "__main__":
             if debug:
                 print("Skipping the initial MC run since k (neq 0) = {}".format(k))
                 sys.stdout.flush()
+    else:
+        MCout_1_k = "logs/MCout_1" + "_k{}.h5".format(k)
+        MCout_1_kp1 = "logs/MCout_1" + "_k{}.h5".format(k + 1)
+        MCout_Np_k = "logs/MCout_Np" + "_k{}.h5".format(k)
 
+        newparams_1_kp1 = "logs/newparams_1" + "_k{}.json".format(k + 1)
+        newparams_1_k = "logs/newparams_1" + "_k{}.json".format(k)
+        newparams_Np_k = "logs/newparams_Np" + "_k{}.json".format(k)
+
+        outdir_1_kp1 = "logs/pythia_1" + "_k{}".format(k + 1)
+        outdir_1_k = "logs/pythia_1" + "_k{}".format(k)
+        outdir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
+
+        gradCond = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_gradientCondition")
+        status = ato.getFromMemoryMap(memoryMap=memorymap, key="status")
+
+        if args.OPTION == "multi":
+            prevparamfile = "logs/prevparams_Np" + "_k{}.json".format(k)
+            paramfile = newparams_Np_k
+            outfile = MCout_Np_k
+            outdir = outdir_Np_k
+            if not gradCond and status == 0:
+                (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
+                    paramfile,
+                    prevparamfile,
+                    args.WEIGHTS,
+                    memorymap,
+                    args.BEBOP,
+                    args.NUMPROCS,
+                    outfile,
+                    outdir
+                )
+                statusToWrite = 4 if successParams < N_p else 0
+                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                   value=simulationBudgetUsed)
+                ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                                   value=statusToWrite)
+                ato.writeMemoryMap(memoryMap=memorymap)
+        else:
+            prevparamfile = None
+            paramfile = newparams_1_kp1
+            outfile = MCout_1_kp1
+            outdir = outdir_1_kp1
+            simulationBudgetUsed = 0
+            successParams = 0
+            if not gradCond and status == 0:
+                (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
+                    paramfile,
+                    prevparamfile,
+                    args.WEIGHTS,
+                    memorymap,
+                    args.BEBOP,
+                    args.NUMPROCS,
+                    outfile,
+                    outdir
+                )
+                statusToWrite = 4 if successParams < 1 else 0
+                ato.putInMemoryMap(memoryMap=memorymap, key="simulationbudgetused",
+                                   value=simulationBudgetUsed)
+                ato.putInMemoryMap(memoryMap=memorymap, key="status",
+                                   value=statusToWrite)
+                ato.writeMemoryMap(memoryMap=memorymap)
 
