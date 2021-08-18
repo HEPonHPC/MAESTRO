@@ -289,7 +289,7 @@ def buildInterpolationPoints(processcardarr=None,memoryMap=None,newparamoutfile=
     if rank ==0:
         if p_sel_new is None:
             p_sel_new = np.array([])
-        ato.writePythiaFiles(processcardarr, param_names, p_sel_new, outdir, fnamep, fnameg)
+        ato.writePythiaFiles(processcardarr, param_names, p_sel_new, outdir, fnamep, fnameg=None)
         ds = {
             "parameters": p_sel_new.tolist(),
             "at fidelity": [0.]*len(p_sel_new)

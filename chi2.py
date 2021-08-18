@@ -55,7 +55,7 @@ def run_chi2_optimization(processcardarr,memorymap,valfile,errfile,
         if debug:print("\\SP amin \t= {}".format(["%.3f"%(c) for c in outputdata['x']]))
         with open(pstarfile,'w') as f:
             json.dump(outds,f,indent=4)
-        ato.writePythiaFiles(processcardarr,param_names, [outputdata['x']], pythiadir)
+        ato.writePythiaFiles(processcardarr,param_names, [outputdata['x']], pythiadir,fnameg=None)
 
     ato.writeMemoryMap(memorymap)
 
