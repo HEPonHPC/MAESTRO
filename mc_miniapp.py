@@ -187,8 +187,8 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         comm.barrier()
 
         if rank == 0:
+            selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=atfidelity>0,YPATH=YPATH)
             currfidelity += sum(newfidelityArr)
-            selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=currfidelity>0,YPATH=YPATH)
         currfidelity = comm.bcast(currfidelity, root=0)
         return currfidelity,returncodes
 
