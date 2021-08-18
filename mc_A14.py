@@ -26,6 +26,7 @@ def MCcmd(d,fidelity,loc,numprocs,MPATH):
         "ttbar":["ATLAS_2012_I1094568","ATLAS_2013_I1243871"]
     }
 
+    if debug: print("Running directory: ",d,end="\r".format(d))
     for r in rivettanalysis.keys():
         runcard = os.path.join(d, "main30_rivet.{}.cmnd".format(r))
         runcardstr = "{}".format(runcard)
@@ -50,7 +51,6 @@ def MCcmd(d,fidelity,loc,numprocs,MPATH):
         #### UNCOMMENT 1 END ###
 
         #### OR UNCOMMENT 2 START ###
-        if debug: print("Running directory: {}           \r".format(d))
         p = Popen(argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
         p.communicate(b"input data that is passed to subprocess' stdin")
         rc = processreturncode(p,r)
