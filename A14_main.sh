@@ -49,7 +49,6 @@ do
   python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o initial $bebop -n $nprocs
   python buildInterpol.py -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd
   python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o multi $bebop -n $nprocs
-exit;
   mpirun -np $nprocs python approx.py -e conf/data.json -w conf/weights
   mpirun -np $nprocs python chi2.py -e conf/data.json -w conf/weights -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd
   python mc_A14.py -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o single $bebop -n $nprocs
