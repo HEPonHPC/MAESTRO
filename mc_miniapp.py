@@ -135,7 +135,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         if rank == 0:
             pp = getParameters(d,pfname)
             if currfidelity > 0:
-                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 maxsigma = max(sigma)
                 sys.stdout.flush()
@@ -158,7 +158,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
             if rank == 0:
                 currfidelity += sum(newfidelityArr)
                 selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=maxsigma is not None,YPATH=YPATH)
-                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 maxsigma = max(sigma)
             maxsigma = comm.bcast(maxsigma, root=0)
@@ -386,7 +386,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
         pp = getParameters(d,pfname)
         maxsigma = None
         if currfidelity > 0:
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             maxsigma = max(sigma)
             sys.stdout.flush()
@@ -403,7 +403,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
                 return currfidelity,rc
             currfidelity += newfidelity
             selectFilesAndYodaMerge(d,newloc,maxsigma is not None,YPATH)
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             maxsigma = max(sigma)
 
