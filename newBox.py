@@ -63,7 +63,9 @@ def tr_update(memorymap,expdatafile,wtfile):
         fidelityused = None
         old_tr_radius = None
         if not gradCond:
-            mcbinids = IO._binids
+            # mcbinids = IO._binids
+            kmcbinids = None
+            kp1mcbinids = None
             if ato.getFromMemoryMap(memoryMap=memorymap, key="useYODAoutput"):
                 # kDATA,binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
                 #     [kMCoutYODA],"params.dat",wtfile)
@@ -71,11 +73,11 @@ def tr_update(memorymap,expdatafile,wtfile):
                 #     [kp1MCoutYODA], "params.dat", wtfile)
                 import glob
                 INDIRSLIST = glob.glob(os.path.join(kMCoutYODA, "*"))
-                kDATA = apprentice.io.readSingleYODAFile(
+                (kDATA,kmcbinids) = apprentice.io.readSingleYODAFile(
                     INDIRSLIST[0],"params.dat",wtfile)
 
                 INDIRSLIST = glob.glob(os.path.join(kp1MCoutYODA, "*"))
-                kp1DATA = apprentice.io.readSingleYODAFile(
+                (kp1DATA,kp1mcbinids) = apprentice.io.readSingleYODAFile(
                     INDIRSLIST[0], "params.dat", wtfile)
             else:
                 kDATA = apprentice.io.readH5(kMCoutH5)
@@ -93,16 +95,16 @@ def tr_update(memorymap,expdatafile,wtfile):
             # print(mcbinids)
             # print(IO._binids)
             for mcnum, (_X, _Y, _E) in enumerate(kDATA):
-                if mcbinids[mcnum] in IO._binids:
-                    ionum = IO._binids.index(mcbinids[mcnum])
+                if kmcbinids[mcnum] in IO._binids:
+                    ionum = IO._binids.index(kmcbinids[mcnum])
                     # print(_Y[0], IO._Y[ionum])
                     chi2_mc_k += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
                 else:
                     continue
 
             for mcnum, (_X, _Y, _E) in enumerate(kp1DATA):
-                if mcbinids[mcnum] in IO._binids:
-                    ionum = IO._binids.index(mcbinids[mcnum])
+                if kp1mcbinids[mcnum] in IO._binids:
+                    ionum = IO._binids.index(kp1mcbinids[mcnum])
                     # print(_Y[0], IO._Y[ionum])
                     chi2_mc_kp1 += IO._W2[ionum]*((_Y[0]-IO._Y[ionum])**2/(_E[0]**2+IO._E[ionum]**2))
                 else:
