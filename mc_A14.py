@@ -146,7 +146,7 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         return currfidelity,0
     if currfidelity > 0:
         (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA) if len(_E) > 0 & (~np.isinf(_E[0])) & (~np.isnan(_E[0]))]
         maxsigma = max(sigma)
         sys.stdout.flush()
 
@@ -161,7 +161,7 @@ def runMCForAcceptableFidelity(d,atfidelity,bound,fidelity,maxfidelity,pfname,wt
         currfidelity += newfidelity
         selectFilesAndYodaMerge(d,newloc,mainfileexists=maxsigma is not None,YPATH=YPATH)
         (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
-        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+        sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA) if len(_E) > 0 & (~np.isinf(_E[0])) & (~np.isnan(_E[0]))]
         maxsigma = max(sigma)
         if currfidelity >= maxfidelity or usefixedfidelity:
             break
