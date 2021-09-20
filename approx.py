@@ -89,8 +89,11 @@ def run_approx(memorymap,expdatafile,wtfile):
                 DATAprev, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataH5(
                     MCoutprev, wtfile, comm=comm)
 
-            X,Y,E = DATAprev[0]
-
+            X,Y,E = (None,None,None)
+            for num, (Xloc, Yloc, Eloc) in  enumerate(DATAprev):
+                if len(Yloc)>0:
+                    X,Y,E = DATAprev[num]
+                    break
             indexToRead = []
             for no in pnoToRead:
                 indexToRead.append(next(i for i, _ in enumerate(X)
