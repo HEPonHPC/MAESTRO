@@ -1,0 +1,73 @@
+{
+    "workflow": {
+        "filter_level": "NONE",
+        "nodes": [
+            {
+             	"start_proc": 0,
+                "nprocs": 36,
+                "cmdline": "./orchestrator.py -o 50 -a conf/algoparams_bk.json",
+                "func": "orch_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_A14.py -n 36 -b -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o initial",
+                "func": "miniappinitial_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 36,
+                "cmdline": "./buildInterpol.py -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd",
+                "func": "inputPre_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_A14.py -n 36 -b -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o multi",
+                "func": "miniappmulti_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 36,
+                "cmdline": "./approx.py -e conf/data.json -w conf/weights",
+                "func": "approx_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 36,
+                "cmdline": "./chi2.py -e conf/data.json -w conf/weights -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd",
+                "func": "chi2_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./mc_A14.py -n 36 -b -e conf/data.json -c main30_rivet.qcd.cmnd main30_rivet.ttbar.cmnd main30_rivet.z.cmnd -o single",
+                "func": "miniappsingle_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+                "start_proc": 0,
+                "nprocs": 36,
+             	  "cmdline": "./newBox.py -w conf/weights -e conf/data.json",
+                "func": "newbox_py",
+                "inports": [],
+                "outports": []
+            }
+        ],
+        "edges": [
+        ]
+    }
+}

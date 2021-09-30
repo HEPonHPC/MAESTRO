@@ -135,7 +135,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         if rank == 0:
             pp = getParameters(d,pfname)
             if currfidelity > 0:
-                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 maxsigma = max(sigma)
                 sys.stdout.flush()
@@ -158,7 +158,7 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
             if rank == 0:
                 currfidelity += sum(newfidelityArr)
                 selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=maxsigma is not None,YPATH=YPATH)
-                DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+                (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 maxsigma = max(sigma)
             maxsigma = comm.bcast(maxsigma, root=0)
@@ -187,8 +187,8 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
         comm.barrier()
 
         if rank == 0:
+            selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=atfidelity>0,YPATH=YPATH)
             currfidelity += sum(newfidelityArr)
-            selectFilesAndYodaMerge(d,newfidelityArr,mainfileexists=currfidelity>0,YPATH=YPATH)
         currfidelity = comm.bcast(currfidelity, root=0)
         return currfidelity,returncodes
 
@@ -386,7 +386,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
         pp = getParameters(d,pfname)
         maxsigma = None
         if currfidelity > 0:
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             maxsigma = max(sigma)
             sys.stdout.flush()
@@ -403,7 +403,7 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
                 return currfidelity,rc
             currfidelity += newfidelity
             selectFilesAndYodaMerge(d,newloc,maxsigma is not None,YPATH)
-            DATA = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
+            (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, pfname, wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             maxsigma = max(sigma)
 
@@ -649,14 +649,14 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
     pass
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Simulation (with noise added)',
+    parser = argparse.ArgumentParser(description='Run Simulation',
                                      formatter_class=SaneFormatter)
     parser.add_argument("-e", dest="EXPDATA", type=str, default=None,
                         help="Experimental data file (JSON)")
     parser.add_argument("-o", dest="OPTION", type=str, default=None,
                         help="Option (initial,single, or multi)")
-    parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
-                        help="Process Card location")
+    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
+                        help="Process Card location(s) (seperated by a space)")
     parser.add_argument("-b", "--bebop", dest="BEBOP", default=False, action="store_true",
                         help="Running on BEBOP")
     parser.add_argument("-w", dest="WEIGHTS", type=str, default="conf/weights",
@@ -716,7 +716,7 @@ if __name__ == "__main__":
             if rank ==0:
                 with open(paramfile, 'w') as f:
                     json.dump({"parameters": [tr_center],"at fidelity":[0.]}, f, indent=4)
-                ato.writePythiaFiles(args.PROCESSCARD, param_names, [tr_center],
+                ato.writePythiaFiles(args.PROCESSCARDS, param_names, [tr_center],
                                  outdir)
 
             (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(

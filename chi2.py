@@ -9,7 +9,7 @@ def mkCov(yerrs):
     import numpy as np
     return np.atleast_2d(yerrs).T * np.atleast_2d(yerrs) * np.eye(yerrs.shape[0])
 
-def run_chi2_optimization(processcard,memorymap,valfile,errfile,
+def run_chi2_optimization(processcardarr,memorymap,valfile,errfile,
                           expdatafile,wtfile,chi2resultoutfile,pstarfile,pythiadir):
     debug = True \
         if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
@@ -55,7 +55,7 @@ def run_chi2_optimization(processcard,memorymap,valfile,errfile,
         if debug:print("\\SP amin \t= {}".format(["%.3f"%(c) for c in outputdata['x']]))
         with open(pstarfile,'w') as f:
             json.dump(outds,f,indent=4)
-        ato.writePythiaFiles(processcard,param_names, [outputdata['x']], pythiadir)
+        ato.writePythiaFiles(processcardarr,param_names, [outputdata['x']], pythiadir,fnameg=None)
 
     ato.writeMemoryMap(memorymap)
 
@@ -77,8 +77,8 @@ if __name__ == "__main__":
 #                        help="Result ouput file (JSON)")
 #    parser.add_argument("--pstarfile", dest="PSTARFILE", type=str, default=None,
 #                        help="p^* parameter outfile (JSON)")
-    parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
-                        help="Process Card location")
+    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
+                        help="Process Card location(s) (seperated by a space)")
     # parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
     #                     help="Algorithm Parameters (JSON)")
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     if not gradCond and status == 0:
         run_chi2_optimization(
-            args.PROCESSCARD,
+            args.PROCESSCARDS,
             memorymap,
             valapproxfile_k,
             errapproxfile_k,

@@ -89,7 +89,7 @@ def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,Np,mindist):
             break
     return p_sel_new,I_init
 
-def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="newp.json",
+def buildInterpolationPoints(processcardarr=None,memoryMap=None,newparamoutfile="newp.json",
                              outdir=None,prevparamoutfile="oldp.json",fnamep="params.dat",
                              fnameg="generator.cmd"):
     from mpi4py import MPI
@@ -289,7 +289,7 @@ def buildInterpolationPoints(processcard=None,memoryMap=None,newparamoutfile="ne
     if rank ==0:
         if p_sel_new is None:
             p_sel_new = np.array([])
-        ato.writePythiaFiles(processcard, param_names, p_sel_new, outdir, fnamep, fnameg)
+        ato.writePythiaFiles(processcardarr, param_names, p_sel_new, outdir, fnamep, fnameg=None)
         ds = {
             "parameters": p_sel_new.tolist(),
             "at fidelity": [0.]*len(p_sel_new)
@@ -310,8 +310,8 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate sample points',
                                      formatter_class=SaneFormatter)
-    parser.add_argument("-c", dest="PROCESSCARD", type=str, default=None,
-                        help="Process Card location")
+    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
+                        help="Process Card location(s) (seperated by a space)")
 
     args = parser.parse_args()
 
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     pythiadir_Np_k = "logs/pythia_Np" + "_k{}".format(k)
 
     buildInterpolationPoints(
-        args.PROCESSCARD,
+        args.PROCESSCARDS,
         memorymap,
         newparams_Np_k,
         pythiadir_Np_k,
