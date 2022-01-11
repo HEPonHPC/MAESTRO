@@ -10,6 +10,8 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    :maxdepth: 2
    :caption: Contents:
 
+   orchestrator
+
 
 
 Indices and tables
