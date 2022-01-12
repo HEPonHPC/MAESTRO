@@ -1,25 +1,78 @@
+"""
+Populate parameters from the current trust region. The parameters are populated from the previous iterations first.
+so that they are in the current trust region, and are at least some minimum distance (in infty norm) from each other.
+If not enough points are found from the previous iterations, then new parameters based on Latin Hypercube Sampling are
+selected such that they are at least some minimum distance (in infty norm) from each other and from parameters selected in
+previous iterations
+"""
 import argparse
 import json
 import numpy as np
 import apprentice.tools as ato
 
 def checkifnotinminseperationdist(point1,point2,mindist):
+    """
+    Check if two parameters are not at minimum distance from each other (in infty norm)
+
+    :param point1: first parameter
+    :param point2: second parameter
+    :param mindist: minimum distance
+    :type point1: list
+    :type point2: list
+    :type mindist: float
+    :return: true if infty norm of parameter distance is >= minimum distance, false otherwise
+    :rtype: bool
+
+    """
     distarr = [np.abs(point1[vno] - point2[vno]) for vno in range(len(point1))]
     infn = max(distarr)
     return infn >= mindist
 
 def readParamFile(file):
+    """
+    Read parameter file
+
+    :param file: file location path
+    :type file: str
+    :return: list of parameters and a list of corresponding current fidelity
+    :rtype: list, list
+
+    """
     import json
     with open(file, 'r') as f:
         ds = json.load(f)
         return ds['parameters'], ds['at fidelity']
 
 def checkIfPointInTR(point, tr_center, tr_radius):
+    """
+    Check if parameter is within the trust region
+
+    :param point: parameter value
+    :param tr_center: trust region center
+    :param tr_radius: trust region radius
+    :type point: list
+    :type tr_center: list
+    :type tr_radius: list
+    :return: true if parameter is within trust region, false otherwise
+    :rtype: bool
+
+    """
     distarr = [np.abs(point[vno] - tr_center[vno]) for vno in range(len(point))]
     infn = max(distarr)
     return infn <= tr_radius
 
 def checkIfSamePoint(point1,point2):
+    """
+    Check if two parameters are the same with the relative tolerance of 1e-09
+
+    :param point1: first parameter
+    :param point2: second parameter
+    :type point1: list
+    :type point2: list
+    :return: true if the parameters are the same, false otherwise
+    :rtype: bool
+
+    """
     def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
     for vno in range(len(point1)):
@@ -28,6 +81,32 @@ def checkIfSamePoint(point1,point2):
     return True
 
 def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_at_fidelity,p_pool_metadata):
+    """
+    Add all acceptable (in current trust region and not the same parameter) to the pool.
+
+    :param file: parameter file location
+    :param iterno: iteration number
+    :param paramtype: type of parameter. Use ``1`` when it comes from the ``initial``/``single`` MC type run and ``Np`` when
+        the parameter comes from ``multi`` type MC run. See doc for `mc_*.py`
+    :param tr_center: trust region center
+    :param tr_radius: trust region radius
+    :param p_pool: current parameter pool (``None`` if no parameter in pool)
+    :param p_pool_at_fidelity: fidelity of parameters in the pool
+    :param p_pool_metadata: metadata for the parameters in the pool. Metadata includes parameter file,
+        fidelity to reuse, index of parameter in parameter file, iteration number in which the parameter was used,
+        parameter type (``1`` or ``Np``)
+    :type file: str
+    :type iterno: int
+    :type paramtype: str
+    :type tr_center: list
+    :type tr_radius: list
+    :type p_pool: None, list
+    :type p_pool_at_fidelity: list
+    :type p_pool_metadata: object
+    :return: parameter pool, fidelity of parameters in the pool
+    :rtype: list, list
+
+    """
     (params,at_fidelity) = readParamFile(file)
     for pno,p in enumerate(params):
         if checkIfPointInTR(p, tr_center, tr_radius):
@@ -45,12 +124,46 @@ def addParamsToPool(file,iterno,paramtype,tr_center,tr_radius,p_pool,p_pool_at_f
     return p_pool,p_pool_at_fidelity
 
 def addTrCenterToSelPrev(tr_center,file,iterno,p_sel_prev,p_sel_prev_metadata):
+    """
+    Special method to add trust region center to the selected points from previous iterations
+
+    :param tr_center: trust region center
+    :param file: current trust region center parameter file
+    :param iterno: current iteration number
+    :param p_sel_prev: selected parameters from previous iterations
+    :param p_sel_prev_metadata: metadata of selected parameters from previous iterations
+    :type tr_center: list
+    :type file: str
+    :type iterno: int
+    :type p_sel_prev: list
+    :type p_sel_prev_metadata: object
+    :return: selected parameters from previous iterations appended with the current trust region center
+    :rtype: list
+
+    """
     (params,at_fidelity) = readParamFile(file)
     p_pool_metadata = {"0":{"file":file,"fidelity to reuse":at_fidelity[0],
                             "index":0,"k":iterno,"ptype":"1"}}
     return addParamToSelPrev(tr_center,0,p_pool_metadata,p_sel_prev,p_sel_prev_metadata)
 
 def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_metadata):
+    """
+    Add parameter to selected points from previous iterations
+
+    :param param: parameter to add
+    :param poolindex: index of parameter in the pool
+    :param p_pool_metadata: parameter pool metadata
+    :param p_sel_prev: selected parameters from previous iterations
+    :param p_sel_prev_metadata: metadata of selected parameters from previous iterations
+    :type param: list
+    :type poolindex: int
+    :type p_pool_metadata: object
+    :type p_sel_prev: list
+    :type p_sel_prev_metadata: object
+    :return: selected parameters from previous iterations appended with the current trust region center
+    :rtype: list
+
+    """
     if p_sel_prev is None:
         p_sel_prev = np.array([param])
         p_sel_prev_metadata['0'] = p_pool_metadata[str(poolindex)]
@@ -60,6 +173,28 @@ def addParamToSelPrev(param,poolindex,p_pool_metadata,p_sel_prev,p_sel_prev_meta
     return p_sel_prev
 
 def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,Np,mindist):
+    """
+    Add parameter from new parameter pool to selected points from current iteration (new parameters). The new parameters
+    selected are not too close to each other or close to other previously selected parameters.
+
+    :param p_init: new parameter pool
+    :param I_init: boolean associated with each parameter in the new parameter pool, which is false if the
+        corresponding parameter is close to other parameters, true otherwise
+    :param p_sel_prev: selected parameters from previous iterations
+    :param p_sel_new: selected parameters from current iteration
+    :param Np: total number of parameters to get
+    :param mindist: minimum distance
+    :type p_init: list
+    :type I_init: list
+    :type p_sel_prev: list
+    :type p_sel_new: list
+    :type Np: int
+    :type mindist: float
+    :return: selected parameters from current iteration and boolean associated with each parameter in the new parameter
+        pool where the selected parameters and set to false so that they do not get reused in the future
+    :rtype: list, list
+
+    """
     for pino, pi in enumerate(p_init):
         if not I_init[pino]: continue
         result = True
@@ -92,6 +227,38 @@ def addParamsToSelNew(p_init, I_init, p_sel_prev, p_sel_new,Np,mindist):
 def buildInterpolationPoints(processcardarr=None,memoryMap=None,newparamoutfile="newp.json",
                              outdir=None,prevparamoutfile="oldp.json",fnamep="params.dat",
                              fnameg="generator.cmd"):
+    """
+    Build interpolation main method. Steps followed include:
+        - Get a new pool of enough new parameters in the current trust region using latin hypercube (LHS) sampling
+        - Of these, discard parameters that are too close to other parameters in the new pool
+        - Populate pool of previous parameters (within trust region and not same/close point)
+        - Of these, discard parameters that are too close to other parameters in the pool of previous parameters
+        - Add current trust region center to the selected previous parameters
+        - Find close matches from previous pool of parameters for points in the new pool of parameters (these parameters
+          are more likely to follow LHS sa we prefer these). Add these close match parameters to selected previous
+          parameters
+        - If required, sort the remaining pool of previous parameters by descending order of fidelity i.e, next we prefer previous
+          parameters with higher fidelity. Add acceptable (not same/close to previously selected) parameters to
+          selected previous parameters
+        - If required, add acceptable parameters from new pool of parameters to selected new parameters
+        - Save data and exit
+
+    :param processcardarr: list of process cards
+    :param memoryMap: memory map object (see apprentice.tools)
+    :param newparamoutfile: new parameter JSON out file location
+    :param outdir: MC output directory location
+    :param prevparamoutfile: previous parameter JSON out file location
+    :param fnamep: parameter file name
+    :param fnameg: generator file name
+    :type processcardarr: list
+    :type memoryMap: object
+    :type newparamoutfile: str
+    :type outdir: str
+    :type prevparamoutfile: str
+    :type fnamep: str
+    :type fnameg: str
+
+    """
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
     rank = comm.rank
@@ -306,7 +473,11 @@ def buildInterpolationPoints(processcardarr=None,memoryMap=None,newparamoutfile=
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
+    """
+    Helper class for better formatting of the script usage.
+    """
     pass
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate sample points',
                                      formatter_class=SaneFormatter)

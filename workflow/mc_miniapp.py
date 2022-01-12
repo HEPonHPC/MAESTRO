@@ -1,5 +1,8 @@
 import shutil
-
+"""
+Run the Monte Carlo simulator on Miniapp. Miniapp consists of three dimensions of aLund,bLund, and sigma.  
+The MC consists gives data for three observables anda total of 61 bins.
+"""
 import numpy as np
 import json
 import argparse
@@ -12,6 +15,17 @@ from shutil import copyfile
 
 # Keep at outermost level
 def mergeyoda(yodafiles,OUTFILE,RBD):
+    """
+    Merge yoda file statistics into a single yoda file
+
+    :param yodafiles: yoda files to merge
+    :param OUTFILE: output filename
+    :param RBD: merge program location i.e., yodamerge location
+    :type yodafiles: list
+    :type OUTFILE: str
+    :type RBD: str
+
+    """
     from subprocess import Popen, PIPE
     if len(yodafiles) == 1:
         copyfile(yodafiles[0], OUTFILE)
@@ -30,6 +44,17 @@ def mergeyoda(yodafiles,OUTFILE,RBD):
 
 # Keep at outermost level
 def getParameters(d, pfname):
+    """
+    Get parameters from the current working directory
+
+    :param d: current working directory
+    :param pfname: parameter file name with extension (to search for)
+    :type d: str
+    :type pfname: str
+    :return: parameter values (in order of memorymap.param_names)
+    :rtype: list
+
+    """
     re_pfname = re.compile(pfname) if pfname else None
     files = glob.glob(os.path.join(d, "*"))
     param = None
@@ -44,6 +69,21 @@ def getParameters(d, pfname):
 
 # Keep at outermost level
 def MCcmd(pp,fidelity,loc,MPATH):
+    """
+    Run the miniapp MC command
+
+    :param pp: parameter values
+    :param fidelity: number of events to use
+    :param loc: output location
+    :param MPATH: miniapp MC location
+    :type pp: list
+    :type fidelity: int
+    :type loc: str
+    :type MPATH: str
+    :return: return code obtained after running miniapp
+    :rtype: int
+
+    """
     p = Popen(
         [MPATH, str(pp[0]), str(pp[1]), str(pp[2]),
          str(fidelity), str(np.random.randint(1,9999999)), "0", "1", loc],
@@ -55,6 +95,14 @@ def MCcmd(pp,fidelity,loc,MPATH):
 
 # Keep at outermost level
 def removeYodaDir(rmdirname):
+    """
+    Helper/utility function to remove yoda directory. This is useful when the MC returns a non zero code for a certain
+    parameter and the parameter needs to be removed from further consideration
+
+    :param rmdirname: name of yoda directory to remove
+    :type rmdirname: str
+
+    """
     import os,shutil
     based = os.path.dirname(rmdirname)
     INDIRSLIST = glob.glob(os.path.join(based, "*"))
@@ -77,6 +125,33 @@ def removeYodaDir(rmdirname):
 # Keep at outermost level
 def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
+    """
+    Method used to run the MC parallel on number of events (fidelity). For each parameter, the MC is run parallel on
+    number of events and then these statistics are merged using merge function
+
+    :param paramfile: location of the JSON file with parameters from the current iteration
+    :param prevparamfile: location of the JSON file with parameters from the previous iterations that can be used in the
+        current iteration
+    :param wtfile: location of the weight file
+    :param memorymap: memory map object (see apprentice.tools)
+    :param isbebop: true if running on bebop, otherwise false
+    :param outfile: output file name (not used)
+    :param outdir: output location
+    :param pfname: parameter file name with extension (to search for)
+    :type paramfile: str
+    :type prevparamfile: str
+    :type wtfile: str
+    :type memorymap: object
+    :type isbebop: bool
+    :type outfile: str
+    :type outdir: str
+    :type pfname: str
+    :return: simulation budget used, number of parameters on which the run was successful
+    :rtype: int, int
+
+    .. todo:: remove outfile
+
+    """
     # Keep at parallel on Ne level (main fn)
     def chunkfidelity(newfidelity,minfidelity):
         size = comm.Get_size()
@@ -356,6 +431,33 @@ def problem_main_program_parallel_on_Ne(paramfile,prevparamfile,wtfile,memorymap
 # Keep at outermost level
 def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap = None,isbebop=False,
                          outfile=None,outdir=None,pfname="params.dat"):
+    """
+    Method used to run the MC parallel on parameters. The MC is run parallel on the parameters for the total number of
+    events for the respective parameter
+
+    :param paramfile: location of the JSON file with parameters from the current iteration
+    :param prevparamfile: location of the JSON file with parameters from the previous iterations that can be used in the
+        current iteration
+    :param wtfile: location of the weight file
+    :param memorymap: memory map object (see apprentice.tools)
+    :param isbebop: true if running on bebop, otherwise false
+    :param outfile: output file name (not used)
+    :param outdir: output location
+    :param pfname: parameter file name with extension (to search for)
+    :type paramfile: str
+    :type prevparamfile: str
+    :type wtfile: str
+    :type memorymap: object
+    :type isbebop: bool
+    :type outfile: str
+    :type outdir: str
+    :type pfname: str
+    :return: simulation budget used, number of parameters on which the run was successful
+    :rtype: int, int
+
+    .. todo:: remove outfile
+
+    """
     def selectFilesAndYodaMerge(d,loc,mainfileexists,YPATH):
         yodafiles = []
         mainfile = os.path.join(d, "out_i0.yoda")
@@ -644,48 +746,12 @@ def problem_main_program_parallel_on_Np(paramfile,prevparamfile,wtfile,memorymap
 
     return simulationBudgetUsed,successParams
 
-class SaneFormatter(argparse.RawTextHelpFormatter,
-                    argparse.ArgumentDefaultsHelpFormatter):
-    pass
+def runMCminiapp():
+    """
+    Run the miniapp MC. If the option is ``initial`` or ``single``, then run the MC on number of events.
+    If option is ``multi``, then run the MC on parameters.
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Simulation',
-                                     formatter_class=SaneFormatter)
-    parser.add_argument("-e", dest="EXPDATA", type=str, default=None,
-                        help="Experimental data file (JSON)")
-    parser.add_argument("-o", dest="OPTION", type=str, default=None,
-                        help="Option (initial,single, or multi)")
-    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
-                        help="Process Card location(s) (seperated by a space)")
-    parser.add_argument("-b", "--bebop", dest="BEBOP", default=False, action="store_true",
-                        help="Running on BEBOP")
-    parser.add_argument("-w", dest="WEIGHTS", type=str, default="conf/weights",
-                        help="Weights file (TXT)")
-
-
-    args = parser.parse_args()
-    from mpi4py import MPI
-
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    comm.barrier()
-
-    (memorymap, pyhenson) = ato.readMemoryMap()
-
-    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
-    debug = True \
-        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
-        else False
-    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
-    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
-    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
-    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
-    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
-    min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
-                                            key="min_param_bounds")
-    max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
-                                            key="max_param_bounds")
-
+    """
     if args.OPTION == "initial":
         prevparamfile = None
         paramfile = "logs/newparams_1_k0.json"
@@ -717,7 +783,7 @@ if __name__ == "__main__":
                 with open(paramfile, 'w') as f:
                     json.dump({"parameters": [tr_center],"at fidelity":[0.]}, f, indent=4)
                 ato.writePythiaFiles(args.PROCESSCARDS, param_names, [tr_center],
-                                 outdir)
+                                     outdir)
 
             (simulationBudgetUsed,successParams) = problem_main_program_parallel_on_Ne(
                 paramfile,
@@ -803,6 +869,53 @@ if __name__ == "__main__":
                 ato.putInMemoryMap(memoryMap=memorymap, key="status",
                                    value=statusToWrite)
                 ato.writeMemoryMap(memoryMap=memorymap)
+
+class SaneFormatter(argparse.RawTextHelpFormatter,
+                    argparse.ArgumentDefaultsHelpFormatter):
+    """
+    Helper class for better formatting of the script usage.
+    """
+    pass
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Run Simulation',
+                                     formatter_class=SaneFormatter)
+    parser.add_argument("-e", dest="EXPDATA", type=str, default=None,
+                        help="Experimental data file (JSON)")
+    parser.add_argument("-o", dest="OPTION", type=str, default=None,
+                        help="Option (initial,single, or multi)")
+    parser.add_argument("-c", dest="PROCESSCARDS", type=str, default=[], nargs='+',
+                        help="Process Card location(s) (seperated by a space)")
+    parser.add_argument("-b", "--bebop", dest="BEBOP", default=False, action="store_true",
+                        help="Running on BEBOP")
+    parser.add_argument("-w", dest="WEIGHTS", type=str, default="conf/weights",
+                        help="Weights file (TXT)")
+
+
+    args = parser.parse_args()
+    from mpi4py import MPI
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    comm.barrier()
+
+    (memorymap, pyhenson) = ato.readMemoryMap()
+
+    k = ato.getFromMemoryMap(memoryMap=memorymap, key="iterationNo")
+    debug = True \
+        if "All" in ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel")) \
+        else False
+    tr_radius = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_radius")
+    tr_center = ato.getFromMemoryMap(memoryMap=memorymap, key="tr_center")
+    N_p = ato.getFromMemoryMap(memoryMap=memorymap, key="N_p")
+    dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
+    param_names = ato.getFromMemoryMap(memoryMap=memorymap, key="param_names")
+    min_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                            key="min_param_bounds")
+    max_param_bounds = ato.getFromMemoryMap(memoryMap=memorymap,
+                                            key="max_param_bounds")
+
+
 
 
 
