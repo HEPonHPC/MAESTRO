@@ -1,3 +1,6 @@
+"""
+Workflow approximation module. This module approximates the MC signal and noise data for each bin/component of the data.
+"""
 import h5py
 import apprentice
 import json
@@ -8,14 +11,41 @@ import apprentice.tools as ato
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
                     argparse.ArgumentDefaultsHelpFormatter):
+    """
+    Helper class for better formatting of the script usage.
+    """
     pass
 
 def projection(X,MIN,MAX):
+    """
+    Project gradient onto a box
+
+    :param X: graient to be projected
+    :param MIN: minimum bounds of the box
+    :param MAX: maximum bounds of the box
+    :type X: list
+    :type MIN: list
+    :type MAX: list
+    :return: projected gradient
+    :rtype: list
+
+    """
     return np.array([
         min(max(x,mi),ma) for x,mi,ma in zip(X,MIN,MAX)
     ])
 
 def run_approx(memorymap,expdatafile,wtfile):
+    """
+    Construct approximations
+
+    :param expdatafile: Experimental data file location with experimental data mean and standard decviation
+    :param wtfile: observable weights file
+    :param memorymap: memory map object (see apprentice.tools)
+    :type memorymap:
+    :type expdatafile: str
+    :type wtfile: str
+
+    """
     oloptions = ato.getOutlevelDef(ato.getFromMemoryMap(memoryMap=memorymap, key="outputlevel"))
     debug = True if "All" in oloptions else False
     dim = ato.getFromMemoryMap(memoryMap=memorymap, key="dim")
