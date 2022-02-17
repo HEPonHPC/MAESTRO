@@ -7,32 +7,46 @@ import json
 import math
 from mfstrodf import DiskUtil
 class MCTask(object):
-    def __init__(self,mc_working_directory,param_names):
+    def __init__(self,mc_working_directory):
         self.mc_run_folder = mc_working_directory
-        #TODO remove param_names and get this info from params.dat
-        self.param_names = param_names
 
     # todo add to doc
     # todo can be called from __main__ or directly on object (should work as a blackbox -- like a task in the workflow)
     def run_mc(self):
         raise Exception("The function objective must be implemented in the derived class")
 
-    #todo add to doc
-    #todo return max sigma. If sigma cannot be found return None
+    # todo add to doc
+    # todo return max sigma. If sigma cannot be found return None
     def merge_statistics_and_get_max_sigma(self):
         raise Exception("The function objective must be implemented in the derived class")
 
-    #todo add to doc
-    #todo return df and additional_data object
+    # todo add to doc
+    # todo return df and additional_data object (additional_data can be none)
     def convert_mc_output_to_df(self, all_param_directory):
         raise Exception("The function objective must be implemented in the derived class")
+
+    @staticmethod
+    def read_params_file(path):
+        from collections import OrderedDict
+        parameters = []
+        with open(path, "r") as f:
+            L = [l.strip() for l in f if not l.startswith("#")]
+            for num, line in enumerate(L):
+                parts = line.split()
+                if len(parts) == 2:
+                    parameters.append(float(parts[1]))
+                elif len(parts) == 1:
+                    parameters.append(float(parts[0]))
+                else:
+                    raise Exception("Error in parameter input format")
+        return parameters
 
     def get_param_from_directory(self,param_directory,fnamep="params.dat"):
         """
         Get all parameters from MC run directory
         :param pfname: parameter file name with extension (to search for)
         :type pfname: str
-        :return: parameter values (in order of param_names)
+        :return: parameter values (in order of how they a listed in fnamep)
         :rtype: list
 
         """
@@ -41,11 +55,10 @@ class MCTask(object):
         param = None
         for f in files:
             if re_pfname and re_pfname.search(os.path.basename(f)):
-                param = apprentice.io.read_paramsfile(f)
+                param = MCTask.read_params_file(f)
         if param is None:
             raise Exception("Something went wrong. Cannot get parameter")
-        pp = [param[pn] for pn in self.param_names]
-        return pp
+        return param
 
     def get_param_from_metadata(self, metadata_file):
         with open(metadata_file, 'r') as f:

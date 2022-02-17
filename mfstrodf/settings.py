@@ -71,7 +71,7 @@ class Settings(object):
             import mfstrodf.mc
             mc_class = getattr(mfstrodf.mc,ds['mc']['location_str'])
             #TODO do this only for function call (mc.caller_type) type. If script call or workflow, dont create this
-            self.config_dict['mc']['object'] = mc_class(self.mc_run_folder_path,self.param_names)
+            self.config_dict['mc']['object'] = mc_class(self.mc_run_folder_path)
         except:
             raise Exception("MC class \""+ds['mc']['location_str']+"\" not found in mfstrodf.mc")
 
