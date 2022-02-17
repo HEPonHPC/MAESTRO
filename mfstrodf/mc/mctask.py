@@ -10,18 +10,18 @@ class MCTask(object):
     def __init__(self,mc_working_directory):
         self.mc_run_folder = mc_working_directory
 
-    # todo add to doc
-    # todo can be called from __main__ or directly on object (should work as a blackbox -- like a task in the workflow)
+    # todo === add to doc
+    # todo === can be called from __main__ or directly on object (should work as a blackbox -- like a task in the workflow)
     def run_mc(self):
         raise Exception("This function must be implemented in the derived class")
 
-    # todo add to doc
-    # todo return max sigma. If sigma cannot be found return None
+    # todo === add to doc
+    # todo === return max sigma. If sigma cannot be found return None
     def merge_statistics_and_get_max_sigma(self):
         raise Exception("This function must be implemented in the derived class")
 
-    # todo add to doc
-    # todo return df and additional_data object (additional_data can be none)
+    # todo === add to doc
+    # todo === return df and additional_data object (additional_data can be none)
     def convert_mc_output_to_df(self, all_param_directory):
         raise Exception("This function must be implemented in the derived class")
 

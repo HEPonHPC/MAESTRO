@@ -34,7 +34,6 @@ class TRSubproblem(object):
             sp_object = self.state.subproblem_function_handle(self,
                                                               parameter=self.state.tr_center_scaled,
                                                               use_scaled=True)  # calls self.appr_tuning_objective
-            #TODO bug: projected gradient norm is icorrect (always 1 when using Tuning obk without error vals
             grad = sp_object.gradient(self.state.tr_center_scaled)
             min_param_bounds = self.state.min_parameter_bounds_scaled
             max_param_bounds = self.state.max_parameter_bounds_scaled
@@ -156,7 +155,7 @@ class TRSubproblem(object):
                                                 debug=self.debug)
         if parameter is not None:
             IO._AS.setRecurrence(parameter)
-            IO._EAS.setRecurrence(parameter)
+            if errscaledoutfile is not None: IO._EAS.setRecurrence(parameter)
         return IO
 
     def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False):

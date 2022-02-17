@@ -44,11 +44,11 @@ class ModelConstruction(object):
         for data_name in self.state.data_names:
             self.state.get_model_function_handle(data_name)(self,data_name)
 
-    #TODO to implement
+    #TODO to implement. We need this for calculating values that were nan/inf of MC(\widetilde{\p}^{(k+1})
     def get_model_objects(self):
         pass
 
-    #TODO: Change appr_* functions after changes to apprentice
+    #TODO: === Change appr_* functions after changes to apprentice
     def appr_pa_m_construct(self,data_name):
         self.appr_appx_construct(data_name)
     def appr_ra_m_n_construct(self,data_name):

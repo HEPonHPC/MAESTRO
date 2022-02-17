@@ -231,7 +231,6 @@ class Settings(object):
 
     def set_data_names(self, dn):
         if 'data_names' not in self.algorithm_parameters_dict:
-            pprint.pp(dn)
             self.algorithm_parameters_dict['data_names'] = dn
 
     @property
