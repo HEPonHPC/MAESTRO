@@ -30,7 +30,7 @@ class TrAmmendment(object):
             if self.debug: print("inside tr update w gradcond", self.state.tr_gradient_condition)
             sys.stdout.flush()
 
-            if not self.state.tr_gradient_condition:
+            if not self.state.close_to_min_condition:
                 with open(self.meta_data_file_kp1, 'r') as f:
                     ds = json.load(f)
                 p_star_kp1 = ds['parameters'][0]
@@ -63,15 +63,16 @@ class TrAmmendment(object):
                                                                              )
                     if rank==0 and self.one_line_output:
                         str = ""
-                    if self.state.k %10 == 0:
-                        str = "iter\tGC   PGNorm     \Delta_k" \
-                              "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
-                    norm_of_step = 0.
-                    str += "%d\tT %.6E %.6E %.6E %s" \
-                           %(self.state.k+1,self.state.proj_grad_norm,self.state.tr_radius,norm_of_step,
-                             self.state.algorithm_status.tr_update_code)
-                    print(str)
-                    sys.stdout.flush()
+                        if self.state.k %10 == 0:
+                            str = "iter\tCMC  PGNorm     \Delta_k" \
+                                  "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
+                        norm_of_step = 0.
+                        str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E" \
+                               %(self.state.k+1,self.state.proj_grad_norm,self.state.tr_radius,norm_of_step,
+                                 self.state.algorithm_status.tr_update_code,
+                                 approx_obj_val_k,approx_obj_val_kp1,mc_obj_val_k,mc_obj_val_kp1,self.state.fidelity,rho)
+                        print(str)
+                        sys.stdout.flush()
                 else:
                     if self.debug: print("rho >= eta. New point accepted")
                     if ParameterPointUtil.is_close(
@@ -93,7 +94,7 @@ class TrAmmendment(object):
                     if rank==0 and self.one_line_output:
                         str = ""
                         if self.state.k %10 == 0:
-                            str = "iter\tGC   PGNorm     \Delta_k" \
+                            str = "iter\tCMC  PGNorm     \Delta_k" \
                                   "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
                         str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E" \
                                %(self.state.k+1,self.state.proj_grad_norm,self.state.tr_radius,norm_of_step,
@@ -111,12 +112,13 @@ class TrAmmendment(object):
                 # DiskUtil.copyanything(self.meta_data_file_k,self.meta_data_file_kp1)
                 # DiskUtil.copyanything(self.mc_run_folder_k,self.mc_run_folder_kp1)
                 self.state.mc_object.set_current_iterate_as_next_iterate(current_iterate_meta_data_file=self.meta_data_file_k,
-                                                                         next_iterate_meta_data_file=self.meta_data_file_kp1
+                                                                         next_iterate_meta_data_file=self.meta_data_file_kp1,
+                                                                         next_iterate_mc_directory=self.mc_run_folder_kp1
                                                                          )
                 if rank==0 and self.one_line_output:
                     str = ""
                     if self.state.k %10 == 0:
-                        str = "iter\tGC   PGNorm     \Delta_k" \
+                        str = "iter\tCMC  PGNorm     \Delta_k" \
                               "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
                     norm_of_step = 0.
                     str += "%d\tT %.6E %.6E %.6E %s" \
@@ -136,7 +138,7 @@ class TrAmmendment(object):
 
     def check_stopping_conditions(self):
         if self.state.algorithm_status.status_val == 0:
-            if not self.state.tr_gradient_condition:
+            if not self.state.close_to_min_condition:
                 if self.state.fidelity >= self.state.max_fidelity:
                     self.state.increment_no_iters_at_max_fidelity()
                     self.state.set_radius_at_which_max_fidelity_reached(self.state.previous_tr_radius)

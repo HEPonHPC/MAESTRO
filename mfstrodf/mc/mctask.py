@@ -83,17 +83,24 @@ class MCTask(object):
         with open(file,'w') as f:
             json.dump(ds, f, indent=4)
 
-    def set_current_iterate_as_next_iterate(self, current_iterate_meta_data_file, next_iterate_meta_data_file):
+    def set_current_iterate_as_next_iterate(self,
+                                            current_iterate_meta_data_file,
+                                            next_iterate_meta_data_file,
+                                            next_iterate_mc_directory=None
+                                            ):
 
-        with open(next_iterate_meta_data_file,'r') as f:
-            next_md_ds = json.load(f)
         with open(current_iterate_meta_data_file,'r') as f:
             curr_md_ds = json.load(f)
-
         curr_mc_dir_name = os.path.join(os.path.dirname(curr_md_ds['param directory'][0]),
                                         '__'+os.path.basename(curr_md_ds['param directory'][0]))
-        new_mc_dir_name = next_md_ds['param directory'][0]
-        curr_md_ds['param directory'] = next_md_ds['param directory']
+        if os.path.exists(next_iterate_meta_data_file):
+            with open(next_iterate_meta_data_file,'r') as f:
+                next_md_ds = json.load(f)
+            new_mc_dir_name = next_md_ds['param directory'][0]
+            curr_md_ds['param directory'] = next_md_ds['param directory']
+        else:
+            new_mc_dir_name = os.path.join(next_iterate_mc_directory,os.path.basename(curr_md_ds['param directory'][0]))
+            curr_md_ds['param directory'] = [new_mc_dir_name]
 
         with open(next_iterate_meta_data_file,'w') as f:
             json.dump(curr_md_ds,f,indent=4)

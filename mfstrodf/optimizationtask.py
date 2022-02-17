@@ -21,11 +21,20 @@ class OptimizaitionTask(object):
             except:
                 raise Exception("Cannot run workflow without pyhenson")
 
+    def check_whether_to_stop(self):
+        if self.state.algorithm_status.status_val != 0:
+            self.state.save(to_log=True)
+            print("The algorithm stopped with exit code {} because:\n".format(self.state.algorithm_status.status_val))
+            print(self.state.algorithm_status.status_def)
+            sys.exit(self.state.algorithm_status.status_val)
+
     def run(self):
+        self.check_whether_to_stop()
         if self.state.next_step == "ops_start":
             self.ops_start()
         else: self.mc_caller_interpretor_resolver(meta_data_file=self.state.meta_data_file,
                                                   next_step=self.state.next_step)
+        self.check_whether_to_stop()
 
     def ops_start(self):
         meta_data_file = self.state.working_directory.get_log_path(
@@ -33,6 +42,8 @@ class OptimizaitionTask(object):
         self.initialize(meta_data_file)
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
                                             next_step="ops_sample")
+        self.check_whether_to_stop()
+
     def ops_sample(self):
         if self.state.k == 0:
             # Move RUN folder to appropriate folder
@@ -47,6 +58,7 @@ class OptimizaitionTask(object):
 
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
                                             next_step="ops_model")
+        self.check_whether_to_stop()
 
     def ops_model(self):
         oldparamdir  = self.state.working_directory.get_log_path("MC_RUN")
@@ -54,8 +66,11 @@ class OptimizaitionTask(object):
         DiskUtil.copyanything(oldparamdir,newparamdir)
         model = ModelConstruction(self.state,newparamdir)
         model.consturct_models()
+        self.check_whether_to_stop()
         subproblem = TRSubproblem(self.state)
         subproblem.check_close_to_optimal_conditions()
+        self.check_whether_to_stop()
+        if self.state.close_to_min_condition: self.ops_tr()
         tr_subproblem_result_file = self.state.working_directory.get_log_path("tr_subproblem_result_k{}.json".format(self.state.k))
         subproblem.solve_tr_subproblem(tr_subproblem_result_file)
         meta_data_file = self.state.working_directory.get_log_path(
@@ -81,11 +96,13 @@ class OptimizaitionTask(object):
                                              **self.state.mc_parameters)
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
                                             next_step="ops_tr")
+        self.check_whether_to_stop()
 
     def ops_tr(self):
         oldparamdir  = self.state.working_directory.get_log_path("MC_RUN")
         newparamdir_kp1  = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k+1))
-        DiskUtil.copyanything(oldparamdir,newparamdir_kp1)
+        if not self.state.close_to_min_condition:
+            DiskUtil.copyanything(oldparamdir,newparamdir_kp1)
         newparamdir_k = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k))
         meta_data_file_kp1 = self.state.working_directory.get_log_path(
             "parameter_metadata_1_k{}.json".format(self.state.k + 1))
@@ -100,9 +117,7 @@ class OptimizaitionTask(object):
             self.state.increment_k()
             self.ops_sample()
         else:
-            print("The algorithm stopped with exit code {} because:\n".format(self.state.algorithm_status.status_val))
-            print(self.state.algorithm_status.status_def)
-            sys.exit(self.state.algorithm_status.status_val)
+            self.check_whether_to_stop()
 
     def initialize(self,meta_data_file):
         debug = OutputLevel.is_debug(self.state.output_level)

@@ -322,7 +322,7 @@ class InterpolationSample(object):
         ############################################################
         # Save data and exit
         ############################################################
-        self.state.update_tr_gradient_condition(False)
+        self.state.update_close_to_min_condition(False)
 
         if rank == 0:
             if self.p_sel is not None:

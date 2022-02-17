@@ -213,8 +213,8 @@ class Settings(object):
     def update_fidelity(self,new_fidelity):
         self.algorithm_parameters_dict['fidelity'] = new_fidelity
 
-    def update_tr_gradient_condition(self,value=False):
-        self.algorithm_parameters_dict['tr_gradient_condition'] = value
+    def update_close_to_min_condition(self,value=False):
+        self.algorithm_parameters_dict['close_to_min_condition'] = value
 
     def update_proj_grad_norm(self,pgnorm):
         self.algorithm_parameters_dict['proj_grad_norm'] = pgnorm
@@ -236,9 +236,9 @@ class Settings(object):
         return 1.0
 
     @property
-    def tr_gradient_condition(self):
-        if 'tr_gradient_condition' in self.algorithm_parameters_dict:
-            return self.algorithm_parameters_dict['tr_gradient_condition']
+    def close_to_min_condition(self):
+        if 'close_to_min_condition' in self.algorithm_parameters_dict:
+            return self.algorithm_parameters_dict['close_to_min_condition']
         return False
 
     @property
