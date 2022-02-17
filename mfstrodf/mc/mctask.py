@@ -69,12 +69,13 @@ class MCTask(object):
 
     def write_param(self, parameters, parameter_names, at_fidelities, run_fidelities,
                     file, mc_run_folder, expected_folder_name,
-                    fnamep="params.dat", fnamef="fidelity.dat", **kwargs):
+                    fnamep="params.dat", fnamerf="run_fidelity.dat",
+                    fnameaf="at_fidelity.dat",**kwargs):
         DiskUtil.remove_directory(mc_run_folder)
         os.makedirs(mc_run_folder,exist_ok=True)
         param_dir = []
         mc_param_dir = []
-        for num, (p, fid) in enumerate(zip(parameters, run_fidelities)):
+        for num, (p, r_fid,a_fid) in enumerate(zip(parameters, run_fidelities,at_fidelities)):
             npad = "{}".format(num).zfill(1+int(np.ceil(np.log10(len(parameters)))))
             outd_mc_run_folder = os.path.join(mc_run_folder, npad)
             outd_expected_folder = os.path.join(expected_folder_name, npad)
@@ -85,9 +86,12 @@ class MCTask(object):
             with open(outfparams, "w") as pf:
                 for k, v in zip(parameter_names, p):
                     pf.write("{name} {val:e}\n".format(name=k, val=v))
-            outffidelities = os.path.join(outd_mc_run_folder, fnamef)
+            outffidelities = os.path.join(outd_mc_run_folder, fnamerf)
             with open(outffidelities, "w") as ff:
-                ff.write("{}".format(fid))
+                ff.write("{}".format(r_fid))
+            outffidelities = os.path.join(outd_mc_run_folder, fnameaf)
+            with open(outffidelities, "w") as ff:
+                ff.write("{}".format(a_fid))
         ds = {
             "parameters": parameters,
             "at fidelity": at_fidelities,
@@ -139,12 +143,12 @@ class MCTask(object):
             ds = json.load(f)
         return ds['at fidelity']
 
-    def get_run_fidelity_from_directory(self,param_directory,fnamef="fidelity.dat"):
-        re_fnamef = re.compile(fnamef) if fnamef else None
+    def get_fidelity_from_directory(self,param_directory,fnamef="run_fidelity.dat"):
+        re_fnamerf = re.compile(fnamef) if fnamef else None
         files = glob.glob(os.path.join(param_directory, "*"))
         fid = None
         for file in files:
-            if re_fnamef and re_fnamef.search(os.path.basename(file)):
+            if re_fnamerf and re_fnamerf.search(os.path.basename(file)):
                 with open(file) as f:
                     fid = int(next(f))
         if fid is None:
@@ -156,13 +160,14 @@ class MCTask(object):
         return newINDIRSLIST if len(newINDIRSLIST)==1 else \
             sorted(newINDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
 
-    def write_run_fidelity_to_metadata_and_directory(self,metadata_file,run_fidelities,fnamef="fidelity.dat"):
+    def write_fidelity_to_metadata_and_directory(self,metadata_file,fidelities,metadata_file_key='run fidelity',
+                                                 fnamef="run_fidelity.dat"):
         with open(metadata_file, 'r') as f:
             ds = json.load(f)
-        ds['run fidelity'] = run_fidelities
+        ds[metadata_file_key] = fidelities
         with open(metadata_file,'w') as f:
             json.dump(ds, f, indent=4)
-        for (fid,exp_d,mc_d) in zip(run_fidelities,ds['param directory'],ds['mc param directory']):
+        for (fid,exp_d,mc_d) in zip(fidelities,ds['param directory'],ds['mc param directory']):
             d=exp_d if os.path.exists(exp_d) else mc_d
             outffidelities = os.path.join(d, fnamef)
             with open(outffidelities, "w") as ff:

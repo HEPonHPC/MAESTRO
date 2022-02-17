@@ -8,12 +8,14 @@ import pprint
 
 
 class InterpolationSample(object):
-    def __init__(self, state,parameter_file="params.dat",fidelity_file="fidelity.dat"):
+    def __init__(self, state,parameter_file="params.dat",run_fidelity_file="run_fidelity.dat",
+                 at_fidelity_file="at_fidelity.dat"):
         self.state: Settings = state
         self.debug = OutputLevel.is_debug(self.state.output_level)
         self.n_to_get = 2 * self.state.N_p
         self.parameter_file = parameter_file
-        self.fidelity_file = fidelity_file
+        self.run_fidelity_file = run_fidelity_file
+        self.at_fidelity_file = at_fidelity_file
         ############################################################
         # Data Structures
         ############################################################
@@ -337,14 +339,15 @@ class InterpolationSample(object):
                                                  mc_run_folder=self.state.mc_run_folder_path,
                                                  expected_folder_name=expected_folder_name,
                                                  fnamep=self.parameter_file,
-                                                 fnamef=self.fidelity_file,
+                                                 fnamerf=self.run_fidelity_file,
+                                                 fnameaf=self.at_fidelity_file,
                                                  **self.state.mc_parameters)
                 with open(meta_data_file,'r') as f:
                     ds = json.load(f)
                 for no,d_from in enumerate(self.p_sel_metadata['param dir']):
                     if d_from is not None:
                         d_to = ds['mc param directory'][no]
-                        DiskUtil.copy_directory_contents(d_from,d_to,exclude=[self.parameter_file,self.fidelity_file])
+                        DiskUtil.copy_directory_contents(d_from,d_to,exclude=[self.parameter_file,self.at_fidelity_file,self.run_fidelity_file])
 
             else:
                 raise Exception("Something went horribly wrong in InterpolationSample.build_interpolation_points")

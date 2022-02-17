@@ -530,7 +530,7 @@ class AlgorithmStatus():
             2:"Max iterations reached",
             3:"Simulation budget depleted",
             4:"MC was successful on less than 1 or N_p parameters (error)",
-            5:"Trust region radius is an order of magnitude less than the radius at which max fidelity was reached",
+            5:"Trust region radius is an order of magnitude smaller than the radius at which max fidelity was reached",
             6:"Fidelity has been at a maximum value for the specified number of iterations",
             7:"The usable MC output was less than what was needed for constructing a model."
               "It is possible that too many parameters yielded MC output that was either nan or infty",

@@ -12,10 +12,12 @@ from mpi4py import MPI
 from mfstrodf import Settings,OutputLevel,DiskUtil,InterpolationSample,ModelConstruction,TRSubproblem,TrAmmendment
 class OptimizaitionTask(object):
     def __init__(self, working_dir=None,algorithm_parameters=None,config=None,
-                 parameter_file="params.dat",fidelity_file="fidelity.dat"):
+                 parameter_file="params.dat",run_fidelity_file="run_fidelity.dat",
+                 at_fidelity_file="at_fidelity.dat"):
         self.state = Settings(working_dir,algorithm_parameters,config)
         self.parameter_file = parameter_file
-        self.fidelity_file = fidelity_file
+        self.run_fidelity_file = run_fidelity_file
+        self.at_fidelity_file = at_fidelity_file
         if self.state.mc_call_on_workflow:
             try:
                 import pyhenson as h
@@ -55,7 +57,7 @@ class OptimizaitionTask(object):
 
         meta_data_file = self.state.working_directory.get_log_path(
             "parameter_metadata_Np_k{}.json".format(self.state.k))
-        sample_obj = InterpolationSample(self.state,self.parameter_file,self.fidelity_file)
+        sample_obj = InterpolationSample(self.state,self.parameter_file,self.run_fidelity_file)
         sample_obj.build_interpolation_points(meta_data_file)
 
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
@@ -94,7 +96,7 @@ class OptimizaitionTask(object):
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name=expected_folder_name,
                                              fnamep=self.parameter_file,
-                                             fnamef=self.fidelity_file,
+                                             fnamerf=self.run_fidelity_file,
                                              **self.state.mc_parameters)
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
                                             next_step="ops_tr")
@@ -148,7 +150,8 @@ class OptimizaitionTask(object):
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name = expected_folder_name,
                                              fnamep=self.parameter_file,
-                                             fnamef=self.fidelity_file,
+                                             fnamerf=self.run_fidelity_file,
+
                                              **self.state.mc_parameters)
 
 
@@ -193,7 +196,10 @@ class OptimizaitionTask(object):
                 nf = 0
             new_fidelities.append(nf)
         # pprint.pprint(new_fidelities)
-        self.state.mc_object.write_run_fidelity_to_metadata_and_directory(meta_data_file,new_fidelities)
+        self.state.mc_object.write_fidelity_to_metadata_and_directory(meta_data_file,current_fidelities,
+                                                                      metadata_file_key="at fidelity",
+                                                                      fnamef="at_fidelity.dat")
+        self.state.mc_object.write_fidelity_to_metadata_and_directory(meta_data_file,new_fidelities)
         if sum(new_fidelities) >0:
             self.mc_caller_interpretor_resolver(meta_data_file,next_step)
         else:

@@ -49,6 +49,8 @@ class TrAmmendment(object):
                     print("chi2/mc k+1\t= %.4E" % (mc_obj_val_kp1))
                 rho = (mc_obj_val_k - mc_obj_val_kp1) / (approx_obj_val_k - approx_obj_val_kp1)
                 if self.debug: print("rho k\t\t= %.4E" % (rho))
+                #todo norm of step becomes 0 after Accept and reject step
+                #todo also SVD error is triggered when rho is 0
                 norm_of_step = ParameterPointUtil.get_infinity_norm(np.array(p_star_kp1)-np.array(self.state.tr_center))
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")

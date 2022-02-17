@@ -54,6 +54,17 @@ class OutputLevel():
             else False
 
 class DiskUtil():
+
+    @staticmethod
+    def remove_file(file):
+        os.remove(file)
+
+    @staticmethod
+    def moveanything(src, dst):
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+        shutil.move(src, dst)
+
     @staticmethod
     def copyanything(src, dst):
         try:
