@@ -1,6 +1,8 @@
 from mfstrodf import OutputLevel, Settings, ParameterPointUtil, DiskUtil
 import numpy as np
 import json, os
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 from mpi4py import MPI
 import pprint
 

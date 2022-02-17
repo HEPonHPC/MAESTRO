@@ -1,5 +1,7 @@
 from mfstrodf import OutputLevel,Settings,MCSubproblem, ParameterPointUtil, TRSubproblem
 import json, sys
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import numpy as np
 import pprint
 class TrAmmendment(object):

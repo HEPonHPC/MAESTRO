@@ -4,6 +4,8 @@ import re,glob,os
 import apprentice
 import numpy as np
 import json
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import math
 from mfstrodf import DiskUtil
 class MCTask(object):

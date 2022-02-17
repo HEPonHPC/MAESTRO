@@ -2,6 +2,9 @@ import copy
 import pprint
 
 import os,sys
+import json
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import numpy as np
 
 
@@ -20,7 +23,6 @@ class Settings(object):
 
     def read_setting_file(self, file):
         try:
-            import json
             with open(file, 'r') as f:
                 ds = json.load(f)
                 return ds
@@ -28,7 +30,6 @@ class Settings(object):
             raise Exception("setting file type not supported")
 
     def write_setting_file(self, ds, file):
-        import json
         with open(file, 'w') as f:
             json.dump(ds, f, indent=4)
 

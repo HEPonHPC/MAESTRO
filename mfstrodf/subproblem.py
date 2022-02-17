@@ -2,6 +2,8 @@ from mfstrodf import Settings, OutputLevel, DiskUtil
 import numpy as np
 import sys
 import json
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import pprint
 
 
@@ -85,7 +87,6 @@ class TRSubproblem(object):
 
     def appr_tuning_objective(self, parameter=None, use_scaled=False):
         # Make data compatible to work with apprentice
-        import json
         expdatafile = self.state.subproblem_parameters['data']
         wtkeys = []
         with open(expdatafile, 'r') as f:
