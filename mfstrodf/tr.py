@@ -66,7 +66,6 @@ class TrAmmendment(object):
                         if self.state.k %10 == 0:
                             str = "iter\tCMC  PGNorm     \Delta_k" \
                                   "     NormOfStep  S   C_RA(P_k)  C_RA(P_{k+1}) C_MC(P_k)  C_MC(P_{k+1}) N_e(apprx)    \\rho\n"
-                        norm_of_step = 0.
                         str += "%d\tF %.6E %.6E %.6E %s %.6E %.6E %.6E %.6E %.4E %.6E" \
                                %(self.state.k+1,self.state.proj_grad_norm,self.state.tr_radius,norm_of_step,
                                  self.state.algorithm_status.tr_update_code,

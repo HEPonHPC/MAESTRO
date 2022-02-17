@@ -34,6 +34,7 @@ class TRSubproblem(object):
             sp_object = self.state.subproblem_function_handle(self,
                                                               parameter=self.state.tr_center_scaled,
                                                               use_scaled=True)  # calls self.appr_tuning_objective
+            #TODO bug: projected gradient norm is icorrect (always 1 when using Tuning obk without error vals
             grad = sp_object.gradient(self.state.tr_center_scaled)
             min_param_bounds = self.state.min_parameter_bounds_scaled
             max_param_bounds = self.state.max_parameter_bounds_scaled
@@ -54,7 +55,6 @@ class TRSubproblem(object):
             self.state.update_proj_grad_norm(1.0)
             pass
         sys.stdout.flush()
-        #TODO if stopping condition is true or gradient contion is true, skip the next steps. Check from the workflow diagram if the branches are implemented properly
 
     def solve_tr_subproblem(self, tr_subproblem_result_file):
         try:
@@ -133,7 +133,8 @@ class TRSubproblem(object):
         with open(valscaledoutfile, 'w') as f:
             json.dump(new_ds, f, indent=4)
 
-        if len(self.state.data_names) > 1 and self.state.data_names[1] is not None:
+        if len(self.state.data_names)>1 and \
+            self.state.subproblem_parameters[m_type][self.state.data_names[1]] is not None:
             errscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[1]]
             with open(errscaledoutfile, 'r') as f:
                 ds = json.load(f)
@@ -159,9 +160,7 @@ class TRSubproblem(object):
         return IO
 
     def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False):
-        # TODO Use this for simpleapp
         if len(self.state.data_names) > 1:
-            self.state.data_names[1] = None
             m_type = 'model_scaled' if use_scaled else 'model'
             self.state.subproblem_parameters[m_type][self.state.data_names[1]] = None
         return self.appr_tuning_objective(parameter,use_scaled)
@@ -175,7 +174,6 @@ class MCSubproblem(object):
         self.parameter = ds['parameters'][0]
         self.mc_run_folder = mc_run_folder
         (self.mc_data_df, self.additional_data) = self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder)
-
         rownames = list(self.state.data_names)
         columnnames = list(self.mc_data_df.index)
         if len(rownames)>1 and ('.P' not in rownames[0] and '.V' not in rownames[1]) and \
@@ -231,6 +229,20 @@ class MCSubproblem(object):
         return obj_val
 
     def appr_tuning_objective_without_error_vals(self):
-        # TODO set self.state.subproblem_parameters['model'][self.state.data_names[1]] to None is self.state.data_names[1] exits and call appr_tuning_objective
-        # TODO Use this for simpleapp
-        pass
+        columnnames = list(self.mc_data_df.index)
+        tr_subproblem = TRSubproblem(self.state)
+        tr_sp_object = self.state.subproblem_function_handle(tr_subproblem,
+                                                             use_scaled=False)  # calls TRSubproblem.appr_tuning_objective
+        obj_val = 0.
+        for cnum in range(0, len(columnnames),2):
+            _Y = self.mc_data_df[self.state.data_names[0]]['{}'.format(columnnames[cnum+1])]
+            term_name = columnnames[cnum].split('.')[0]
+            if '#' not in term_name:
+                term_name += "#1"
+            if term_name in tr_sp_object._binids and len(_Y) > 0:
+                ionum = tr_sp_object._binids.index(term_name)
+                obj_val += tr_sp_object._W2[ionum] * (
+                        (_Y[0] - tr_sp_object._Y[ionum]) ** 2 / (tr_sp_object._E[ionum] ** 2))
+            else:
+                continue
+        return obj_val

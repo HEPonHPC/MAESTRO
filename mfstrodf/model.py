@@ -92,7 +92,6 @@ class ModelConstruction(object):
                     sys.stdout.flush()
             try:
                 val = apprentice.RationalApproximation(X, Y, order=(m,n), pnames=self.state.param_names)
-                #TODO set this only if self.additional_data is not None and there are xmin and xmax keys in self.additional_data
                 if self.additional_data is not None:
                     if '_xmin' in self.additional_data[data_name] and '_xmax' in self.additional_data[data_name]:
                         val._xmin = self.additional_data[data_name]["_xmin"][num]
