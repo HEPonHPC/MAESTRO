@@ -27,7 +27,7 @@ class TrAmmendment(object):
             p_star_k = ds['parameters'][0]
             tr_subproblem = TRSubproblem(self.state)
             sp_object = self.state.subproblem_function_handle(tr_subproblem) # calls TrSubproblem.appr_tuning_objective
-            if self.debug: print("inside tr update w gradcond", self.state.tr_gradient_condition)
+            if self.debug: print("inside tr update w gradcond", self.state.close_to_min_condition)
             sys.stdout.flush()
 
             if not self.state.close_to_min_condition:
@@ -148,11 +148,13 @@ class TrAmmendment(object):
             elif self.state.simulation_budget_used >= self.state.max_simulation_budget:
                 self.state.algorithm_status.update_status(3)
             elif self.state.radius_at_which_max_fidelity_reached is not None and \
-                    ParameterPointUtil.order_of_magnitude(self.state.previous_tr_radius) <=\
+                    ParameterPointUtil.order_of_magnitude(self.state.previous_tr_radius) <\
                         ParameterPointUtil.order_of_magnitude(self.state.radius_at_which_max_fidelity_reached):
                 self.state.algorithm_status.update_status(5)
             elif self.state.no_iters_at_max_fidelity >= self.state.max_fidelity_iteration:
                 self.state.algorithm_status.update_status(6)
+            elif self.state.previous_tr_radius <= self.state.tr_min_radius:
+                self.state.algorithm_status.update_status(9)
             else: self.state.algorithm_status.update_status(0)
 
             if self.debug: print("Status\t\t= {} : {}".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))

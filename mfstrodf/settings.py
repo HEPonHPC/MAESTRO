@@ -40,7 +40,7 @@ class Settings(object):
         l1keys = ['tr','param_names','param_bounds','kappa','max_fidelity',
                   'N_p','dim','theta','thetaprime','fidelity','max_iteration','max_fidelity_iteration',
                   'min_gradient_norm','max_simulation_budget']
-        tr_l2keys = ['radius','max_radius','center','sigma','eta']
+        tr_l2keys = ['radius','max_radius','min_radius','center','sigma','eta']
         if 'simulation_budget_used' not in self.algorithm_parameters_dict:
             self.algorithm_parameters_dict['simulation_budget_used'] = 0
         # Do consisency check
@@ -176,6 +176,10 @@ class Settings(object):
         return self.algorithm_parameters_dict['tr']['eta']
 
     @property
+    def tr_min_radius(self):
+        return self.algorithm_parameters_dict['tr']['min_radius']
+
+    @property
     def tr_max_radius(self):
         return self.algorithm_parameters_dict['tr']['max_radius']
 
@@ -283,10 +287,11 @@ class Settings(object):
 
     @property
     def max_fidelity(self):
-        return self.algorithm_parameters_dict['max_fidelity']
+        return np.infty if self.usefixedfidelity else self.algorithm_parameters_dict['max_fidelity']
 
     @property
     def min_fidelity(self):
+        if self.usefixedfidelity: return self.fidelity
         if 'min_fidelity' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['min_fidelity']
         return 50
@@ -511,11 +516,13 @@ class AlgorithmStatus():
             2:"Max iterations reached",
             3:"Simulation budget depleted",
             4:"MC was successful on less than 1 or N_p parameters (error)",
-            5:"Trust region radius is less than a certain bound",
-            6:"Fidelity is at a maximum value for a specified number of iterations",
-            7:"The usable vals and errs of a bin was less than what was needed for constructing a polynomial of order (1,0)/"
-              "Too many vals or errs for this bin were either nan or infty",
-            8:"Failure:"
+            5:"Trust region radius is an order of magnitude less than the radius at which max fidelity was reached",
+            6:"Fidelity has been at a maximum value for the specified number of iterations",
+            7:"The usable MC output was less than what was needed for constructing a model."
+              "It is possible that too many parameters yielded MC output that was either nan or infty",
+            8:"Failure: ",
+            9:"Trust region radius is less than the specified minimum bound",
+
         }
         return status_dict
 

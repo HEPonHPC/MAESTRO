@@ -24,8 +24,8 @@ class OptimizaitionTask(object):
     def check_whether_to_stop(self):
         if self.state.algorithm_status.status_val != 0:
             self.state.save(to_log=True)
-            print("The algorithm stopped with exit code {} because:\n".format(self.state.algorithm_status.status_val))
-            print(self.state.algorithm_status.status_def)
+            print("\nThe algorithm stopped with exit code {} because:".format(self.state.algorithm_status.status_val))
+            print("{} : {}\n".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
             sys.exit(self.state.algorithm_status.status_val)
 
     def run(self):
