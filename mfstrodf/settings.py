@@ -36,12 +36,24 @@ class Settings(object):
     def initialize_algorithm_parameters(self, file:str):
         ds = self.read_setting_file(file)
         self.algorithm_parameters_dict = ds
-        #TODO go over the key names to check whether they are current and define these keys from workflow
-        #TODO diagram for easy lookup
+        """
+        kappa: adaptive sampling constant. Used in the bound for MC standard dev to check MC accuracy
+        N_p: minimum number of parameters in TR to run MC over to build models
+        theta (not in WF diagram): Used as a factor in the calculation of minimum distance b/w parameters
+        thetaprime (not in WF diagram): Used as a factor in the calculation of equivalence distance b/w parameters in 
+                    the new pool and those in the previous pool to find close matches from p_pool for points in p_init
+        
+        max_fidelity_iteration: (k_\lambda in WF diagram): numbe of iterations for which the fidelity can be at max_fidelity
+        min_gradient_norm (alpha in WF diagram): projected gradient norm
+        """
         l1keys = ['tr','param_names','param_bounds','kappa','max_fidelity',
                   'N_p','dim','theta','thetaprime','fidelity','max_iteration','max_fidelity_iteration',
                   'min_gradient_norm','max_simulation_budget']
-        tr_l2keys = ['radius','max_radius','min_radius','center','sigma','eta']
+        """
+        mu: model precision constant (used as a factor to check model precision and if current iterate is close to minimum)
+        eta: model fitness threshold (used as the bound for significant reduction condition rho)
+        """
+        tr_l2keys = ['radius','max_radius','min_radius','center','mu','eta']
         if 'simulation_budget_used' not in self.algorithm_parameters_dict:
             self.algorithm_parameters_dict['simulation_budget_used'] = 0
         # Do consisency check
@@ -322,8 +334,8 @@ class Settings(object):
         self.algorithm_parameters_dict['tr']['center'] = new_center
 
     @property
-    def tr_sigma(self):
-        return self.algorithm_parameters_dict['tr']['sigma']
+    def tr_mu(self):
+        return self.algorithm_parameters_dict['tr']['mu']
 
     @property
     def N_p(self):

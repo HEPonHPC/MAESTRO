@@ -44,12 +44,12 @@ class TRSubproblem(object):
             proj_grad_norm = np.linalg.norm(proj_grad)
             if proj_grad_norm <= self.state.min_gradient_norm and self.state.fidelity >= self.state.max_fidelity:
                 self.state.algorithm_status.update_status(1)
-            if proj_grad_norm <= self.state.tr_sigma * self.state.tr_radius:
+            if proj_grad_norm <= self.state.tr_mu * self.state.tr_radius:
                 self.state.update_close_to_min_condition(True)
             else:
                 self.state.update_close_to_min_condition(False)
             if self.debug: print(
-                "||pgrad|| \t= %.3f <=> %.3f" % (proj_grad_norm, self.state.tr_sigma * self.state.tr_radius))
+                "||pgrad|| \t= %.3f <=> %.3f" % (proj_grad_norm, self.state.tr_mu * self.state.tr_radius))
             self.state.update_proj_grad_norm(proj_grad_norm)
         except:
             self.state.update_close_to_min_condition(False)
