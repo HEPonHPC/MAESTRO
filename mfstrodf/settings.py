@@ -82,11 +82,12 @@ class Settings(object):
         # self.config_dict['mc']['parameters'] = ds['mc']['parameters']
         try:
             import mfstrodf.mc
-            mc_class = getattr(mfstrodf.mc,ds['mc']['location_str'])
-            #TODO do this only for function call (mc.caller_type) type. If script call or workflow, dont create this
+            mc_class = getattr(mfstrodf.mc,ds['mc']['class_str'])
             self.config_dict['mc']['object'] = mc_class(self.mc_run_folder_path)
         except:
-            raise Exception("MC class \""+ds['mc']['location_str']+"\" not found in mfstrodf.mc")
+            raise Exception("MC class \""+ds['mc']['class_str']+"\" not found in mfstrodf.mc")
+        if self.mc_call_using_script_run and 'location_str' not in ds['mc']:
+            raise Exception("MC script location needs to be set in config_dict.mc.location_str for script call")
 
         # self.config_dict['model']['parameters'] = ds['model']['parameters']
 
