@@ -77,7 +77,7 @@ class TRSubproblem(object):
                     json.dump(outputdata, f, indent=4)
                 if self.debug:
                     sys.stdout.flush()
-                    print("\n\\SP amin \t= {}".format(["%.3f" % (c) for c in outputdata['x']]))
+                    print("\n\\SP amin \t= {}".format(["%.16f" % (c) for c in outputdata['x']]))
                     print("\\SP min \t= {}".format(outputdata['fun']))
             sys.stdout.flush()
         except:

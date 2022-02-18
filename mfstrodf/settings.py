@@ -536,6 +536,16 @@ class AlgorithmStatus():
               "It is possible that too many parameters yielded MC output that was either nan or infty",
             8:"Failure: ",
             9:"Trust region radius is less than the specified minimum bound",
+            10:"The subproblem solution indicates that the current iterate is very similar to the "
+               "previous iterate. This could happen because all of the same parameters from the previous iteration "
+               "got selected within the trust region of the current iteration. The solver cannot continue. Quitting now. "
+               "Some suggestions to get around this problem include:\n"
+               "\t1. Try increasing number of parameters \"N_p\"\n"
+               "\t2. Try increasing \"fidelity\" parameter\n"
+               "\t3. Try using multiple levels of fidelity by setting \"usefixedfidelity\" parameter to \"false\"\n"
+               "A feature that allows the user to set the minimum percentage of new parameters required in any iteration "
+               "is in the works and will be released in future versions of this project."
+
 
         }
         return status_dict

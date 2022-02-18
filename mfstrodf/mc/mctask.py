@@ -85,7 +85,7 @@ class MCTask(object):
             outfparams = os.path.join(outd_mc_run_folder, fnamep)
             with open(outfparams, "w") as pf:
                 for k, v in zip(parameter_names, p):
-                    pf.write("{name} {val:e}\n".format(name=k, val=v))
+                    pf.write("{name} {val:.16e}\n".format(name=k, val=v))
             outffidelities = os.path.join(outd_mc_run_folder, fnamerf)
             with open(outffidelities, "w") as ff:
                 ff.write("{}".format(r_fid))

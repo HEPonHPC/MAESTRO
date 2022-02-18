@@ -30,6 +30,8 @@ class OptimizaitionTask(object):
             self.state.save(to_log=True)
             print("\nThe algorithm stopped with exit code {} because:".format(self.state.algorithm_status.status_val))
             print("{} : {}\n".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
+            print("If the problem is abnormal or needs more investigation, please contact the "
+                  "author Mohan Krishnamoorthy at mkrishnamoorthy2425@gmail.com\n")
             sys.exit(self.state.algorithm_status.status_val)
 
     def run(self):
