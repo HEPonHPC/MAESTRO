@@ -83,7 +83,7 @@ class TRSubproblem(object):
         except:
             self.state.algorithm_status.update_status(8, "Something went wrong when trying to solve the TR subproblem. "
                                                      "Quitting now")
-            pass
+            raise
 
     def appr_tuning_objective(self, parameter=None, use_scaled=False):
         # Make data compatible to work with apprentice
