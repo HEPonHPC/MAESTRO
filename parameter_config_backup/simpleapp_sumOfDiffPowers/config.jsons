@@ -1,0 +1,30 @@
+{
+    "__output_level":50,
+    "output_level":10,
+    "mc":{
+      "caller_type":"function call",
+      "class_str":"SumOfDiffPowers",
+      "__only required for script run caller type__location_str":"SumOfDiffPowers",
+      "ranks":1,
+      "parameters":{}
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2},
+        "DMC":{"m":1}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct",
+        "DMC":"appr_pa_m_construct"
+      }
+    },
+    "subproblem":{
+      "parameters":{
+        "data":"/Users/mkrishnamoorthy/Research/Code/log/workflow/parameter_config_backup/simpleapp_sumOfDiffPowers/data.json",
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective_without_error_vals"
+    }
+}

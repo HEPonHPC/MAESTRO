@@ -1,0 +1,38 @@
+{
+    "tr": {
+        "radius": 5,
+        "max_radius": 20,
+        "min_radius": 1e-5,
+        "center": [
+            2.13681979279795745,
+            -2.7717580840968665,
+            3.2082901878570345
+        ],
+        "mu": 0.01,
+        "eta": 0.01
+    },
+    "param_names": [
+      "x",
+      "y",
+      "z"
+    ],
+    "param_bounds": [
+      [-5,5],
+      [-5,5],
+      [-5,5]
+    ],
+    "kappa":100,
+    "max_fidelity":1000000000,
+    "usefixedfidelity":false,
+    "N_p": 10,
+    "__N_p": 100,
+    "dim": 3,
+    "theta": 0.01,
+    "thetaprime": 0.0001,
+    "__fidelity": 1000,
+    "fidelity": 10000000,
+    "max_iteration":50,
+    "max_fidelity_iteration":5,
+    "min_gradient_norm": 0.00001,
+    "max_simulation_budget":100000000000000000
+}
