@@ -14,6 +14,8 @@ setup(
         'matplotlib>=3.0.0',
         'mpi4py>=3.0.0',
         'pandas>=1.1.5',
+        'pyDOE>=0.3.8',
+        'pyDOE2>=1.3.0',
 
     ],
     scripts=["bin/mfstrodf-run"],
