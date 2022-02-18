@@ -10,10 +10,10 @@ setup(
     include_package_data = True,
     install_requires = [
         'numpy>=1.15.0',
-        'scipy>=1.7.2',
+        'scipy>=1.5.4',
         'matplotlib>=3.0.0',
         'mpi4py>=3.0.0',
-        'pandas>=1.4.0',
+        'pandas>=1.1.5',
 
     ],
     scripts=["bin/mfstrodf-run"],

@@ -20,7 +20,7 @@
     },
     "subproblem":{
       "parameters":{
-        "data":"/Users/mkrishnamoorthy/Research/Code/log/workflow/parameter_config_backup/simpleapp_sumOfDiffPowers/data.json",
+        "data":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/simpleapp_sumOfDiffPowers/data.json",
         "optimization":{
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }

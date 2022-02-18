@@ -34,4 +34,7 @@ results_p4_q3_ts2x
 
 # PyCharm files
 *.idea
-
+!algoparams.json
+!config.json
+!data.json
+!weights
