@@ -86,21 +86,58 @@ class TRSubproblem(object):
             raise
 
     def appr_tuning_objective(self, parameter=None, use_scaled=False):
-        # Make data compatible to work with apprentice
-        expdatafile = self.state.subproblem_parameters['data']
+        terms = []
         wtkeys = []
-        with open(expdatafile, 'r') as f:
-            exp_ds = json.load(f)
+        # Make val approximation compatible to work with apprentice
+        m_type = 'model_scaled' if use_scaled else 'model'
+        valscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[0]]
         new_ds = {}
-        for key in exp_ds:
+        with open(valscaledoutfile, 'r') as f:
+            ds = json.load(f)
+        for key in ds:
             if '#' not in key:
-                new_ds["{}#1".format(key)] = exp_ds[key]
+                new_ds["{}#1".format(key)] = ds[key]
+                terms.append("{}#1".format(key))
                 wtkeys.append(key)
             else:
-                new_ds[key] = exp_ds[key]
+                new_ds[key] = ds[key]
+                terms.append(key)
                 prefix = key.split('#')[0]
                 if prefix not in wtkeys:
                     wtkeys.append(prefix)
+        with open(valscaledoutfile, 'w') as f:
+            json.dump(new_ds, f, indent=4)
+
+        # If err approximation exists then make it compatible to work with apprentice
+        if len(self.state.data_names)>1 and \
+                self.state.subproblem_parameters[m_type][self.state.data_names[1]] is not None:
+            errscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[1]]
+            with open(errscaledoutfile, 'r') as f:
+                ds = json.load(f)
+            for key in ds:
+                if '#' not in key:
+                    new_ds["{}#1".format(key)] = ds[key]
+                else:
+                    new_ds[key] = ds[key]
+            with open(errscaledoutfile, 'w') as f:
+                json.dump(new_ds, f, indent=4)
+        else:
+            errscaledoutfile = None
+
+        # Make data compatible to work with apprentice
+        new_ds = {}
+        if 'data' in self.state.subproblem_parameters:
+            expdatafile = self.state.subproblem_parameters['data']
+            with open(expdatafile, 'r') as f:
+                exp_ds = json.load(f)
+            for key in exp_ds:
+                if '#' not in key:
+                    new_ds["{}#1".format(key)] = exp_ds[key]
+                else:
+                    new_ds[key] = exp_ds[key]
+        else:
+            for t in terms:
+                new_ds[t] = [0.,1.]
 
         my_expdatafile = self.state.working_directory.get_conf_path("data.json")
         with open(my_expdatafile, 'w') as f:
@@ -119,34 +156,6 @@ class TRSubproblem(object):
             with open(my_wtfile, "w") as ff:
                 ff.write(wtstr)
         self.state.update_subproblem_parameters('weights', my_wtfile)
-
-        m_type = 'model_scaled' if use_scaled else 'model'
-        valscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[0]]
-        new_ds = {}
-        with open(valscaledoutfile, 'r') as f:
-            ds = json.load(f)
-        for key in ds:
-            if '#' not in key:
-                new_ds["{}#1".format(key)] = ds[key]
-            else:
-                new_ds[key] = ds[key]
-        with open(valscaledoutfile, 'w') as f:
-            json.dump(new_ds, f, indent=4)
-
-        if len(self.state.data_names)>1 and \
-            self.state.subproblem_parameters[m_type][self.state.data_names[1]] is not None:
-            errscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[1]]
-            with open(errscaledoutfile, 'r') as f:
-                ds = json.load(f)
-            for key in ds:
-                if '#' not in key:
-                    new_ds["{}#1".format(key)] = ds[key]
-                else:
-                    new_ds[key] = ds[key]
-            with open(errscaledoutfile, 'w') as f:
-                json.dump(new_ds, f, indent=4)
-        else:
-            errscaledoutfile = None
 
         import apprentice
         IO = apprentice.appset.TuningObjective2(my_wtfile,
