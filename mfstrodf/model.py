@@ -42,8 +42,8 @@ class ModelConstruction(object):
         """
     def consturct_models(self):
         for data_name in self.state.data_names:
-            self.state.get_model_function_handle(data_name)(self,data_name)
-
+            fh = self.state.get_model_function_handle(data_name)
+            fh(self,data_name) if fh is not None else self.appr_pa_m_construct(data_name)
     #TODO to implement. We need this for calculating values that were nan/inf of MC(\widetilde{\p}^{(k+1})
     def get_model_objects(self):
         pass
@@ -76,9 +76,12 @@ class ModelConstruction(object):
             num += 1
             X = self.mc_data_df[data_name]['{}'.format(columnnames[cnum])]
             Y = self.mc_data_df[data_name]['{}'.format(columnnames[cnum+1])]
-            #TODO if data_name not present, then assume (1,0) order
-            m = self.state.model_parameters[data_name]['m'] if 'm' in self.state.model_parameters[data_name] else 2
-            n = self.state.model_parameters[data_name]['n'] if 'n' in self.state.model_parameters[data_name] else 0
+            m = self.state.model_parameters[data_name]['m']\
+                if data_name in self.state.model_parameters and 'm' in self.state.model_parameters[data_name] \
+                else 1
+            n = self.state.model_parameters[data_name]['n'] \
+                if data_name in self.state.model_parameters and 'n' in self.state.model_parameters[data_name] \
+                else 0
             if self.debug:
                 if ((num + 1) % 5 == 0):
                     now = time.time()
@@ -93,7 +96,7 @@ class ModelConstruction(object):
                     sys.stdout.flush()
             try:
                 val = apprentice.RationalApproximation(X, Y, order=(m,n), pnames=self.state.param_names)
-                if self.additional_data is not None:
+                if self.additional_data is not None and data_name in self.additional_data:
                     if '_xmin' in self.additional_data[data_name] and '_xmax' in self.additional_data[data_name]:
                         val._xmin = self.additional_data[data_name]["_xmin"][num]
                         val._xmax = self.additional_data[data_name]["_xmax"][num]

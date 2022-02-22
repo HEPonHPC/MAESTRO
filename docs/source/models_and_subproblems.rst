@@ -202,7 +202,7 @@ this object is:
 
 .. math::
 
-   L_1(p) = \sum_{t=0}^{N_t} w_t \frac{ (M_t(p)-D_t)^2 }{\widetilde{M_t}(p)^2 + \widetilde{D_t}^2}
+   L_2(p) = \sum_{t=0}^{N_t} w_t \frac{ (M_t(p)-D_t)^2 }{\widetilde{M_t}(p)^2 + \widetilde{D_t}^2}
 
 where
 
@@ -281,7 +281,7 @@ this object is:
 
 .. math::
 
-   L_1(p) = \sum_{t=0}^{N_t} w_t \frac{ (M_t(p)-D_t)^2 }{\widetilde{D_t}^2}
+   L_2(p) = \sum_{t=0}^{N_t} w_t \frac{ (M_t(p)-D_t)^2 }{\widetilde{D_t}^2}
 
 where
 

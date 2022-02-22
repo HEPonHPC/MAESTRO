@@ -10,12 +10,10 @@
     },
     "model":{
       "parameters":{
-        "MC":{"m":2},
-        "DMC":{"m":1}
+        "MC":{"m":2}
       },
       "function_str":{
-        "MC":"appr_pa_m_construct",
-        "DMC":"appr_pa_m_construct"
+        "MC":"appr_pa_m_construct"
       }
     },
     "subproblem":{
