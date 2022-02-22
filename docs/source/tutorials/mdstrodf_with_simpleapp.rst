@@ -16,7 +16,7 @@ will go through the follwoing steps:
 * Set the configuration inputs
 
   * Select a simple MC function
-  * Select a model function
+  * Select a surrogate model function
   * Select a subprobmel function
 
 * Run MF-STRO-DF on simpleapp
@@ -139,17 +139,17 @@ mc object configuration:
         "parameters":{}
       }
 
-Selecting a model function
+Selecting a surrogate model function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/model.py`` to construct models.
+``mfstrodf/model.py`` to construct surrogate models.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined function functiom<mfstrodf_model_avail_func>`
-* :ref:`create your own function<mfstrodf_model_create>` model
+* reuse a :ref:`predefined model function<mfstrodf_model_avail_func>` function
+* :ref:`create your own model<mfstrodf_model_create>` function
 
-For this tutorial, we will construct the model using
+For this tutorial, we will construct the surrogate model using
 :ref:`appr_pa_m_construct<mfstrodf_model_avail_func_appr_pa_m>` function with the
 following model object configuration:
 
@@ -167,18 +167,18 @@ following model object configuration:
       }
     }
 
-Selecting a subprobmel function
+Selecting a surrogate  function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
 ``mfstrodf/subproblem.py`` to get a subproblem object.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined function functiom<mfstrodf_subproblem_avail_func>`
-* :ref:`create your own function<mfstrodf_subproblem_create>` model
+* reuse a :ref:`predefined subproblem object<mfstrodf_subproblem_avail_func>` function
+* :ref:`create your own subproblem object<mfstrodf_subproblem_create>` function
 
 For this tutorial, we will get the subproblem object using
-:ref:`appr_tuning_objective<mfstrodf_model_avail_func_appr_tuning_objective>`
+:ref:`appr_tuning_objective<mfstrodf_subproblem_avail_func_appr_tuning_objective>`
 function with the following subproblem object configuration:
 
   .. code-block:: json
