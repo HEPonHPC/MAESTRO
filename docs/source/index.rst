@@ -13,11 +13,11 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    Quickstart<introduction>
    advanced_installation
    code_documentation
+   models_and_subproblems
+   inputs_and_outputs
    running_as_a_function_call
    running_as_a_script
    running_on_decaf_henson
-   inputs_and_outputs
-   models_and_subproblems
 
 .. toctree::
    :maxdepth: 3
