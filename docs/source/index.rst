@@ -13,6 +13,7 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    Quickstart<introduction>
    advanced_installation
    code_documentation
+   running_as_a_function_call
    running_as_a_script
    running_on_decaf_henson
    inputs_and_outputs
