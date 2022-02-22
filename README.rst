@@ -18,12 +18,14 @@ and this analytical and closed-form optimization problem is solved to find the
 next iterate within the trust-region. Then the trust region is moved and the
 iterations continue until a satisfactory convergence criteria is met.
 
+.. _mfstrodf_dependencies:
+
 Dependencies
 ~~~~~~~~~~~~
 
 Required dependencies:
 
-* Python_ 3.7 or above
+* Python_ 3.7
 * NumPy_ 1.15.0 or above
 * SciPy_ 1.5.4 or above
 * pandas_ 1.1.5 or above
@@ -44,6 +46,8 @@ For running with the mpi4py parallelism:
 * A functional MPI 1.x/2.x/3.x implementation, such as MPICH_, built with shared/dynamic libraries
 * mpi4py_ v3.0.0 or above
 
+.. _mfstrodf_initial_install:
+
 Installation
 ~~~~~~~~~~~~
 
@@ -61,6 +65,7 @@ Then proceed to installing MF-STRO-DF::
     cd workflow
     pip install .
 
+.. _mfstrodf_test_the_install:
 
 Testing the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~

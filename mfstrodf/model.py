@@ -76,6 +76,7 @@ class ModelConstruction(object):
             num += 1
             X = self.mc_data_df[data_name]['{}'.format(columnnames[cnum])]
             Y = self.mc_data_df[data_name]['{}'.format(columnnames[cnum+1])]
+            #TODO if data_name not present, then assume (1,0) order
             m = self.state.model_parameters[data_name]['m'] if 'm' in self.state.model_parameters[data_name] else 2
             n = self.state.model_parameters[data_name]['n'] if 'n' in self.state.model_parameters[data_name] else 0
             if self.debug:

@@ -66,6 +66,7 @@ class Settings(object):
         if 'current_iteration' not in self.algorithm_parameters_dict:
             self.algorithm_parameters_dict['current_iteration'] = 0
 
+    #TODO check that ranks is not required for functionc call or workflow
     def initialize_config(self, file:str,working_dir:str=None):
         ds = self.read_setting_file(file)
         self.config_dict = ds
