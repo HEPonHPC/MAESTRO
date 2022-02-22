@@ -45,7 +45,7 @@ status=0;
 until [ $status -ne 0 ]
 do
   python mc_miniapp.py -e conf/data.json -c process.dat -o initial $bebop
-  python buildInterpol.py -c process.dat
+  python buildInterpol.py -c process.datå
   mpirun -np $nprocs python mc_miniapp.py -e conf/data.json -c process.dat -o multi $bebop
   python approx.py -e conf/data.json -w conf/weights
   python chi2.py -e conf/data.json -w conf/weights -c process.dat
