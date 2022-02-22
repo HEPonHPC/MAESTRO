@@ -48,6 +48,7 @@ the expected algorithm parameters JSON is given below.
         "max_fidelity_iteration":
         "min_gradient_norm":
         "max_simulation_budget":
+        "output_level":
     }
 
 The data type, description, and example values for each key in the algorithm parameters JSON
@@ -228,6 +229,21 @@ is given below.
 
       "max_simulation_budget":1000000000000000
 
+* **output_level**: ``int`` output level. The mapping of values to the output printed to console is:
+
+  * 0: quiet, dont print anything except for the output message
+  * 10: everything printed in the previous level plus the single line optimization output (see :ref:`below<mfstrodf_output_single_line>`)
+  * 11: everything printed in the previous level plus the next iterate value
+  * 20: everything printed in the previous level plus interpolation points in every iteration
+  * 30: everything printed in the previous level plus value of the subproblem function at the new iterate
+  * 40: everything printed in the previous level plus norm of the step taken in each iteration
+  * 50: verbose/debug mode. Print everything
+
+  .. code-block:: json
+    :force:
+
+      "output_level":0
+
 .. _mfstrodf_input_config:
 
 Configuration inputs
@@ -241,7 +257,6 @@ the expected configuration inputs JSON is given below.
     :force:
 
     {
-        "output_level":
         "mc":{
           "caller_type":
           "class_str":
@@ -273,21 +288,6 @@ the expected configuration inputs JSON is given below.
 
 The data type, description, and examples for each key in the configuration inputs JSON
 is given below.
-
-* **output_level**: ``int`` output level. The mapping of values to the output printed to console is:
-
-  * 0: quiet, dont print anything except for the output message
-  * 10: everything printed in the previous level plus the single line optimization output (see :ref:`below<mfstrodf_output_single_line>`)
-  * 11: everything printed in the previous level plus the next iterate value
-  * 20: everything printed in the previous level plus interpolation points in every iteration
-  * 30: everything printed in the previous level plus value of the subproblem function at the new iterate
-  * 40: everything printed in the previous level plus norm of the step taken in each iteration
-  * 50: verbose/debug mode. Print everything
-
-  .. code-block:: json
-    :force:
-
-      "output_level":0
 
 * **mc**: ``object`` configuration of the Monte Carlo simulator. The keys within
   this object include:
@@ -398,7 +398,7 @@ One line output
 
 For each iteration, the MF-STRO-DF algorithm generates one line output describing the
 progress of the optimization when :math:`output\_level\ge10` in the
-:ref:`configuration inputs<mfstrodf_input_config>`. An example snippet of the one
+:ref:`algorithm parameters inputs<mfstrodf_input_algo_parameters>`. An example snippet of the one
 line output and the description of each column is given below:
 
 .. figure:: figure/onelineoutput.png

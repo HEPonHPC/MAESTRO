@@ -1,6 +1,4 @@
 {
-    "__output_level":50,
-    "output_level":10,
     "mc":{
       "caller_type":"function call",
       "class_str":"SumOfDiffPowers",

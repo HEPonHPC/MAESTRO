@@ -89,7 +89,8 @@ simpleapp present in ``parameter_config_backup/simpleapp_sumOfDiffPowers/algopar
       "max_iteration":50,
       "max_fidelity_iteration":5,
       "min_gradient_norm": 0.00001,
-      "max_simulation_budget":10000000
+      "max_simulation_budget":10000000,
+      "output_level":10
     }
 
 Selecting a simple MC function
@@ -199,14 +200,13 @@ function with the following subproblem object configuration:
 Setting the configuration inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The configuration input consists of the objects from the last three steps and ``output_level``
+The configuration input consists of the objects from the last three steps
 So the configuration output for this tutorial is:
 
   .. code-block:: json
     :force:
 
     {
-      "output_level":10,
       "mc":{
         "caller_type":"function call",
         "class_str":"SumOfDiffPowers"
@@ -275,7 +275,7 @@ with the correct location and assign an appropriate name in ``<working_dir_name>
 Understanding the output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If every thing runs as expected, since :math:`output\_level\ge10` in the configuration,
+If every thing runs as expected, since :math:`output\_level\ge10` in the algorithm parameter input,
 the output should contain a one line summary of each iteration of the MF-STRO-DF
 algorithm run as described in the
 :ref:`one line output documentation<mfstrodf_output_single_line>`.

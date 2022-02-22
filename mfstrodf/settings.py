@@ -74,7 +74,6 @@ class Settings(object):
         if working_dir is not None:
             self.config_dict['working_directory_str'] = working_dir
         self.config_dict['working_directory'] = WorkingDirectory(self.config_dict['working_directory_str'])
-        # self.config_dict['output_level'] = ds['output_level']
         # can be "function call","script run","workflow"
         # self.config_dict['mc'] = {}
         # self.config_dict['mc']['caller_type'] = ds['mc']['caller_type']
@@ -379,7 +378,7 @@ class Settings(object):
 
     @property
     def output_level(self):
-        return self.config_dict['output_level']
+        return self.algorithm_parameters_dict['output_level']
 
     @property
     def working_directory(self):
