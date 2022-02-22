@@ -19,7 +19,7 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    models_and_subproblems
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Tutorials:
 
    tutorials/mdstrodf_with_simpleapp

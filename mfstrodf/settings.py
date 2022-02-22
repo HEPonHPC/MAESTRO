@@ -50,7 +50,7 @@ class Settings(object):
                   'N_p','dim','theta','thetaprime','fidelity','max_iteration','max_fidelity_iteration',
                   'min_gradient_norm','max_simulation_budget']
         """
-        mu: model precision constant (used as a factor to check model precision and if current iterate is close to minimum)
+        mu: model precision constant (used as a factor to check model precision if current iterate is close to minimum)
         eta: model fitness threshold (used as the bound for significant reduction condition rho)
         """
         tr_l2keys = ['radius','max_radius','min_radius','center','mu','eta']
