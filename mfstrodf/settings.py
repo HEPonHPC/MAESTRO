@@ -442,7 +442,10 @@ class Settings(object):
             import pyhenson as h
             pyhenson_found = True
         except: pyhenson_found = False
-        return self.mc_caller_type == "workflow" and pyhenson_found
+        is_workflow =  self.mc_caller_type == "workflow"
+        if is_workflow and not pyhenson_found:
+            raise Exception("Cannot run workflow without pyhenson")
+        return is_workflow
 
     @property
     def mc_call_using_script_run(self):

@@ -19,11 +19,8 @@ class OptimizaitionTask(object):
         self.run_fidelity_file = run_fidelity_file
         self.at_fidelity_file = at_fidelity_file
         if self.state.mc_call_on_workflow:
-            try:
-                import pyhenson as h
-                self.henson = h
-            except:
-                raise Exception("Cannot run workflow without pyhenson")
+            import pyhenson as h
+            self.henson = h
 
     def check_whether_to_stop(self):
         if self.state.algorithm_status.status_val != 0:
@@ -225,9 +222,8 @@ if __name__ == "__main__":
     parser.add_argument("-d", dest="WORKINGDIR", type=str, default=None,
                         help="Working Directory")
     args = parser.parse_args()
-    DiskUtil.remove_directory(args.WORKINGDIR)
+    DiskUtil.remove_directory(os.path.join(args.WORKINGDIR,"log"))
     os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
-    os.makedirs(os.path.join(args.WORKINGDIR,"conf"),exist_ok=False)
 
     opt_task = OptimizaitionTask(args.WORKINGDIR,args.ALGOPARAMS,args.CONFIG)
 

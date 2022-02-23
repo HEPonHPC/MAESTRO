@@ -1,0 +1,25 @@
+{
+    "workflow": {
+        "filter_level": "NONE",
+        "nodes": [
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
+                "func": "opt_task_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 1,
+                "cmdline": "./sumofdiffpowers -d log/MC_RUN",
+                "func": "miniappinitial_py",
+                "inports": [],
+                "outports": []
+            }
+        ],
+        "edges": [
+        ]
+    }
+}

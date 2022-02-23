@@ -36,6 +36,8 @@ results_p4_q3_ts2x
 *.idea
 !algoparams.json
 !config.json
+!config_workflow.json
 !data.json
 !weights
 !onelineoutput.png
+!decaf-henson.json
