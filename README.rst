@@ -65,6 +65,14 @@ Then proceed to installing MF-STRO-DF::
     cd workflow
     pip install .
 
+If you want to run with mpi4py parallelism you need to have a functional MPI
+1.x/2.x/3.x implementation, such as MPICH_, built with shared/dynamic libraries
+and install mpi4py using the command below. This step is optional and
+if mpi4py is not installed, all code will automatically run on a single rank::
+
+    pip install mpi4py
+
+
 .. _mfstrodf_test_the_install:
 
 Testing the installation

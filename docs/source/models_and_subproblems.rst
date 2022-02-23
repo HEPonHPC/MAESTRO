@@ -386,8 +386,20 @@ Note that you need to replace the ``CONSTRUCT SUBPROBLEM OBJECT`` section
 in the code above to complete the subproblem object construction function.
 Also, the following methods should be callable on ``SP``::
 
-  # returns the objective function value at parameter p
+  # returns the objective function value using surrogates evaluated at parameter p
   SP.objective(p)
+
+  # returns the objective function using MC simulator values obtained at parameter p,
+  # the MC simulator values are passed as a pandas_dataframe with the following
+  # structure:
+  #
+  #      MC                          ...
+  #    term1.P        [[1., 2.],[4., 8.],[12.,9],...]
+  #    term1.V        [19., 18., 17.,...]                ...
+  #    term2.P        [[1., 2.],[4., 8.],[12.,9],...]
+  #    term2.V        [29., 28., 27.,...]
+  #    ...            ...                                ...
+  SP.objective_without_surrograte_values(pandas_dataframe)
 
   # returns the gradient of the subproblem function at parameter p
   SP.gradient(p)
