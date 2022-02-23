@@ -13,7 +13,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./sumofdiffpowers -d log/MC_RUN",
+                "cmdline": "./sumofdiffpowers.py -d log/MC_RUN",
                 "func": "miniappinitial_py",
                 "inports": [],
                 "outports": []

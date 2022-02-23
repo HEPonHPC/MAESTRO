@@ -2,7 +2,7 @@
 
 #sample runs:
 #sh run_workflow.sh ../../../../log/workflow/simpleapp/sumOfDiffPowers/WD_workflow ../../../parameter_config_backup/simpleapp_sumOfDiffPowers/
-
+rm -rf $1
 mkdir -p $1
 mkdir -p $1/conf
 mkdir -p $1/logs
