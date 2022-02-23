@@ -1,11 +1,10 @@
 from mfstrodf import OutputLevel, Settings, ParameterPointUtil, DiskUtil
+from mfstrodf.mpi4py_ import MPI_
 import numpy as np
 import json, os
 from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.16f')
-from mpi4py import MPI
 import pprint
-
 
 class InterpolationSample(object):
     def __init__(self, state,parameter_file="params.dat",run_fidelity_file="run_fidelity.dat",
@@ -127,7 +126,7 @@ class InterpolationSample(object):
         self.p_sel_metadata["run fidelity"].append(max(self.state.min_fidelity, diff) if diff > 0 else 0)
 
     def remove_selected_params_from_prev_metadata_and_directory(self):
-        comm = MPI.COMM_WORLD
+        comm = MPI_.COMM_WORLD
         rank = comm.rank
         u_files, u_argindices, u_count = np.unique(self.p_sel_files, return_inverse=True,return_counts=True)
         for fno,file in enumerate(u_files):
@@ -175,7 +174,7 @@ class InterpolationSample(object):
         return s.scaledPoints
 
     def build_interpolation_points(self, meta_data_file):
-        comm = MPI.COMM_WORLD
+        comm = MPI_.COMM_WORLD
         rank = comm.rank
         factor = 1
         while len(self.p_init[self.i_init]) < self.n_to_get:

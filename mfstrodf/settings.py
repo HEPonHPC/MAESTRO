@@ -428,8 +428,8 @@ class Settings(object):
         if 'ranks' in self.config_dict['mc']:
             return self.config_dict['mc']['ranks']
         else:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
+            from mfstrodf.mpi4py_ import MPI_
+            comm = MPI_.COMM_WORLD
             return comm.Get_size()
 
     @property

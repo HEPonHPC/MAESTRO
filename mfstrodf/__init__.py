@@ -5,4 +5,4 @@ from mfstrodf.sample import InterpolationSample
 from mfstrodf.model import ModelConstruction
 from mfstrodf.subproblem import TRSubproblem, MCSubproblem
 from mfstrodf.tr import TrAmmendment
-
+from mfstrodf.mpi4py_ import MPI_, COMM_

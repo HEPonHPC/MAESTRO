@@ -59,8 +59,8 @@ class TRSubproblem(object):
 
     def solve_tr_subproblem(self, tr_subproblem_result_file):
         try:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
+            from mfstrodf.mpi4py_ import MPI_
+            comm = MPI_.COMM_WORLD
             rank = comm.Get_rank()
             sp_object = self.state.subproblem_function_handle(self,use_scaled=False)  # calls self.appr_tuning_objective
             optimization_parameters = self.state.optimization_parameters

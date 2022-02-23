@@ -8,8 +8,9 @@ import pprint
 import os
 
 import sys
-from mpi4py import MPI
-from mfstrodf import Settings,OutputLevel,DiskUtil,InterpolationSample,ModelConstruction,TRSubproblem,TrAmmendment
+from mfstrodf import Settings,OutputLevel,DiskUtil,InterpolationSample,\
+    ModelConstruction,TRSubproblem,TrAmmendment
+from mfstrodf.mpi4py_ import MPI_
 class OptimizaitionTask(object):
     def __init__(self, working_dir=None,algorithm_parameters=None,config=None,
                  parameter_file="params.dat",run_fidelity_file="run_fidelity.dat",
@@ -79,7 +80,7 @@ class OptimizaitionTask(object):
         meta_data_file = self.state.working_directory.get_log_path(
             "parameter_metadata_1_k{}.json".format(self.state.k + 1))
 
-        comm = MPI.COMM_WORLD
+        comm = MPI_().COMM_WORLD
         rank = comm.Get_rank()
         comm.barrier()
         with open(tr_subproblem_result_file,'r') as f:
@@ -124,7 +125,7 @@ class OptimizaitionTask(object):
 
     def initialize(self,meta_data_file):
         debug = OutputLevel.is_debug(self.state.output_level)
-        comm = MPI.COMM_WORLD
+        comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         comm.barrier()
         if rank==0 and debug:
@@ -226,7 +227,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
 
     opt_task = OptimizaitionTask(args.WORKINGDIR,args.ALGOPARAMS,args.CONFIG)
-
+    MPI_.print_MPI_message()
     # pprint.pprint(opt_task.state.algorithm_parameters_dict)
     # pprint.pprint(opt_task.state.config_dict)
     opt_task.run()

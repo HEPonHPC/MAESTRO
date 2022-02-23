@@ -18,8 +18,8 @@ class TrAmmendment(object):
         self.is_norm_of_step = OutputLevel.is_norm_of_step(self.state.output_level)
 
     def perform_tr_update(self):
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
+        from mfstrodf.mpi4py_ import MPI_
+        comm = MPI_.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
 

@@ -1,5 +1,5 @@
 import pandas
-from mpi4py import MPI
+from mfstrodf.mpi4py_ import MPI_
 import time, datetime
 import sys,os,json
 from mfstrodf import OutputLevel,Settings
@@ -61,7 +61,7 @@ class ModelConstruction(object):
         t4 = time.time()
         app = {}
         appscaled = {}
-        comm = MPI.COMM_WORLD
+        comm = MPI_.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
         columnnames = list(self.mc_data_df.index)
