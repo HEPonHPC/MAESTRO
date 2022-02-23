@@ -1,4 +1,4 @@
-from mfstrodf import OutputLevel,Settings,MCSubproblem, ParameterPointUtil, TRSubproblem
+from mfstrodf import OutputLevel,Settings, ParameterPointUtil, TRSubproblem
 import json, sys
 from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.16f')
@@ -39,8 +39,12 @@ class TrAmmendment(object):
 
                 approx_obj_val_k = sp_object.objective(p_star_k)
                 approx_obj_val_kp1 = sp_object.objective(p_star_kp1)
-                mc_obj_val_k = MCSubproblem(self.state,self.meta_data_file_k,self.mc_run_folder_k).objective()
-                mc_obj_val_kp1 = MCSubproblem(self.state,self.meta_data_file_kp1,self.mc_run_folder_kp1).objective()
+                (mc_data_df_k, additional_data_k) = \
+                    self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder_k)
+                (mc_data_df_kp1, additional_data_kp1) = \
+                    self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder_kp1)
+                mc_obj_val_k = sp_object.objective_without_surrograte_values(mc_data_df_k)
+                mc_obj_val_kp1 = sp_object.objective_without_surrograte_values(mc_data_df_kp1)
 
                 if self.debug:
                     print("chi2/ra k\t= %.4E" % (approx_obj_val_k))

@@ -113,13 +113,6 @@ class Settings(object):
         except:
             raise Exception("TRSubproblem function \""+ds['subproblem']['function_str']+"\" not found in mfstrodf.TRSubproblem")
 
-        try:
-            from mfstrodf import MCSubproblem
-            method_to_call = getattr(MCSubproblem,ds['subproblem']['function_str'])
-            self.config_dict['subproblem']['function (MC)'] = method_to_call
-        except:
-            raise Exception("MCSubproblem function \""+ds['subproblem']['function_str']+"\" not found in mfstrodf.MCSubproblem")
-
         if 'algorithm_status_dict' in self.config_dict:
             self.algorithm_status.from_dict(self.config_dict['algorithm_status_dict'])
         else:
@@ -145,7 +138,6 @@ class Settings(object):
         if 'object' in config_dict_to_save['mc']: config_dict_to_save['mc'].pop('object')
         if 'function' in config_dict_to_save['model']: config_dict_to_save['model'].pop('function')
         if 'function' in config_dict_to_save['subproblem']: config_dict_to_save['subproblem'].pop('function')
-        if 'function (MC)' in config_dict_to_save['subproblem']: config_dict_to_save['subproblem'].pop('function (MC)')
         if 'working_directory' in config_dict_to_save: config_dict_to_save.pop('working_directory')
         if 'algorithm_status' in config_dict_to_save: config_dict_to_save.pop('algorithm_status')
         self.write_setting_file(self.algorithm_parameters_dict,algorithm_parameters_file)
@@ -396,10 +388,6 @@ class Settings(object):
     @property
     def subproblem_function_handle(self):
         return self.config_dict['subproblem']['function']
-
-    @property
-    def mc_objective_function_handle(self):
-        return self.config_dict['subproblem']['function (MC)']
 
     @property
     def subproblem_parameters(self):

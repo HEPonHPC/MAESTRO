@@ -11,25 +11,18 @@ class ModelConstruction(object):
         self.debug = OutputLevel.is_debug(self.state.output_level)
         (self.mc_data_df,self.additional_data) = self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder)
         self.state.set_data_names(list(self.mc_data_df.columns.values))
-        rownames = self.state.data_names
-        columnnames = list(self.mc_data_df.index)
-        if len(rownames)>1 and ('.P' not in rownames[0] and '.V' not in rownames[1]) and \
-            len(columnnames)>1 and ('.P' not in columnnames[0] and '.V' not in columnnames[1]):
-            raise Exception('The MC data frame does not have a parameter index that ends in \".P\" '
-                            'and value index that ends in \".V\"')
-        if len(rownames)>1 and ('.P' in rownames[0] and '.V' in rownames[1]):
-            self.mc_data_df = self.mc_data_df.transpose()
         """
         Code works for 
-        >inp = {'MC':{'bin1.P':[1,2,3],'bin1.V':[19,18,17],'bin2.P':[1,2,3],'bin2.V':[29,28,27]},
-                'DMC':{'bin1.P':[4,5,6],'bin1.V':[99,98,97],'bin2.P':[4,5,6],'bin2.V':[89,88,87]}}
+        Code works for 
+        >inp = {'MC':{'bin1.P':[[1,2],[3,4],[6,3]],'bin1.V':[19,18,17],'bin2.P':[[1,2],[3,4],[6,3]],'bin2.V':[29,28,27]},
+                'DMC':{'bin1.P':[[1,2],[3,4],[6,3]],'bin1.V':[99,98,97],'bin2.P':[[1,2],[3,4],[6,3]],'bin2.V':[89,88,87]}}
         >df = pd.DataFrame(inp)
         >df
-                        MC           DMC    
-        bin1.P        [1, 2, 3]     [4, 5, 6]    
-        bin1.V        [19, 18, 17]  [99, 98, 97]
-        bin2.P        [1, 2, 3]     [4, 5, 6]    
-        bin2.V        [29, 28, 27]  [89, 88, 87]    
+                        MC                      DMC    
+        bin1.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]    
+        bin1.V        [19, 18, 17]               [99, 98, 97]
+        bin2.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]    
+        bin2.V        [29, 28, 27]              [89, 88, 87]     
         
         or its transpose
         MC,DMC are data_names. bin1.P,bin1,V,bin2.P,bin2.V are column names 

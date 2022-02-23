@@ -24,9 +24,21 @@ class SimpleApp(MCTask):
                                         term_names=term_names,data=[Y,DY],out_path=outfile
                                         ) # from super class
 
+    def check_df_structure_sanity(self,df):
+        rownames = list(df.columns.values)
+        columnnames = list(df.index)
+        if len(rownames)>1 and ('.P' not in rownames[0] and '.V' not in rownames[1]) and \
+                len(columnnames)>1 and ('.P' not in columnnames[0] and '.V' not in columnnames[1]):
+            raise Exception('The MC data frame does not have a parameter index that ends in \".P\" '
+                            'and value index that ends in \".V\"')
+        if len(rownames)>1 and ('.P' in rownames[0] and '.V' in rownames[1]):
+            df = df.transpose()
+        return df
+
     def convert_mc_output_to_df(self, all_param_directory):
         df = self.convert_csv_data_to_df(all_param_directory=all_param_directory,
                                          mc_out_file_name="out.csv")
+        df = self.check_df_structure_sanity(df)
         additional_data = None
         return (df,additional_data)
 
