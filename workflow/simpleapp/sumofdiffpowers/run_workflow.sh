@@ -1,7 +1,8 @@
 #! /bin/bash
 
 #sample runs:
-#sh run_workflow.sh ../../../../log/workflow/simpleapp/sumOfDiffPowers/WD_workflow ../../../parameter_config_backup/simpleapp_sumOfDiffPowers/
+# sh run_workflow.sh /tmp/simpleapp/sumOfDiffPowers/WD_workflow ../../../parameter_config_backup/simpleapp_sumOfDiffPowers/
+# sh run_workflow.sh ../../../../log/workflow/simpleapp/sumOfDiffPowers/WD_workflow ../../../parameter_config_backup/simpleapp_sumOfDiffPowers/
 rm -rf $1
 mkdir -p $1
 mkdir -p $1/conf
