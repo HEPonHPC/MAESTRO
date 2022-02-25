@@ -9,7 +9,7 @@ import os
 
 import sys
 from mfstrodf import Settings,OutputLevel,DiskUtil,InterpolationSample,\
-    ModelConstruction,TRSubproblem,TrAmmendment
+    ModelConstruction,Fstructure,TrAmmendment
 from mfstrodf.mpi4py_ import MPI_
 class OptimizaitionTask(object):
     def __init__(self, working_dir=None,algorithm_parameters=None,config=None,
@@ -71,19 +71,19 @@ class OptimizaitionTask(object):
         model = ModelConstruction(self.state,newparamdir)
         model.consturct_models()
         self.check_whether_to_stop()
-        subproblem = TRSubproblem(self.state)
-        subproblem.check_close_to_optimal_conditions()
+        f_structure = Fstructure(self.state)
+        f_structure.check_close_to_optimal_conditions()
         self.check_whether_to_stop()
         if self.state.close_to_min_condition: self.ops_tr()
-        tr_subproblem_result_file = self.state.working_directory.get_log_path("tr_subproblem_result_k{}.json".format(self.state.k))
-        subproblem.solve_tr_subproblem(tr_subproblem_result_file)
+        f_structure_subproblem_result_file = self.state.working_directory.get_log_path("f_structure_subproblem_result_k{}.json".format(self.state.k))
+        f_structure.solve_f_structure_subproblem(f_structure_subproblem_result_file)
         meta_data_file = self.state.working_directory.get_log_path(
             "parameter_metadata_1_k{}.json".format(self.state.k + 1))
 
         comm = MPI_().COMM_WORLD
         rank = comm.Get_rank()
         comm.barrier()
-        with open(tr_subproblem_result_file,'r') as f:
+        with open(f_structure_subproblem_result_file,'r') as f:
             ds = json.load(f)
         new_param = ds['x']
         if rank == 0:

@@ -1,4 +1,4 @@
-from mfstrodf import OutputLevel,Settings, ParameterPointUtil, TRSubproblem
+from mfstrodf import OutputLevel,Settings, ParameterPointUtil, Fstructure
 import json, sys
 from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.16f')
@@ -27,8 +27,8 @@ class TrAmmendment(object):
             with open(self.meta_data_file_k, 'r') as f:
                 ds = json.load(f)
             p_star_k = ds['parameters'][0]
-            tr_subproblem = TRSubproblem(self.state)
-            sp_object = self.state.subproblem_function_handle(tr_subproblem) # calls TrSubproblem.appr_tuning_objective
+            f_structure = Fstructure(self.state)
+            sp_object = self.state.f_structure_function_handle(f_structure) # calls Fstructure.appr_tuning_objective
             if self.debug: print("inside tr update w gradcond", self.state.close_to_min_condition)
             sys.stdout.flush()
 

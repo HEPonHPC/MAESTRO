@@ -7,7 +7,7 @@ encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import pprint
 
 
-class TRSubproblem(object):
+class Fstructure(object):
     def __init__(self, state):
         self.state: Settings = state
         self.debug = OutputLevel.is_debug(self.state.output_level)
@@ -33,13 +33,13 @@ class TRSubproblem(object):
 
     def check_close_to_optimal_conditions(self):
         try:
-            sp_object = self.state.subproblem_function_handle(self,
+            sp_object = self.state.f_structure_function_handle(self,
                                                               parameter=self.state.tr_center_scaled,
                                                               use_scaled=True)  # calls self.appr_tuning_objective
             grad = sp_object.gradient(self.state.tr_center_scaled)
             min_param_bounds = self.state.min_parameter_bounds_scaled
             max_param_bounds = self.state.max_parameter_bounds_scaled
-            proj_grad = TRSubproblem.projection(self.state.tr_center_scaled - grad, min_param_bounds,
+            proj_grad = Fstructure.projection(self.state.tr_center_scaled - grad, min_param_bounds,
                                                 max_param_bounds) - self.state.tr_center_scaled
             proj_grad_norm = np.linalg.norm(proj_grad)
             if proj_grad_norm <= self.state.min_gradient_norm and self.state.fidelity >= self.state.max_fidelity:
@@ -57,12 +57,12 @@ class TRSubproblem(object):
             pass
         sys.stdout.flush()
 
-    def solve_tr_subproblem(self, tr_subproblem_result_file):
+    def solve_f_structure_subproblem(self, f_structure_subproblem_result_file):
         try:
             from mfstrodf.mpi4py_ import MPI_
             comm = MPI_.COMM_WORLD
             rank = comm.Get_rank()
-            sp_object = self.state.subproblem_function_handle(self,use_scaled=False)  # calls self.appr_tuning_objective
+            sp_object = self.state.f_structure_function_handle(self,use_scaled=False)  # calls self.appr_tuning_objective
             optimization_parameters = self.state.optimization_parameters
             optimization_parameters['comm'] = comm
             # optimization_parameters
@@ -73,7 +73,7 @@ class TRSubproblem(object):
                 "fun": result['fun'],
             }
             if rank == 0:
-                with open(tr_subproblem_result_file, 'w') as f:
+                with open(f_structure_subproblem_result_file, 'w') as f:
                     json.dump(outputdata, f, indent=4)
                 if self.debug:
                     sys.stdout.flush()
@@ -81,8 +81,8 @@ class TRSubproblem(object):
                     print("\\SP min \t= {}".format(outputdata['fun']))
             sys.stdout.flush()
         except:
-            self.state.algorithm_status.update_status(8, "Something went wrong when trying to solve the TR subproblem. "
-                                                     "Quitting now")
+            self.state.algorithm_status.update_status(8, "Something went wrong when trying to solve "
+                                                     "the function structure subproblem. Quitting now")
             raise
 
     def appr_tuning_objective(self, parameter=None, use_scaled=False):
@@ -90,7 +90,7 @@ class TRSubproblem(object):
         wtkeys = []
         # Make val approximation compatible to work with apprentice
         m_type = 'model_scaled' if use_scaled else 'model'
-        valscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[0]]
+        valscaledoutfile = self.state.f_structure_parameters[m_type][self.state.data_names[0]]
         new_ds = {}
         with open(valscaledoutfile, 'r') as f:
             ds = json.load(f)
@@ -110,8 +110,8 @@ class TRSubproblem(object):
 
         # If err approximation exists then make it compatible to work with apprentice
         if len(self.state.data_names)>1 and \
-                self.state.subproblem_parameters[m_type][self.state.data_names[1]] is not None:
-            errscaledoutfile = self.state.subproblem_parameters[m_type][self.state.data_names[1]]
+                self.state.f_structure_parameters[m_type][self.state.data_names[1]] is not None:
+            errscaledoutfile = self.state.f_structure_parameters[m_type][self.state.data_names[1]]
             with open(errscaledoutfile, 'r') as f:
                 ds = json.load(f)
             for key in ds:
@@ -126,8 +126,8 @@ class TRSubproblem(object):
 
         # Make data compatible to work with apprentice
         new_ds = {}
-        if 'data' in self.state.subproblem_parameters:
-            expdatafile = self.state.subproblem_parameters['data']
+        if 'data' in self.state.f_structure_parameters:
+            expdatafile = self.state.f_structure_parameters['data']
             with open(expdatafile, 'r') as f:
                 exp_ds = json.load(f)
             for key in exp_ds:
@@ -142,11 +142,11 @@ class TRSubproblem(object):
         my_expdatafile = self.state.working_directory.get_conf_path("data.json")
         with open(my_expdatafile, 'w') as f:
             json.dump(new_ds, f, indent=4)
-        self.state.update_subproblem_parameters('data', my_expdatafile)
+        self.state.update_f_structure_parameters('data', my_expdatafile)
 
         my_wtfile = self.state.working_directory.get_conf_path("weights")
-        if 'weights' in self.state.subproblem_parameters:
-            wtfile = self.state.subproblem_parameters['weights']
+        if 'weights' in self.state.f_structure_parameters:
+            wtfile = self.state.f_structure_parameters['weights']
             if wtfile != my_wtfile:
                 DiskUtil.copyanything(wtfile, my_wtfile)
         else:
@@ -155,7 +155,7 @@ class TRSubproblem(object):
                 wtstr += "{}\t1\n".format(key)
             with open(my_wtfile, "w") as ff:
                 ff.write(wtstr)
-        self.state.update_subproblem_parameters('weights', my_wtfile)
+        self.state.update_f_structure_parameters('weights', my_wtfile)
 
         import apprentice
         IO = apprentice.appset.TuningObjective2(my_wtfile,
@@ -171,5 +171,5 @@ class TRSubproblem(object):
     def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False):
         if len(self.state.data_names) > 1:
             m_type = 'model_scaled' if use_scaled else 'model'
-            self.state.subproblem_parameters[m_type][self.state.data_names[1]] = None
+            self.state.f_structure_parameters[m_type][self.state.data_names[1]] = None
         return self.appr_tuning_objective(parameter,use_scaled)

@@ -118,7 +118,7 @@ class ModelConstruction(object):
             "{}_model_k{}.json".format(data_name,self.state.k))
         with open(val_out_file, "w") as f:
             json.dump(JD, f,indent=4)
-        self.state.update_subproblem_model_parameters('model',{data_name:val_out_file})
+        self.state.update_f_structure_model_parameters('model',{data_name:val_out_file})
 
         JD = OrderedDict()
         a = {}
@@ -130,4 +130,4 @@ class ModelConstruction(object):
             "{}_model_scaled_k{}.json".format(data_name,self.state.k))
         with open(scaled_val_out_file, "w") as f:
             json.dump(JD, f,indent=4)
-        self.state.update_subproblem_model_parameters('model_scaled',{data_name:val_out_file})
+        self.state.update_f_structure_model_parameters('model_scaled',{data_name:val_out_file})

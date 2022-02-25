@@ -99,19 +99,19 @@ class Settings(object):
             except:
                 raise Exception("Model function \""+ds['model']['function_str'][data_name]+"\" not found in mfstrodf.ModelConstruction")
 
-        # self.config_dict['subproblem']['parameters'] = ds['subproblem']['parameters']
-        if 'model' not in self.config_dict['subproblem']['parameters']:
-            self.config_dict['subproblem']['parameters']['model'] = {}
-        if 'model_scaled' not in self.config_dict['subproblem']['parameters']:
-            self.config_dict['subproblem']['parameters']['model_scaled'] = {}
-        # self.config_dict['subproblem']['parameters']['optimization'] = ds['subproblem']['parameters']['optimization']
+        # self.config_dict['f_structure']['parameters'] = ds['f_structure']['parameters']
+        if 'model' not in self.config_dict['f_structure']['parameters']:
+            self.config_dict['f_structure']['parameters']['model'] = {}
+        if 'model_scaled' not in self.config_dict['f_structure']['parameters']:
+            self.config_dict['f_structure']['parameters']['model_scaled'] = {}
+        # self.config_dict['f_structure']['parameters']['optimization'] = ds['f_structure']['parameters']['optimization']
 
         try:
-            from mfstrodf import TRSubproblem
-            method_to_call = getattr(TRSubproblem,ds['subproblem']['function_str'])
-            self.config_dict['subproblem']['function'] = method_to_call
+            from mfstrodf import Fstructure
+            method_to_call = getattr(Fstructure,ds['f_structure']['function_str'])
+            self.config_dict['f_structure']['function'] = method_to_call
         except:
-            raise Exception("TRSubproblem function \""+ds['subproblem']['function_str']+"\" not found in mfstrodf.TRSubproblem")
+            raise Exception("Fstructure function \""+ds['f_structure']['function_str']+"\" not found in mfstrodf.Fstructure")
 
         if 'algorithm_status_dict' in self.config_dict:
             self.algorithm_status.from_dict(self.config_dict['algorithm_status_dict'])
@@ -132,12 +132,12 @@ class Settings(object):
             self.config_dict['meta_data_file'] = meta_data_file
 
         self.config_dict['algorithm_status_dict'] = self.algorithm_status.as_dict()
-        if 'comm' in self.config_dict['subproblem']['parameters']['optimization']:
-            self.config_dict['subproblem']['parameters']['optimization'].pop('comm')
+        if 'comm' in self.config_dict['f_structure']['parameters']['optimization']:
+            self.config_dict['f_structure']['parameters']['optimization'].pop('comm')
         config_dict_to_save = copy.deepcopy(self.config_dict)
         if 'object' in config_dict_to_save['mc']: config_dict_to_save['mc'].pop('object')
         if 'function' in config_dict_to_save['model']: config_dict_to_save['model'].pop('function')
-        if 'function' in config_dict_to_save['subproblem']: config_dict_to_save['subproblem'].pop('function')
+        if 'function' in config_dict_to_save['f_structure']: config_dict_to_save['f_structure'].pop('function')
         if 'working_directory' in config_dict_to_save: config_dict_to_save.pop('working_directory')
         if 'algorithm_status' in config_dict_to_save: config_dict_to_save.pop('algorithm_status')
         self.write_setting_file(self.algorithm_parameters_dict,algorithm_parameters_file)
@@ -174,7 +174,7 @@ class Settings(object):
 
     @property
     def optimization_parameters(self):
-        return self.config_dict['subproblem']['parameters']['optimization']
+        return self.config_dict['f_structure']['parameters']['optimization']
 
     @property
     def tr_eta(self):
@@ -386,18 +386,18 @@ class Settings(object):
         return self.config_dict['model']['parameters']
 
     @property
-    def subproblem_function_handle(self):
-        return self.config_dict['subproblem']['function']
+    def f_structure_function_handle(self):
+        return self.config_dict['f_structure']['function']
 
     @property
-    def subproblem_parameters(self):
-        return self.config_dict['subproblem']['parameters']
+    def f_structure_parameters(self):
+        return self.config_dict['f_structure']['parameters']
 
-    def update_subproblem_model_parameters(self, model_scaling_key:str,ds:object):
-        self.config_dict['subproblem']['parameters'][model_scaling_key].update(ds)
+    def update_f_structure_model_parameters(self, model_scaling_key:str,ds:object):
+        self.config_dict['f_structure']['parameters'][model_scaling_key].update(ds)
 
-    def update_subproblem_parameters(self, key,value):
-        self.config_dict['subproblem']['parameters'][key] = value
+    def update_f_structure_parameters(self, key,value):
+        self.config_dict['f_structure']['parameters'][key] = value
 
     @property
     def mc_run_folder_path(self):
@@ -528,7 +528,7 @@ class AlgorithmStatus():
               "It is possible that too many parameters yielded MC output that was either nan or infty",
             8:"Failure: ",
             9:"Trust region radius is less than the specified minimum bound",
-            10:"The subproblem solution indicates that the current iterate is very similar to the "
+            10:"The function structure solution indicates that the current iterate is very similar to the "
                "previous iterate. This could happen because all of the same parameters from the previous iteration "
                "got selected within the trust region of the current iteration. The solver cannot continue. Quitting now. "
                "Some suggestions to get around this problem include:\n"

@@ -14,7 +14,7 @@
         "MC":"appr_pa_m_construct"
       }
     },
-    "subproblem":{
+    "f_structure":{
       "parameters":{
         "__data":"if the key data does not give the path of the data JSON file then the value of 0 and error of 1 is assumed",
         "__weights":"if the key weights does not give the path to the weights file then a weight of 1 is assumed",
