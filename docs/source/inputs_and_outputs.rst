@@ -437,14 +437,22 @@ Exit Codes
 
 The exit codes and messages maintained by MF-STRO-DF algorithm are given below.
 
-* 0: OK
-* 1: Norm of the projected gradient too small
+* 0: Ok to continue on to next iteration
+* 1: Success: norm of the projected gradient is sufficiently small
 * 2: Max iterations reached
 * 3: Simulation budget depleted
-* 4: MC was successful on less than 1 or N_p parameters (error)
-* 5: Trust region radius is an order of magnitude smaller than the radius at which max fidelity was reached
+* 4: Failure: MC task was successful on less than 1 or N_p parameters (error)
+* 5: Trust region radius is an order of magnitude smaller than the radius at
+  which max fidelity was reached
 * 6: Fidelity has been at a maximum value for the specified number of iterations
-* 7: The usable MC output was less than what was needed for constructing a model. It is possible that too many parameters yielded MC output that was either nan or infty
-* 8: Failure:
+* 7: The usable MC output was less than what was needed for constructing a model.
+  It is possible that too many parameters yielded MC output that was either nan
+  or infinity
+* 8: Other failure occurred
 * 9: Trust region radius is less than the specified minimum bound
-* 10: The function structure solution indicates that the current iterate is very similar to the previous iterate. This could happen because all of the same parameters from the previous iteration got selected within the trust region of the current iteration. The solver cannot continue. Quitting now
+* 10: The function structure solution indicates that the current iterate is very
+  similar to the previous iterate. This could happen because the algorithm is
+  near a stationary point due to which it fails to move from the current iterate.
+  Then all of the same parameters from the previous iteration got selected within
+  the trust region of the current iteration. In this state, the solver cannot
+  continue. Quitting now.
