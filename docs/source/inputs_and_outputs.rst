@@ -235,7 +235,7 @@ is given below.
   * 10: everything printed in the previous level plus the single line optimization output (see :ref:`below<mfstrodf_output_single_line>`)
   * 11: everything printed in the previous level plus the next iterate value
   * 20: everything printed in the previous level plus interpolation points in every iteration
-  * 30: everything printed in the previous level plus value of the subproblem function at the new iterate
+  * 30: everything printed in the previous level plus value of the f_structure composed of model and of MC at the new iterate
   * 40: everything printed in the previous level plus norm of the step taken in each iteration
   * 50: verbose/debug mode. Print everything
 
@@ -274,7 +274,7 @@ the expected configuration inputs JSON is given below.
 
           }
         },
-        "subproblem":{
+        "f_structure":{
           "parameters":{
 
             "optimization":{
@@ -353,25 +353,25 @@ is given below.
       }
     }
 
-* **subproblem**: ``object`` configuration of the trust region subproblem. The keys within
+* **f_structure**: ``object`` configuration of the function structure. The keys within
   this object include:
 
-  * **function_str**: ``str`` specify the name of the function within ``mfstrodf.TRSubproblem``
-    to use for subproblem object construction. For more information on available functions in mfstrodf.TRSubproblem
-    or how to create your own, see :ref:`models<mfstrodf_subproblem>`
+  * **function_str**: ``str`` specify the name of the function within ``mfstrodf.Fstructure``
+    to use for f_structure object construction. For more information on available functions in mfstrodf.Fstructure
+    or how to create your own, see :ref:`models<mfstrodf_f_structure>`
   * **parameters**: ``object`` the key-value pairs in this object will be used as
-    parameters for subproblem object creation in function specified in ``function_str``.
+    parameters for f_structure object creation in function specified in ``function_str``.
     Additionally, the parameters object contains an additional key to specify
     optimization parameters
 
       * **optimization**: ``object`` the the key-value pairs in this object are
-        used as parameters by the minimize function in the subproblem object
+        used as parameters by the minimize function in the f_structure object
         obtained by running the function specified in ``function_str``.
 
   .. code-block:: json
     :force:
 
-    "subproblem":{
+    "f_structure":{
       "function_str":"appr_tuning_objective_without_error_vals",
       "parameters":{
         "data":"if the key data does not give the path of the data JSON file then the value of 0 and error of 1 is assumed",
@@ -422,10 +422,10 @@ line output and the description of each column is given below:
   * ``R``: Reject, trust region center stays at the current iterate and the trust region
     radius halved
 
-* **C_RA(P_k)**: subproblem function value with values from the surrogate model obtained at the current iterate
-* **C_RA(P_{k+1})**: subproblem function value with values from the surrogate model obtained at the next iterate
-* **C_MC(P_k)**: subproblem function value with values from the simulator run at the current iterate
-* **C_MC(P_{k+1})**: subproblem function value with values from the simulator run at the next iterate
+* **C_RA(P_k)**: value of the f_structure composed of the surrogate model evaluated at the current iterate
+* **C_RA(P_{k+1})**: value of the f_structure composed of the surrogate model evaluated at the next iterate
+* **C_MC(P_k)**: value of the f_structure composed of the simulator run values from the current iterate
+* **C_MC(P_{k+1})**: value of the f_structure composed of the simulator run values from the next iterate
 * **N_e(apprx)**: current fidelity
 * **\rho**: sufficient decrease condition :math:`\rho`
 
@@ -447,4 +447,4 @@ The exit codes and messages maintained by MF-STRO-DF algorithm are given below.
 * 7: The usable MC output was less than what was needed for constructing a model. It is possible that too many parameters yielded MC output that was either nan or infty
 * 8: Failure:
 * 9: Trust region radius is less than the specified minimum bound
-* 10: The subproblem solution indicates that the current iterate is very similar to the previous iterate. This could happen because all of the same parameters from the previous iteration got selected within the trust region of the current iteration. The solver cannot continue. Quitting now
+* 10: The function structure solution indicates that the current iterate is very similar to the previous iterate. This could happen because all of the same parameters from the previous iteration got selected within the trust region of the current iteration. The solver cannot continue. Quitting now

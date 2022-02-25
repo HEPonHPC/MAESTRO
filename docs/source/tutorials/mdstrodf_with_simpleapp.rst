@@ -171,20 +171,20 @@ Selecting a surrogate  function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/subproblem.py`` to get a subproblem object.
+``mfstrodf/fstructure.py`` to get a f_structure object.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined subproblem object<mfstrodf_subproblem_avail_func>` function
-* :ref:`create your own subproblem object<mfstrodf_subproblem_create>` function
+* reuse a :ref:`predefined f_structure object<mfstrodf_f_structure_avail_func>` function
+* :ref:`create your own f_structure object<mfstrodf_f_structure_create>` function
 
-For this tutorial, we will get the subproblem object using
-:ref:`appr_tuning_objective<mfstrodf_subproblem_avail_func_appr_tuning_objective>`
-function with the following subproblem object configuration:
+For this tutorial, we will get the f_structure object using
+:ref:`appr_tuning_objective<mfstrodf_f_structure_avail_func_appr_tuning_objective>`
+function with the following f_structure object configuration:
 
   .. code-block:: json
     :force:
 
-    "subproblem":{
+    "f_structure":{
       "parameters":{
         "optimization":{
           "nstart":5,
@@ -200,7 +200,7 @@ function with the following subproblem object configuration:
 Setting the configuration inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The configuration input consists of the objects from the last three steps
+The configuration input consists of the objects from the last three steps.
 So the configuration output for this tutorial is:
 
   .. code-block:: json
@@ -222,7 +222,7 @@ So the configuration output for this tutorial is:
           "DMC":{"m":1},
         }
       },
-      "subproblem":{
+      "f_structure":{
         "parameters":{
           "optimization":{
             "nstart":5,

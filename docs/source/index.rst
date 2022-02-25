@@ -13,7 +13,7 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    Quickstart<introduction>
    advanced_installation
    code_documentation
-   models_and_subproblems
+   models_and_fstructure
    inputs_and_outputs
    running_as_a_function_call
    running_as_a_script
