@@ -96,8 +96,7 @@ class OptimizaitionTask(object):
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name=expected_folder_name,
                                              fnamep=self.parameter_file,
-                                             fnamerf=self.run_fidelity_file,
-                                             **self.state.mc_parameters)
+                                             fnamerf=self.run_fidelity_file)
         self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
                                             next_step="ops_tr")
         self.check_whether_to_stop()
@@ -150,9 +149,7 @@ class OptimizaitionTask(object):
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name = expected_folder_name,
                                              fnamep=self.parameter_file,
-                                             fnamerf=self.run_fidelity_file,
-
-                                             **self.state.mc_parameters)
+                                             fnamerf=self.run_fidelity_file)
 
 
     def mc_caller_interpretor_resolver(self, meta_data_file, next_step:str):
@@ -223,11 +220,12 @@ if __name__ == "__main__":
     parser.add_argument("-d", dest="WORKINGDIR", type=str, default=None,
                         help="Working Directory")
     args = parser.parse_args()
-    DiskUtil.remove_directory(os.path.join(args.WORKINGDIR,"log"))
-    os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
 
     opt_task = OptimizaitionTask(args.WORKINGDIR,args.ALGOPARAMS,args.CONFIG)
+    if opt_task.state.next_step == "ops_start":
+        DiskUtil.remove_directory(os.path.join(args.WORKINGDIR,"log"))
+        os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
+        os.makedirs(os.path.join(args.WORKINGDIR,"conf"),exist_ok=True)
+        
     MPI_.print_MPI_message()
-    # pprint.pprint(opt_task.state.algorithm_parameters_dict)
-    # pprint.pprint(opt_task.state.config_dict)
     opt_task.run()

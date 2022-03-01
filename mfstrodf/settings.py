@@ -82,7 +82,7 @@ class Settings(object):
         try:
             import mfstrodf.mc
             mc_class = getattr(mfstrodf.mc,ds['mc']['class_str'])
-            self.config_dict['mc']['object'] = mc_class(self.mc_run_folder_path)
+            self.config_dict['mc']['object'] = mc_class(self.mc_run_folder_path,self.mc_parameters)
         except:
             raise Exception("MC class \""+ds['mc']['class_str']+"\" not found in mfstrodf.mc")
         if self.mc_call_using_script_run and 'location_str' not in ds['mc']:
@@ -405,7 +405,9 @@ class Settings(object):
 
     @property
     def mc_parameters(self):
-        return  self.config_dict['mc']['parameters']
+        if "parameters" in self.config_dict['mc']:
+            return  self.config_dict['mc']['parameters']
+        return None
 
     @property
     def mc_object(self):

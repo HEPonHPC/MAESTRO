@@ -1,0 +1,35 @@
+{
+    "mc":{
+      "caller_type":"function call",
+      "class_str":"Miniapp",
+      "__only for script run__location_str":"/Users/mkrishnamoorthy/Research/Code/workflow/mfstrodf/mc/bin/miniapp.py",
+      "__only for script run__ranks":10,
+      "parameters":{
+        "mc_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp",
+        "__does not work on my mac__yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge",
+        "yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/YODA/dummyyodamerge.py",
+        "min_fidelity":50,
+        "weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights"
+      }
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2},
+        "DMC":{"m":1}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct",
+        "DMC":"appr_pa_m_construct"
+      }
+    },
+    "f_structure":{
+      "parameters":{
+        "data":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/data.json",
+        "weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights",
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective"
+    }
+}

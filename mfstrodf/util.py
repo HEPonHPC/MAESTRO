@@ -62,7 +62,9 @@ class DiskUtil():
     @staticmethod
     def moveanything(src, dst):
         if os.path.exists(dst):
-            shutil.rmtree(dst)
+            try:
+                shutil.rmtree(dst)
+            except: DiskUtil.remove_file(dst)
         shutil.move(src, dst)
 
     @staticmethod

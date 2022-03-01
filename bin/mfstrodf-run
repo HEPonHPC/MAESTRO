@@ -2,11 +2,6 @@
 
 import argparse
 
-class OptimizationTask(object):
-    def __init__(self):
-        pass
-
-
 
 
 class SaneFormatter(argparse.RawTextHelpFormatter,
@@ -28,6 +23,8 @@ if __name__ == "__main__":
                         help="Algorithm Parameters (JSON)")
     parser.add_argument("-c", dest="CONFIG", type=str, default=None,
                         help="Config file location")
+
+
 
 
 

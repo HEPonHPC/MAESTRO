@@ -9,8 +9,9 @@ encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import math
 from mfstrodf import DiskUtil
 class MCTask(object):
-    def __init__(self,mc_working_directory):
+    def __init__(self,mc_working_directory, mc_parameters=None):
         self.mc_run_folder = mc_working_directory
+        self.mc_parmeters = mc_parameters
 
     # todo === add to doc
     # todo === can be called from __main__ or directly on object (should work as a blackbox -- like a task in the workflow)
@@ -70,7 +71,7 @@ class MCTask(object):
     def write_param(self, parameters, parameter_names, at_fidelities, run_fidelities,
                     file, mc_run_folder, expected_folder_name,
                     fnamep="params.dat", fnamerf="run_fidelity.dat",
-                    fnameaf="at_fidelity.dat",**kwargs):
+                    fnameaf="at_fidelity.dat"):
         DiskUtil.remove_directory(mc_run_folder)
         os.makedirs(mc_run_folder,exist_ok=True)
         param_dir = []

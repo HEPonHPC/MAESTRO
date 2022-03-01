@@ -339,8 +339,7 @@ class InterpolationSample(object):
                                                  expected_folder_name=expected_folder_name,
                                                  fnamep=self.parameter_file,
                                                  fnamerf=self.run_fidelity_file,
-                                                 fnameaf=self.at_fidelity_file,
-                                                 **self.state.mc_parameters)
+                                                 fnameaf=self.at_fidelity_file)
                 with open(meta_data_file,'r') as f:
                     ds = json.load(f)
                 for no,d_from in enumerate(self.p_sel_metadata['param dir']):
