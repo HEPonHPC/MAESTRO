@@ -8,8 +8,8 @@ Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Simpleapp is a a simple application comprised of the simple functions to which
-noise is added to emulate as a Monte Carlo simulator.
+Simpleapp is a an application comprised of simple functions to which
+noise is added to emulate the Monte Carlo simulator.
 
 In this tutorial, we describe how to setup a simpleapp problem, run the
 MF-STRO-DF algorithm over it to generate optimal parameters. For this, we
@@ -143,7 +143,7 @@ This is done using the following mc object configuration:
       "caller_type":"function call",
       "class_str":"SimpleApp",
       "parameters":{
-        "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
+        "functions":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
       }
     }
 
@@ -224,7 +224,7 @@ So the configuration output for this tutorial is:
         "caller_type":"function call",
         "class_str":"SimpleApp",
         "parameters":{
-          "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
+          "functions":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
         }
       },
       "model":{
