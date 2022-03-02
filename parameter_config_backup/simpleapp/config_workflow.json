@@ -4,7 +4,14 @@
       "class_str":"SimpleApp",
       "__only required for script run caller type__location_str":"simpleapp.py",
       "__only required for script run caller type__ranks":1,
-      "parameters":{}
+      "parameters":{
+        "functions":[
+          "SumSquares",
+          "Sphere",
+          "RotatedHyperEllipsoid",
+          "SumOfDiffPowers"
+        ]
+      }
     },
     "model":{
       "parameters":{

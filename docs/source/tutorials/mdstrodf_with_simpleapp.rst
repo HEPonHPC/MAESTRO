@@ -8,8 +8,8 @@ Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Simpleapp is a a simple application comprised of the simple functions to which
-noise is added to emulate as a Monte Carlo simulator.
+Simpleapp is a an application comprised of simple functions to which
+noise is added to emulate the Monte Carlo simulator.
 
 In this tutorial, we describe how to setup a simpleapp problem, run the
 MF-STRO-DF algorithm over it to generate optimal parameters. For this, we
@@ -143,7 +143,7 @@ This is done using the following mc object configuration:
       "caller_type":"function call",
       "class_str":"SimpleApp",
       "parameters":{
-        "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
+        "functions":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
       }
     }
 
@@ -205,10 +205,15 @@ function with the following f_structure object configuration:
       "function_str":"appr_tuning_objective"
     }
 
-Note that if you want to specify data and weights, then assign complete path of the
+Note that if the data and weights keys are not specified in the parameter object
+of the ``f_structure`` configuration, then a data value of ``[1,0]`` and a weight of ``1`` is
+assumed for each term of ``appr_tuning_objective``.
+If you want to specify your own data and weights, then assign complete path of the
 data and weights files to the ``data`` and ``weights`` keys, respectively in
-the ``parameter`` object above. Exampe data and weights files for this tutorial
-can be found in ``parameter_config_backup/simpleapp/``.
+the ``parameter`` object of the ``f_structure`` configuration.
+Exampe data and weights files for this tutorial can be found in
+``parameter_config_backup/simpleapp/data.json`` and ``parameter_config_backup/simpleapp/weights``,
+respectively.
 
 Setting the configuration inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,7 +229,7 @@ So the configuration output for this tutorial is:
         "caller_type":"function call",
         "class_str":"SimpleApp",
         "parameters":{
-          "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
+          "functions":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
         }
       },
       "model":{

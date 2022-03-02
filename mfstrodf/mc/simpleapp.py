@@ -5,7 +5,7 @@ import pprint,os
 class SimpleApp(MCTask):
     def run_mc(self):
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        (term_names,term_class) = self.get_terms()
+        (term_names,term_class) = self.get_functions()
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
@@ -20,12 +20,12 @@ class SimpleApp(MCTask):
                                         term_names=term_names,data=[Y,DY],out_path=outfile
                                         ) # from super class
 
-    def get_terms(self):
+    def get_functions(self):
         term_names = []
         term_class = []
         count = {}
         import mfstrodf.mc
-        for t in self.mc_parmeters['terms']:
+        for t in self.mc_parmeters['functions']:
             count[t] = 1 if t not in term_names else count[t] + 1
             sct = "" if count[t] == 1 else str(count[t])
             term_names.append("{}{}".format(t,sct))
@@ -58,7 +58,7 @@ class SimpleApp(MCTask):
         import pandas as pd
         import math
         dirlist = self.get_param_directory_array(self.mc_run_folder)
-        (term_names,term_class) = self.get_terms()
+        (term_names,term_class) = self.get_functions()
         max_sigma = 0
         for dno,d in enumerate(dirlist):
             at_fidelity = self.get_fidelity_from_directory(d,fnamef="at_fidelity.dat")
@@ -95,7 +95,7 @@ class SimpleApp(MCTask):
 class DeterministicApp(SimpleApp):
     def run_mc(self):
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        (term_names,term_class) = self.get_terms() # from super class
+        (term_names,term_class) = self.get_functions() # from super class
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class

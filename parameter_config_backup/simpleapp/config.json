@@ -5,7 +5,7 @@
       "__only required for script run caller type__location_str":"simpleapp.py",
       "__only required for script run caller type__ranks":1,
       "parameters":{
-        "terms":[
+        "functions":[
           "SumSquares",
           "Sphere",
           "RotatedHyperEllipsoid",
