@@ -103,31 +103,33 @@ class ModelConstruction(object):
             appscaled[term_name] = valscaled.asDict
         all_apps = [app]
         all_apps_scaled = [appscaled]
-        t5 = time.time()
-        if rank == 0:
-            if self.debug: print("Approximation calculation took {} seconds".format(t5 - t4))
-        sys.stdout.flush()
-        from collections import OrderedDict
-        JD = OrderedDict()
-        a = {}
-        for apps in all_apps:
-            a.update(apps)
-        for k in a.keys():
-            JD[k] = a[k]
         val_out_file = self.state.working_directory.get_log_path(
             "{}_model_k{}.json".format(data_name,self.state.k))
-        with open(val_out_file, "w") as f:
-            json.dump(JD, f,indent=4)
-        self.state.update_f_structure_model_parameters('model',{data_name:val_out_file})
-
-        JD = OrderedDict()
-        a = {}
-        for apps in all_apps_scaled:
-            a.update(apps)
-        for k in a.keys():
-            JD[k] = a[k]
         scaled_val_out_file = self.state.working_directory.get_log_path(
             "{}_model_scaled_k{}.json".format(data_name,self.state.k))
-        with open(scaled_val_out_file, "w") as f:
-            json.dump(JD, f,indent=4)
-        self.state.update_f_structure_model_parameters('model_scaled',{data_name:val_out_file})
+        if rank == 0:
+            t5 = time.time()
+            if self.debug: print("Approximation calculation took {} seconds".format(t5 - t4))
+            sys.stdout.flush()
+            from collections import OrderedDict
+            JD = OrderedDict()
+            a = {}
+            for apps in all_apps:
+                a.update(apps)
+            for k in a.keys():
+                JD[k] = a[k]
+
+            with open(val_out_file, "w") as f:
+                json.dump(JD, f,indent=4)
+
+            JD = OrderedDict()
+            a = {}
+            for apps in all_apps_scaled:
+                a.update(apps)
+            for k in a.keys():
+                JD[k] = a[k]
+            with open(scaled_val_out_file, "w") as f:
+                json.dump(JD, f,indent=4)
+
+        self.state.update_f_structure_model_parameters('model',{data_name:val_out_file})
+        self.state.update_f_structure_model_parameters('model_scaled',{data_name:scaled_val_out_file})

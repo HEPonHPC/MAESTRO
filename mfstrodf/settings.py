@@ -22,16 +22,31 @@ class Settings(object):
         self.initialize_config(config_file, working_dir)
 
     def read_setting_file(self, file):
-        try:
-            with open(file, 'r') as f:
-                ds = json.load(f)
-                return ds
-        except:
-            raise Exception("setting file type not supported")
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        ds = None
+        if rank == 0:
+            try:
+                with open(file, 'r') as f:
+                    ds = json.load(f)
+            except:
+                ds = None
+                pass
+        ds = comm.bcast(ds, root=0)
+        if ds is None:
+            if rank == 0:
+                raise Exception("setting file type not supported")
+            else: exit(8)
+        return ds
 
     def write_setting_file(self, ds, file):
-        with open(file, 'w') as f:
-            json.dump(ds, f, indent=4)
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            with open(file, 'w') as f:
+                json.dump(ds, f, indent=4)
 
     def initialize_algorithm_parameters(self, file:str):
         ds = self.read_setting_file(file)

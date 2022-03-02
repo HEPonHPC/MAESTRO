@@ -24,6 +24,6 @@ if __name__ == "__main__":
         mc_parameters = ds['mc']['parameters']
     mc_parameters = comm.bcast(mc_parameters, root=0)
 
-    from mfstrodf.mc import MiniApp
-    mctask = MiniApp(args.MCDIR,mc_parameters)
+    from mfstrodf.mc import SimpleApp
+    mctask = SimpleApp(args.MCDIR,mc_parameters)
     mctask.run_mc()

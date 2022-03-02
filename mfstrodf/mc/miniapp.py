@@ -6,7 +6,7 @@ from subprocess import Popen, PIPE
 import apprentice
 import math
 
-class Miniapp(MCTask):
+class MiniApp(MCTask):
     @staticmethod
     def __chunk_fidelity(run_at_fidelity,min_fidelity=50):
         comm = MPI_.COMM_WORLD
@@ -86,7 +86,7 @@ class Miniapp(MCTask):
             if rank==0:
                 min_f = self.mc_parmeters['min_fidelity'] \
                     if 'min_fidelity' in self.mc_parmeters else 50
-                run_fidelity_arr = Miniapp.__chunk_fidelity(run_fidelity,min_f)
+                run_fidelity_arr = MiniApp.__chunk_fidelity(run_fidelity,min_f)
             run_fidelity_arr = comm.bcast(run_fidelity_arr,root=0)
             if run_fidelity_arr[rank] !=0:
                 outfile = os.path.join(d,"out_curr_r{}.yoda".format(rank))
@@ -156,7 +156,7 @@ class Miniapp(MCTask):
 
 
 if __name__ == "__main__":
-    S = Miniapp("MC_RUN",{"weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights"})
+    S = MiniApp("MC_RUN",{"weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights"})
     directory = "/Users/mkrishnamoorthy/Research/Code/log/workflow/old/Miniapp/WD_local/logs/pythia_Np_k0"
     # directory = "/Users/mkrishnamoorthy/Research/Code/log/workflow/miniapp/WD/log/MC_RUN"
     S.convert_mc_output_to_df(directory)

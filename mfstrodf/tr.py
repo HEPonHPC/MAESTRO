@@ -24,8 +24,11 @@ class TrAmmendment(object):
         rank = comm.Get_rank()
 
         if self.state.algorithm_status.status_val == 0:
-            with open(self.meta_data_file_k, 'r') as f:
-                ds = json.load(f)
+            ds = None
+            if rank == 0:
+                with open(self.meta_data_file_k, 'r') as f:
+                    ds = json.load(f)
+            ds = comm.bcast(ds, root=0)
             p_star_k = ds['parameters'][0]
             f_structure = Fstructure(self.state)
             sp_object = self.state.f_structure_function_handle(f_structure) # calls Fstructure.appr_tuning_objective
@@ -33,8 +36,11 @@ class TrAmmendment(object):
             sys.stdout.flush()
 
             if not self.state.close_to_min_condition:
-                with open(self.meta_data_file_kp1, 'r') as f:
-                    ds = json.load(f)
+                ds = None
+                if rank == 0:
+                    with open(self.meta_data_file_kp1, 'r') as f:
+                        ds = json.load(f)
+                ds = comm.bcast(ds, root=0)
                 p_star_kp1 = ds['parameters'][0]
 
                 approx_obj_val_k = sp_object.objective(p_star_k)

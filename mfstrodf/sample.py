@@ -104,6 +104,9 @@ class InterpolationSample(object):
                     break
 
     def add_param_to_selected_params(self, param, at_fidelity,file=None,index=None):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         if self.p_sel is None:
             self.p_sel = np.array([param])
         else:
@@ -114,8 +117,11 @@ class InterpolationSample(object):
         if file is None:
             param_dir=None
         else:
-            with open(file, 'r') as f:
-                ds = json.load(f)
+            ds = None
+            if rank == 0:
+                with open(file, 'r') as f:
+                    ds = json.load(f)
+            ds = comm.bcast(ds, root=0)
             value = ds['param directory']
             dir_to_remove = value[index]
             fname = os.path.basename(dir_to_remove)

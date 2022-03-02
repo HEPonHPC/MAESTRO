@@ -83,9 +83,12 @@ class OptimizaitionTask(object):
         comm = MPI_().COMM_WORLD
         rank = comm.Get_rank()
         comm.barrier()
-        with open(f_structure_subproblem_result_file,'r') as f:
-            ds = json.load(f)
-        new_param = ds['x']
+        new_param = None
+        if rank == 0:
+            with open(f_structure_subproblem_result_file,'r') as f:
+                ds = json.load(f)
+            new_param = ds['x']
+        new_param = comm.bcast(new_param, root=0)
         if rank == 0:
             expected_folder_name = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k+1))
             self.state.mc_object.write_param(parameters=[new_param],
@@ -226,6 +229,6 @@ if __name__ == "__main__":
         DiskUtil.remove_directory(os.path.join(args.WORKINGDIR,"log"))
         os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
         os.makedirs(os.path.join(args.WORKINGDIR,"conf"),exist_ok=True)
-        
+
     MPI_.print_MPI_message()
     opt_task.run()
