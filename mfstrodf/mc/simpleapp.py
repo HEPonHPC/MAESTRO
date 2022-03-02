@@ -27,7 +27,8 @@ class SimpleApp(MCTask):
         import mfstrodf.mc
         for t in self.mc_parmeters['terms']:
             count[t] = 1 if t not in term_names else count[t] + 1
-            term_names.append("{}{}".format(t,count[t]))
+            sct = "" if count[t] == 1 else str(count[t])
+            term_names.append("{}{}".format(t,sct))
             try:
                 mc_class = getattr(mfstrodf.mc,t)
                 term_class.append(mc_class)

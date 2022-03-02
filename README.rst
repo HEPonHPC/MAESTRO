@@ -78,29 +78,33 @@ if mpi4py is not installed, all code will automatically run on a single rank::
 Testing the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now we will test whether the installation was successful. First, create a log
-directory in the root folder - where apprentice and workflow projects are located
-(instead of running these commands at the root folder location, you can instead
-run these commands at the ``/tmp`` on unix systems)::
+Now we will test whether the installation was successful.
+For this, we run the MF-STRO-DF algorithm on a simple application comprised of
+the following four functions that are used to emulate the Monte Carlo simulator:
 
-    cd ..
-    mkdir -p log/workflow/simpleapp/sumOfDiffPowers
+* `sum of different powers`_
+* `rotated hyper-ellipsoid`_
+* `sphere`_
+* `sum of squares`_
 
-Then from the current directory, go to the ``workflow/mfstrodf`` directory location::
-
-    cd <location of workflow project>/workflow/mfstrodf/
-
-Then run the MF-STRO-DF algorithm on a simple application with the noisy `sum of different powers`_
-function as the Monte Carlo simulator to check whether the installation was successful and everything
-is set up properly. If everything is running properly, then you should see the optimization output as
+If everything is running properly, then you should see the optimization output as
 described in :ref:`MF-STRO-DF output<mfstrodf_output>`::
 
     python optimizationtask.py
-      -a ../parameter_config_backup/simpleapp_sumOfDiffPowers/algoparams.json
-      -c ../parameter_config_backup/simpleapp_sumOfDiffPowers/config.json
-      -d ../../log/workflow/simpleapp/sumOfDiffPowers/WD
+      -a ../parameter_config_backup/simpleapp/algoparams.json
+      -c ../parameter_config_backup/simpleapp/config.json
+      -d ../../log/workflow/simpleapp/WD
+
+The ouput log files are stored in ``../../log/workflow/simpleapp/WD/log/``. At the end of the
+optimization run, you can see the optimal parameters obtained under the
+``tr/center`` keys of the JSON file at
+``../../log/workflow/simpleapp/WD/log/algorithm_parameters_dump_k<last_iteration>.json``, where
+``last_iteration`` is the last iteration number displayed on your console.
 
 .. _`sum of different powers`: https://www.sfu.ca/~ssurjano/sumpow.html
+.. _`rotated hyper-ellipsoid`: https://www.sfu.ca/~ssurjano/rothyp.html
+.. _`sphere`: https://www.sfu.ca/~ssurjano/spheref.html
+.. _`sum of squares`: https://www.sfu.ca/~ssurjano/sumsqu.html
 .. _apprentice: https://github.com/HEPonHPC/apprentice
 .. _h5py: https://www.h5py.org
 .. _numba: https://numba.pydata.org

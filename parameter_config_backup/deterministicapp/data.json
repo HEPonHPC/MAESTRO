@@ -1,14 +1,18 @@
 {
-	"Term1": [
-		0.0,
-		1.0
-	],
-	"Term2": [
-		0.0,
-		1.0
-	],
-	"Term3": [
-		0.0,
-		1.0
-	]
+    "SumSquares": [
+        0.0,
+        1.0
+    ],
+    "Sphere": [
+        0.0,
+        1.0
+    ],
+    "RotatedHyperEllipsoid": [
+        0.0,
+        1.0
+    ],
+    "SumOfDiffPowers": [
+        0.0,
+        1.0
+    ]
 }

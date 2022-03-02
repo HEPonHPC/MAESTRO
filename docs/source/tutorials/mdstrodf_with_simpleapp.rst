@@ -7,8 +7,12 @@ MF-STRO-DF with simpleapp
 Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this tutorial, we describe how to setup a simpleapp problem, run
-the MF-STRO-DF algorithm over it to generate optimal parameters. For this, we
+
+Simpleapp is a a simple application comprised of the simple functions to which
+noise is added to emulate as a Monte Carlo simulator.
+
+In this tutorial, we describe how to setup a simpleapp problem, run the
+MF-STRO-DF algorithm over it to generate optimal parameters. For this, we
 will go through the follwoing steps:
 
 * Test the install
@@ -48,96 +52,100 @@ Setting the algorithm parameters
 Next, we need to select the algorithm parameters. More details about the
 parameters expected, their data types, and examples can be found in the
 :ref:`algorithm parameters documentation<mfstrodf_input_algo_parameters>`.
-Here is the example algorithm parameters JSON file for the sum of different powers`_
-simpleapp present in ``parameter_config_backup/simpleapp_sumOfDiffPowers/algoparams.json``.
+Here is the example algorithm parameters JSON file for the simpleapp
+present in ``parameter_config_backup/simpleapp/algoparams.json``.
 
   .. code-block:: json
     :force:
-    :caption: parameter_config_backup/simpleapp_sumOfDiffPowers/algoparams.json
+    :caption: parameter_config_backup/simpleapp/algoparams.json
 
     {
       "tr": {
-          "radius": 5,
-          "max_radius": 20,
-          "min_radius": 1e-5,
-          "center": [
-              2.13681979279795745,
-              -2.7717580840968665,
-              3.2082901878570345
-          ],
-          "mu": 0.01,
-          "eta": 0.01
-      },
-      "param_names": [
-        "x",
-        "y",
-        "z"
-      ],
-      "param_bounds": [
-        [-5,5],
-        [-5,5],
-        [-5,5]
-      ],
-      "kappa":100,
-      "max_fidelity":1000000,
-      "usefixedfidelity":false,
-      "N_p": 10,
-      "dim": 3,
-      "theta": 0.01,
-      "thetaprime": 0.0001,
-      "fidelity": 1000,
-      "max_iteration":50,
-      "max_fidelity_iteration":5,
-      "min_gradient_norm": 0.00001,
-      "max_simulation_budget":10000000,
-      "output_level":10
+        "radius": 5,
+        "max_radius": 20,
+        "min_radius": 1e-5,
+        "center": [
+            2.13681979279795745,
+            -2.7717580840968665,
+            3.2082901878570345
+        ],
+        "mu": 0.01,
+        "eta": 0.01
+        },
+        "param_names": [
+          "x",
+          "y",
+          "z"
+        ],
+        "param_bounds": [
+          [-5,5],
+          [-5,5],
+          [-5,5]
+        ],
+        "kappa":100,
+        "max_fidelity":1e9,
+        "usefixedfidelity":false,
+        "N_p": 25,
+        "dim": 3,
+        "theta": 0.01,
+        "thetaprime": 0.0001,
+        "fidelity": 1000,
+        "max_iteration":50,
+        "max_fidelity_iteration":5,
+        "min_gradient_norm": 1e-5,
+        "max_simulation_budget":1e16,
+        "output_level":10
     }
 
 Selecting a simple MC function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The next step is to select a simple function to which noise will be added to
+The next step is to select a functions to which noise will be added to
 emulate a Monte Carlo simulator. The function needs to be written in Python_ 3.7.
-This function should be a static method called ``mapping`` within a class
-that inherits ``SimpleApp``. This class should be added to ``mfstrodf/mc/simpleapp.py``
-An example `sum of different powers`_ function is written in Python_ and present
-in ``mfstrodf/mc/simpleapp.py``. This code is shown below.
+This function should be written in a class inside ``mfstrodf/mc/simpleapp.py`` and
+this function should be a static method called ``mapping``.
+Currently, the following four functions are available for use with simpleapp (see
+``mfstrodf/mc/simpleapp.py``):
+
+* `sum of different powers`_
+* `rotated hyper-ellipsoid`_
+* `sphere`_
+* `sum of squares`_
+
+As an example, the `sum of different powers`_ function within
+``mfstrodf/mc/simpleapp.py`` is shown below.
 
 .. code-block:: python
     :linenos:
     :caption: mfstrodf/mc/simpleapp.py
 
-    # This class can inherits SimpleApp if you want to reuse the utility
-    # functions in SimpleApp. Otherwise, it has to inherit MCTask, and implement
-    # your own versions of the abstract functions in MCTask
-    class SumOfDiffPowers(SimpleApp):
-      # This need to be a static method that is called mapping
-      @staticmethod
-      def mapping(x):
-        sum = 0
-        for ii in range(len(x)):
-          xi = x[ii]
-          new = (abs(xi)) ** (ii + 2)
-          sum = sum + new
-        # return a single floating point number
-        return sum
+    class SumOfDiffPowers():
+    @staticmethod
+    def mapping(x):
+        s = 0
+        for i in range(len(x)):
+            n = (abs(x[i])) ** (i + 2)
+            s = s + n
+        return s
 
-``SimpleApp`` itself inherits ``MCTask``. Both SimpleApp and ``MCTask`` contain
+``SimpleApp`` inherits ``MCTask`` that contains
 useful utility functions that will allow you to interface with the MF-STRO-DF
 algorithm with ease. More information about the interface of these methods can be
 found in their :ref:`function documentation<mfstrodf_code_doc>`.
 
-For this tutorial, we will select the SumOfDiffPowers simpleapp with the following
-mc object configuration:
+For this tutorial, we will select all four functions mentioned above with simpleapp.
+This is done using the following mc object configuration:
 
   .. code-block:: json
     :force:
 
       "mc":{
-        "caller_type":"function call",
-        "class_str":"SumOfDiffPowers",
-        "parameters":{}
+      "caller_type":"function call",
+      "class_str":"SimpleApp",
+      "parameters":{
+        "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
       }
+    }
 
 Selecting a surrogate model function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,7 +175,7 @@ following model object configuration:
       }
     }
 
-Selecting a surrogate  function
+Selecting the function structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
@@ -197,6 +205,11 @@ function with the following f_structure object configuration:
       "function_str":"appr_tuning_objective"
     }
 
+Note that if you want to specify data and weights, then assign complete path of the
+data and weights files to the ``data`` and ``weights`` keys, respectively in
+the ``parameter`` object above. Exampe data and weights files for this tutorial
+can be found in ``parameter_config_backup/simpleapp/``.
+
 Setting the configuration inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -206,11 +219,13 @@ So the configuration output for this tutorial is:
   .. code-block:: json
     :force:
 
-    {
-      "mc":{
+      {
+        "mc":{
         "caller_type":"function call",
-        "class_str":"SumOfDiffPowers"
-        "parameters":{}
+        "class_str":"SimpleApp",
+        "parameters":{
+          "terms":["SumSquares", "Sphere", "RotatedHyperEllipsoid", "SumOfDiffPowers"]
+        }
       },
       "model":{
         "function_str":{
@@ -250,24 +265,14 @@ Then, we install the workflow code by typing the following commands::
 
   cd workflow
   pip install .
+  cd mfstrodf
 
-Then, create a log directory in the root folder - where apprentice and workflow projects are located
-(instead of running these commands at the root folder location, you can instead
-run these commands at the ``/tmp`` on unix systems)::
-
-  cd ..
-  mkdir -p log/workflow/simpleapp/sumOfDiffPowers
-
-Then from the current directory, go to the ``workflow/mfstrodf`` directory location::
-
-    cd <location of workflow project>/workflow/mfstrodf/
-
-Then try the MF-STRO-DF algorithm on the `sum of different powers`_ simpleapp using the command::
+Then try the MF-STRO-DF algorithm on the simpleapp using the command::
 
   python optimizationtask.py
     -a <algorithm_parameters_JSON_location>
     -c <configuration_input_JSON_location>
-    -d ../../log/workflow/simpleapp/sumOfDiffPowers/<working_dir_name>
+    -d ../../log/workflow/simpleapp/<working_dir_name>
 
 Here, replace ``<algorithm_parameters_JSON_location>`` and ``<configuration_input_JSON_location>``
 with the correct location and assign an appropriate name in ``<working_dir_name>``.
@@ -282,4 +287,7 @@ algorithm run as described in the
 
 .. _Python: http://www.python.org
 .. _`sum of different powers`: https://www.sfu.ca/~ssurjano/sumpow.html
+.. _`rotated hyper-ellipsoid`: https://www.sfu.ca/~ssurjano/rothyp.html
+.. _`sphere`: https://www.sfu.ca/~ssurjano/spheref.html
+.. _`sum of squares`: https://www.sfu.ca/~ssurjano/sumsqu.html
 .. _apprentice: https://github.com/HEPonHPC/apprentice
