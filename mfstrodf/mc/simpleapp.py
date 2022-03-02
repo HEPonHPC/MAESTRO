@@ -55,6 +55,9 @@ class SimpleApp(MCTask):
         return (df,additional_data)
 
     def merge_statistics_and_get_max_sigma(self):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         import pandas as pd
         import math
         dirlist = self.get_param_directory_array(self.mc_run_folder)
@@ -69,10 +72,16 @@ class SimpleApp(MCTask):
                 DiskUtil.copyanything(curr_mc_out_path,prev_mc_out_path)
             if not os.path.exists(curr_mc_out_path):
                 DiskUtil.copyanything(prev_mc_out_path,curr_mc_out_path)
-            curr_df = pd.read_csv(curr_mc_out_path)
+            curr_df = None
+            if rank == 0:
+                curr_df = pd.read_csv(curr_mc_out_path)
+            curr_df = comm.bcast(curr_df, root=0)
             rownames = list(curr_df.columns.values)
             columnnames = list(curr_df.index)
-            prev_df = pd.read_csv(prev_mc_out_path)
+            prev_df = None
+            if rank == 0:
+                prev_df = pd.read_csv(prev_mc_out_path)
+            prev_df = comm.bcast(prev_df, root=0)
             _Y = []
             _E = []
 

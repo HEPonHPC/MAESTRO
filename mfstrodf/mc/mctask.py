@@ -57,8 +57,14 @@ class MCTask(object):
         :rtype: list
 
         """
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         re_pfname = re.compile(fnamep) if fnamep else None
-        files = glob.glob(os.path.join(param_directory, "*"))
+        files = None
+        if rank == 0:
+            files = glob.glob(os.path.join(param_directory, "*"))
+        files = comm.bcast(files, root=0)
         param = None
         for f in files:
             if re_pfname and re_pfname.search(os.path.basename(f)):
@@ -178,7 +184,13 @@ class MCTask(object):
 
     def get_fidelity_from_directory(self,param_directory,fnamef="run_fidelity.dat"):
         re_fnamerf = re.compile(fnamef) if fnamef else None
-        files = glob.glob(os.path.join(param_directory, "*"))
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        files = None
+        if rank == 0:
+            files = glob.glob(os.path.join(param_directory, "*"))
+        files = comm.bcast(files, root=0)
         fid = None
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
@@ -196,7 +208,13 @@ class MCTask(object):
         return fid
 
     def get_param_directory_array(self,all_param_directory):
-        newINDIRSLIST = glob.glob(os.path.join(all_param_directory, "*"))
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        newINDIRSLIST = None
+        if rank == 0:
+            newINDIRSLIST = glob.glob(os.path.join(all_param_directory, "*"))
+        newINDIRSLIST = comm.bcast(newINDIRSLIST, root=0)
         return newINDIRSLIST if len(newINDIRSLIST)==1 else \
             sorted(newINDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
 
@@ -246,12 +264,18 @@ class MCTask(object):
 
     def convert_csv_data_to_df(self,all_param_directory,mc_out_file_name):
         import pandas as pd
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         dirlist = self.get_param_directory_array(all_param_directory)
         main_object = {}
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d)
             mc_out_path = os.path.join(d,mc_out_file_name)
-            df = pd.read_csv(mc_out_path)
+            df = None
+            if rank == 0:
+                df = pd.read_csv(mc_out_path)
+            df = comm.bcast(df, root=0)
             rownames = list(df.columns.values)
             columnnames = list(df.index)
             for rno in range(1,len(rownames)):

@@ -24,12 +24,16 @@ class OptimizaitionTask(object):
             self.henson = h
 
     def check_whether_to_stop(self):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         if self.state.algorithm_status.status_val != 0:
-            self.state.save(to_log=True)
-            print("\nThe algorithm stopped with exit code {} because:".format(self.state.algorithm_status.status_val))
-            print("{} : {}\n".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
-            print("If the problem is abnormal or needs more investigation, please contact the "
-                  "author Mohan Krishnamoorthy at mkrishnamoorthy2425@gmail.com\n")
+            if rank == 0:
+                self.state.save(to_log=True)
+                print("\nThe algorithm stopped with exit code {} because:".format(self.state.algorithm_status.status_val))
+                print("{} : {}\n".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
+                print("If the problem is abnormal or needs more investigation, please contact the "
+                      "author Mohan Krishnamoorthy at mkrishnamoorthy2425@gmail.com\n")
             sys.exit(self.state.algorithm_status.status_val)
 
     def run(self):
@@ -224,8 +228,10 @@ if __name__ == "__main__":
                         help="Working Directory")
     args = parser.parse_args()
 
+    comm = MPI_.COMM_WORLD
+    rank = comm.Get_rank()
     opt_task = OptimizaitionTask(args.WORKINGDIR,args.ALGOPARAMS,args.CONFIG)
-    if opt_task.state.next_step == "ops_start":
+    if rank == 0 and opt_task.state.next_step == "ops_start":
         DiskUtil.remove_directory(os.path.join(args.WORKINGDIR,"log"))
         os.makedirs(os.path.join(args.WORKINGDIR,"log"),exist_ok=False)
         os.makedirs(os.path.join(args.WORKINGDIR,"conf"),exist_ok=True)

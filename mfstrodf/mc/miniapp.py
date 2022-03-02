@@ -96,6 +96,7 @@ class MiniApp(MCTask):
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
         size = comm.Get_size()
+        rank = comm.Get_rank()
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         all_sigma = []
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
