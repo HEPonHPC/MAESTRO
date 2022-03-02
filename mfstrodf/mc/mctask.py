@@ -151,7 +151,7 @@ class MCTask(object):
         for file in files:
             if re_fnamerf and re_fnamerf.search(os.path.basename(file)):
                 with open(file) as f:
-                    fid = int(next(f))
+                    fid = int(float(next(f)))
         if fid is None:
             raise Exception("Something went wrong. Cannot get fidelity")
         return fid
