@@ -42,7 +42,8 @@ class Fstructure(object):
             proj_grad = Fstructure.projection(self.state.tr_center_scaled - grad, min_param_bounds,
                                                 max_param_bounds) - self.state.tr_center_scaled
             proj_grad_norm = np.linalg.norm(proj_grad)
-            if proj_grad_norm <= self.state.min_gradient_norm and self.state.fidelity >= self.state.max_fidelity:
+            if proj_grad_norm <= self.state.min_gradient_norm and \
+                    (self.state.usefixedfidelity or self.state.fidelity >= self.state.max_fidelity):
                 self.state.algorithm_status.update_status(1)
             if proj_grad_norm <= self.state.tr_mu * self.state.tr_radius:
                 self.state.update_close_to_min_condition(True)

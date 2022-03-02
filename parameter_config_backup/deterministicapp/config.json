@@ -1,10 +1,17 @@
 {
     "mc":{
       "caller_type":"function call",
-      "class_str":"SumOfDiffPowers",
-      "__only required for script run caller type__location_str":"SumOfDiffPowers",
-      "ranks":1,
-      "parameters":{}
+      "class_str":"DeterministicApp",
+      "__only required for script run caller type__location_str":"simpleapp.py",
+      "__only required for script run caller type__ranks":1,
+      "parameters":{
+        "terms":[
+          "SumSquares",
+          "Sphere",
+          "RotatedHyperEllipsoid",
+          "SumOfDiffPowers"
+        ]
+      }
     },
     "model":{
       "parameters":{

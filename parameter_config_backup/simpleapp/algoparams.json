@@ -22,7 +22,7 @@
       [-5,5]
     ],
     "kappa":100,
-    "max_fidelity":1000000000,
+    "max_fidelity":1e9,
     "usefixedfidelity":false,
     "N_p": 25,
     "__N_p": 100,
@@ -33,8 +33,8 @@
     "fidelity": 1000,
     "max_iteration":50,
     "max_fidelity_iteration":5,
-    "min_gradient_norm": 0.00001,
-    "max_simulation_budget":100000000000000000,
+    "min_gradient_norm": 1e-5,
+    "max_simulation_budget":1e16,
     "__output_level":50,
     "output_level":10
 }

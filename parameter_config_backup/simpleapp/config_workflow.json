@@ -1,0 +1,27 @@
+{
+    "mc":{
+      "caller_type":"workflow",
+      "class_str":"SimpleApp",
+      "__only required for script run caller type__location_str":"simpleapp.py",
+      "__only required for script run caller type__ranks":1,
+      "parameters":{}
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct"
+      }
+    },
+    "f_structure":{
+      "parameters":{
+        "__data":"if the key data does not give the path of the data JSON file then the value of 0 and error of 1 is assumed",
+        "__weights":"if the key weights does not give the path to the weights file then a weight of 1 is assumed",
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective_without_error_vals"
+    }
+}

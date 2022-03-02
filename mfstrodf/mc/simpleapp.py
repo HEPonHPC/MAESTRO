@@ -3,26 +3,37 @@ import numpy as np
 import pprint,os
 
 class SimpleApp(MCTask):
-    @staticmethod
-    def mapping(x):
-        raise Exception("This function must be implemented in the derived class")
-
     def run_mc(self):
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        term_names = ["Term1","Term2","Term3"]
+        (term_names,term_class) = self.get_terms()
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
             if run_fidelity>0:
-                Y = [np.random.normal(factor * self.mapping(param),
+                Y = [np.random.normal(clss.mapping(param),
                                       1 / np.sqrt(run_fidelity), 1)[0]
-                     for factor in range(1,4)]
-                DY = [1 / np.sqrt(run_fidelity) for factor in range(1,4)]
+                                        for clss in term_class]
+                DY = [1 / np.sqrt(run_fidelity) for clss in term_class]
 
                 outfile = os.path.join(d,"out_curr.csv")
                 self.save_mc_out_as_csv(header="name,MC,DMC",
                                         term_names=term_names,data=[Y,DY],out_path=outfile
                                         ) # from super class
+
+    def get_terms(self):
+        term_names = []
+        term_class = []
+        count = {}
+        import mfstrodf.mc
+        for t in self.mc_parmeters['terms']:
+            count[t] = 1 if t not in term_names else count[t] + 1
+            term_names.append("{}{}".format(t,count[t]))
+            try:
+                mc_class = getattr(mfstrodf.mc,t)
+                term_class.append(mc_class)
+            except:
+                raise Exception("MC term class \""+t+"\" not found in mfstrodf.mc")
+        return term_names,term_class
 
     def check_df_structure_sanity(self,df):
         rownames = list(df.columns.values)
@@ -46,7 +57,7 @@ class SimpleApp(MCTask):
         import pandas as pd
         import math
         dirlist = self.get_param_directory_array(self.mc_run_folder)
-        term_names = ["Term1","Term2","Term3"]
+        (term_names,term_class) = self.get_terms()
         max_sigma = 0
         for dno,d in enumerate(dirlist):
             at_fidelity = self.get_fidelity_from_directory(d,fnamef="at_fidelity.dat")
@@ -80,16 +91,64 @@ class SimpleApp(MCTask):
             max_sigma = max(max_sigma,np.max(_E))
         return max_sigma
 
-class SumOfDiffPowers(SimpleApp):
+class DeterministicApp(SimpleApp):
+    def run_mc(self):
+        dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
+        (term_names,term_class) = self.get_terms() # from super class
+        for dno,d in enumerate(dirlist):
+            param = self.get_param_from_directory(d) # from super class
+            run_fidelity = self.get_fidelity_from_directory(d) # from super class
+            if run_fidelity>0:
+                Y = [clss.mapping(param) for clss in term_class]
+                DY = [1. for clss in term_class]
+
+                outfile = os.path.join(d,"out_curr.csv")
+                self.save_mc_out_as_csv(header="name,MC,DMC",
+                                        term_names=term_names,data=[Y,DY],out_path=outfile
+                                        ) # from super class
+
+class SumOfDiffPowers():
     @staticmethod
     def mapping(x):
         # https://www.sfu.ca/~ssurjano/sumpow.html
-        sum = 0
-        for ii in range(len(x)):
-            xi = x[ii]
-            new = (abs(xi)) ** (ii + 2)
-            sum = sum + new
-        return sum
+        s = 0
+        for i in range(len(x)):
+            n = (abs(x[i])) ** (i + 2)
+            s = s + n
+        return s
+
+class RotatedHyperEllipsoid():
+    @staticmethod
+    def mapping(x):
+        # https://www.sfu.ca/~ssurjano/rothyp.html
+        outer = 0.
+        for i in range(len(x)):
+            inner = 0.
+            for j in range(i):
+                inner = inner + x[j]**2
+            outer = outer + inner
+        return outer
+
+class Sphere():
+    @staticmethod
+    def mapping(x):
+        # https://www.sfu.ca/~ssurjano/spheref.html
+        s = 0
+        for i in range(len(x)):
+            s = s + x[i]**2
+        return s
+
+
+class SumSquares():
+    @staticmethod
+    def mapping(x):
+        # https://www.sfu.ca/~ssurjano/sumsqu.html
+        s = 0
+        for i in range(len(x)):
+            s = s + (i+1)*x[i]**2
+        return s
+
+
 
 
 
