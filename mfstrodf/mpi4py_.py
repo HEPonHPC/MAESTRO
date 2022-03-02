@@ -30,6 +30,19 @@ class MPI_():
         COMM_WORLD = COMM_()
 
     @staticmethod
+    def chunk_it(sequence):
+        size = MPI_.COMM_WORLD.size
+        avg = np.ceil(len(sequence) / float(size))
+
+        out = []
+        last = 0.0
+        while last < len(sequence):
+            out.append(sequence[int(last):int(last + avg)])
+            last += avg
+
+        return out
+
+    @staticmethod
     def mpi4py_installed():
         try:
             from mpi4py import MPI
