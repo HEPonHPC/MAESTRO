@@ -1,3 +1,5 @@
+import sys
+
 from mfstrodf.mc import MCTask,DiskUtil
 import numpy as np
 import pprint,os
@@ -70,9 +72,10 @@ class MiniApp(MCTask):
                 else:
                     file1=outfile
                     file2=yoda_files[filenum+1]
-                process = Popen([self.mc_parmeters['yodamerge_location'],'-o',outfile,file1,file2],
-                                stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                process.communicate()
+                p = Popen(
+                    [self.mc_parmeters['yodamerge_location'],'-o',outfile,file1,file2],
+                    stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                p.communicate(b"input data that is passed to subprocess' stdin")
 
     def run_mc(self):
         comm = MPI_.COMM_WORLD
@@ -82,31 +85,35 @@ class MiniApp(MCTask):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
 
-            run_fidelity_arr = None
+            rank_run_fidelity = None
             if rank==0:
                 min_f = self.mc_parmeters['min_fidelity'] \
                     if 'min_fidelity' in self.mc_parmeters else 50
-                run_fidelity_arr = MiniApp.__chunk_fidelity(run_fidelity,min_f)
-            run_fidelity_arr = comm.bcast(run_fidelity_arr,root=0)
-            if run_fidelity_arr[rank] !=0:
+                rank_run_fidelity = MiniApp.__chunk_fidelity(run_fidelity,min_f)
+            rank_run_fidelity = comm.scatter(rank_run_fidelity,root=0)
+            if rank_run_fidelity !=0:
                 outfile = os.path.join(d,"out_curr_r{}.yoda".format(rank))
-                self.__run_mc_command(param,run_fidelity_arr[rank],outfile)
-            comm.barrier()
+                self.__run_mc_command(param,rank_run_fidelity,outfile)
+        comm.barrier()
 
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
         dirlist = self.get_param_directory_array(self.mc_run_folder)
-        all_sigma = []
+        rank_dirs = None
+        if rank == 0:
+            rank_dirs = MPI_.chunk_it(dirlist)
+        rank_dirs = comm.scatter(rank_dirs, root=0)
+        rank_max_sigma = 0.
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
-        for dno,d in enumerate(dirlist):
+        for dno,d in enumerate(rank_dirs):
             yodafiles = []
             mainfile = os.path.join(d, "out.yoda")
             if os.path.exists(mainfile):
                 yodafiles.append(mainfile)
-            for rank in range(size):
-                curr_file = os.path.join(d,"out_curr_r{}.yoda".format(rank))
+            for r in range(size):
+                curr_file = os.path.join(d,"out_curr_r{}.yoda".format(r))
                 if os.path.exists(curr_file):
                     yodafiles.append(curr_file)
             outfile = os.path.join(d, "out_curr.yoda")
@@ -118,10 +125,9 @@ class MiniApp(MCTask):
             DiskUtil.moveanything(outfile,mainfile)
             (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, "params.dat", wtfile)
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-            # print(d)
-            # pprint.pprint(DATA)
-            # pprint.pprint(sigma)
-            all_sigma.append(max(sigma))
+            rank_max_sigma = max(sigma)
+        all_sigma = comm.gather(rank_max_sigma,root=0)
+        all_sigma = comm.bcast(all_sigma,root=0)
         return max(all_sigma)
 
     def check_df_structure_sanity(self,df):

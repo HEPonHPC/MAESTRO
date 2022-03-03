@@ -53,11 +53,15 @@ class OptimizaitionTask(object):
         self.check_whether_to_stop()
 
     def ops_sample(self):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         if self.state.k == 0:
             # Move RUN folder to appropriate folder
             oldparamdir  = self.state.working_directory.get_log_path("MC_RUN")
             newparamdir  = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k))
-            DiskUtil.copyanything(oldparamdir,newparamdir)
+            if rank == 0:
+                DiskUtil.copyanything(oldparamdir,newparamdir)
 
         meta_data_file = self.state.working_directory.get_log_path(
             "parameter_metadata_Np_k{}.json".format(self.state.k))
@@ -69,9 +73,13 @@ class OptimizaitionTask(object):
         self.check_whether_to_stop()
 
     def ops_model(self):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         oldparamdir  = self.state.working_directory.get_log_path("MC_RUN")
         newparamdir  = self.state.working_directory.get_log_path("MC_RUN_Np_k{}".format(self.state.k))
-        DiskUtil.copyanything(oldparamdir,newparamdir)
+        if rank == 0:
+            DiskUtil.copyanything(oldparamdir,newparamdir)
         model = ModelConstruction(self.state,newparamdir)
         model.consturct_models()
         self.check_whether_to_stop()
@@ -109,10 +117,14 @@ class OptimizaitionTask(object):
         self.check_whether_to_stop()
 
     def ops_tr(self):
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
         oldparamdir  = self.state.working_directory.get_log_path("MC_RUN")
         newparamdir_kp1  = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k+1))
-        if not self.state.close_to_min_condition:
-            DiskUtil.copyanything(oldparamdir,newparamdir_kp1)
+        if rank == 0:
+            if not self.state.close_to_min_condition:
+                DiskUtil.copyanything(oldparamdir,newparamdir_kp1)
         newparamdir_k = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k))
         meta_data_file_kp1 = self.state.working_directory.get_log_path(
             "parameter_metadata_1_k{}.json".format(self.state.k + 1))

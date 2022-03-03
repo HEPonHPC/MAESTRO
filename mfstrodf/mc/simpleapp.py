@@ -68,10 +68,11 @@ class SimpleApp(MCTask):
             run_fidelity = self.get_fidelity_from_directory(d)
             prev_mc_out_path = os.path.join(d,"out.csv")
             curr_mc_out_path = os.path.join(d,"out_curr.csv")
-            if not os.path.exists(prev_mc_out_path):
-                DiskUtil.copyanything(curr_mc_out_path,prev_mc_out_path)
-            if not os.path.exists(curr_mc_out_path):
-                DiskUtil.copyanything(prev_mc_out_path,curr_mc_out_path)
+            if rank == 0:
+                if not os.path.exists(prev_mc_out_path):
+                    DiskUtil.copyanything(curr_mc_out_path,prev_mc_out_path)
+                if not os.path.exists(curr_mc_out_path):
+                    DiskUtil.copyanything(prev_mc_out_path,curr_mc_out_path)
             curr_df = None
             if rank == 0:
                 curr_df = pd.read_csv(curr_mc_out_path)

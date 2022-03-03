@@ -57,62 +57,43 @@ class DiskUtil():
 
     @staticmethod
     def remove_file(file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            os.remove(file)
+        os.remove(file)
 
     @staticmethod
     def moveanything(src, dst):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            if os.path.exists(dst):
-                try:
-                    shutil.rmtree(dst)
-                except: DiskUtil.remove_file(dst)
-            shutil.move(src, dst)
+        if os.path.exists(dst):
+            try:
+                shutil.rmtree(dst)
+            except: DiskUtil.remove_file(dst)
+        shutil.move(src, dst)
 
     @staticmethod
     def copyanything(src, dst):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            try:
-                if os.path.exists(dst):
-                    shutil.rmtree(dst)
-                shutil.copytree(src, dst)
-            except OSError as exc:
-                if exc.errno == errno.ENOTDIR:
-                    shutil.copy(src, dst)
-                else: raise
+        try:
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            shutil.copytree(src, dst)
+        except OSError as exc:
+            if exc.errno == errno.ENOTDIR:
+                shutil.copy(src, dst)
+            else: raise
+
 
     @staticmethod
     def remove_directory(d):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            try:
-                if os.path.exists(d):
-                    shutil.rmtree(d)
-            except OSError as e:
-                print("Error: %s - %s." % (e.filename, e.strerror))
+        try:
+            if os.path.exists(d):
+                shutil.rmtree(d)
+        except OSError as e:
+            print("Error: %s - %s." % (e.filename, e.strerror))
 
     @staticmethod
     def copy_directory_contents(dir_from, dir_to,exclude=None):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        if rank == 0:
-            import glob
-            indir_list = glob.glob(os.path.join(dir_from, "*"))
-            for f in indir_list:
-                if exclude is not None and os.path.basename(f) not in exclude:
-                    DiskUtil.copyanything(f,os.path.join(dir_to,os.path.basename(f)))
+        import glob
+        indir_list = glob.glob(os.path.join(dir_from, "*"))
+        for f in indir_list:
+            if exclude is not None and os.path.basename(f) not in exclude:
+                DiskUtil.copyanything(f,os.path.join(dir_to,os.path.basename(f)))
 
 class ParameterPointUtil():
     @staticmethod

@@ -29,23 +29,17 @@ class MCTask(object):
 
     @staticmethod
     def read_params_file(path):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        parameters = None
-        if rank == 0:
-            parameters = []
-            with open(path, "r") as f:
-                L = [l.strip() for l in f if not l.startswith("#")]
-                for num, line in enumerate(L):
-                    parts = line.split()
-                    if len(parts) == 2:
-                        parameters.append(float(parts[1]))
-                    elif len(parts) == 1:
-                        parameters.append(float(parts[0]))
-                    else:
-                        raise Exception("Error in parameter input format")
-        parameters = comm.bcast(parameters, root=0)
+        parameters = []
+        with open(path, "r") as f:
+            L = [l.strip() for l in f if not l.startswith("#")]
+            for num, line in enumerate(L):
+                parts = line.split()
+                if len(parts) == 2:
+                    parameters.append(float(parts[1]))
+                elif len(parts) == 1:
+                    parameters.append(float(parts[0]))
+                else:
+                    raise Exception("Error in parameter input format")
         return parameters
 
     def get_param_from_directory(self,param_directory,fnamep="params.dat"):
@@ -61,14 +55,14 @@ class MCTask(object):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         re_pfname = re.compile(fnamep) if fnamep else None
-        files = None
+        param = None
         if rank == 0:
             files = glob.glob(os.path.join(param_directory, "*"))
-        files = comm.bcast(files, root=0)
-        param = None
-        for f in files:
-            if re_pfname and re_pfname.search(os.path.basename(f)):
-                param = MCTask.read_params_file(f)
+            for f in files:
+                if re_pfname and re_pfname.search(os.path.basename(f)):
+                    param = MCTask.read_params_file(f)
+                    break
+        param = comm.bcast(param,root=0)
         if param is None:
             raise Exception("Something went wrong. Cannot get parameter")
         return param
@@ -214,9 +208,10 @@ class MCTask(object):
         newINDIRSLIST = None
         if rank == 0:
             newINDIRSLIST = glob.glob(os.path.join(all_param_directory, "*"))
+            newINDIRSLIST = newINDIRSLIST if len(newINDIRSLIST)==1 else \
+                sorted(newINDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
         newINDIRSLIST = comm.bcast(newINDIRSLIST, root=0)
-        return newINDIRSLIST if len(newINDIRSLIST)==1 else \
-            sorted(newINDIRSLIST, key=lambda i: int(os.path.splitext(os.path.basename(i))[0]))
+        return newINDIRSLIST
 
     def write_fidelity_to_metadata_and_directory(self,metadata_file,fidelities,metadata_file_key='run fidelity',
                                                  fnamef="run_fidelity.dat"):

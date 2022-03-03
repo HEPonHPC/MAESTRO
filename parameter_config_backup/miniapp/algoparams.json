@@ -25,7 +25,7 @@
     "max_fidelity":100000,
     "__usefixedfidelity":false,
     "usefixedfidelity":true,
-    "N_p": 10,
+    "N_p": 6,
     "__N_p": 36,
     "dim": 3,
     "theta": 0.01,
