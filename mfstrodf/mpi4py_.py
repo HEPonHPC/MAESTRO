@@ -60,4 +60,4 @@ class MPI_():
     @staticmethod
     def print_MPI_message():
         if not MPI_.mpi4py_installed():
-            print("WARNING: mpi4py not available. Only 1 rank will be used")
+            print("Warning: mpi4py not available. Only 1 rank will be used")

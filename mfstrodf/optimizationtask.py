@@ -40,16 +40,14 @@ class OptimizaitionTask(object):
         self.check_whether_to_stop()
         if self.state.next_step == "ops_start":
             self.ops_start()
-        else: self.mc_caller_interpretor_resolver(meta_data_file=self.state.meta_data_file,
-                                                  next_step=self.state.next_step)
+        else: self.mc_caller_interpretor_resolver(next_step=self.state.next_step)
         self.check_whether_to_stop()
 
     def ops_start(self):
-        meta_data_file = self.state.working_directory.get_log_path(
-            "parameter_metadata_1_k{}.json".format(self.state.k))
-        self.initialize(meta_data_file)
-        self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
-                                            next_step="ops_sample")
+        # meta_data_file = self.state.working_directory.get_log_path(
+        #     "parameter_metadata_1_k{}.json".format(self.state.k))
+        self.initialize()
+        self.mc_caller_interpretor_resolver(next_step="ops_sample")
         self.check_whether_to_stop()
 
     def ops_sample(self):
@@ -63,13 +61,12 @@ class OptimizaitionTask(object):
             if rank == 0:
                 DiskUtil.copyanything(oldparamdir,newparamdir)
 
-        meta_data_file = self.state.working_directory.get_log_path(
-            "parameter_metadata_Np_k{}.json".format(self.state.k))
+        # meta_data_file = self.state.working_directory.get_log_path(
+        #     "parameter_metadata_Np_k{}.json".format(self.state.k))
         sample_obj = InterpolationSample(self.state,self.parameter_file,self.run_fidelity_file)
-        sample_obj.build_interpolation_points(meta_data_file)
+        sample_obj.build_interpolation_points()
 
-        self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
-                                            next_step="ops_model")
+        self.mc_caller_interpretor_resolver(next_step="ops_model")
         self.check_whether_to_stop()
 
     def ops_model(self):
@@ -89,8 +86,8 @@ class OptimizaitionTask(object):
         if self.state.close_to_min_condition: self.ops_tr()
         f_structure_subproblem_result_file = self.state.working_directory.get_log_path("f_structure_subproblem_result_k{}.json".format(self.state.k))
         f_structure.solve_f_structure_subproblem(f_structure_subproblem_result_file)
-        meta_data_file = self.state.working_directory.get_log_path(
-            "parameter_metadata_1_k{}.json".format(self.state.k + 1))
+        # meta_data_file = self.state.working_directory.get_log_path(
+        #     "parameter_metadata_1_k{}.json".format(self.state.k + 1))
 
         comm = MPI_().COMM_WORLD
         rank = comm.Get_rank()
@@ -101,19 +98,20 @@ class OptimizaitionTask(object):
                 ds = json.load(f)
             new_param = ds['x']
         new_param = comm.bcast(new_param, root=0)
+        param_meta_data = None
         if rank == 0:
             expected_folder_name = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k+1))
-            self.state.mc_object.write_param(parameters=[new_param],
+            param_meta_data = self.state.mc_object.write_param(parameters=[new_param],
                                              parameter_names=self.state.param_names,
                                              at_fidelities=[0],
                                              run_fidelities=[self.state.fidelity],
-                                             file=meta_data_file,
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name=expected_folder_name,
                                              fnamep=self.parameter_file,
                                              fnamerf=self.run_fidelity_file)
-        self.mc_caller_interpretor_resolver(meta_data_file = meta_data_file,
-                                            next_step="ops_tr")
+        param_meta_data = comm.bcast(param_meta_data,root=0)
+        self.state.update_parameter_metadata(self.state.k+1, "1", param_ds=param_meta_data)
+        self.mc_caller_interpretor_resolver(next_step="ops_tr")
         self.check_whether_to_stop()
 
     def ops_tr(self):
@@ -126,12 +124,12 @@ class OptimizaitionTask(object):
             if not self.state.close_to_min_condition:
                 DiskUtil.copyanything(oldparamdir,newparamdir_kp1)
         newparamdir_k = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k))
-        meta_data_file_kp1 = self.state.working_directory.get_log_path(
-            "parameter_metadata_1_k{}.json".format(self.state.k + 1))
-        meta_data_file_k = self.state.working_directory.get_log_path(
-            "__parameter_metadata_1_k{}.json".format(self.state.k))
+        # meta_data_file_kp1 = self.state.working_directory.get_log_path(
+        #     "parameter_metadata_1_k{}.json".format(self.state.k + 1))
+        # meta_data_file_k = self.state.working_directory.get_log_path(
+        #     "__parameter_metadata_1_k{}.json".format(self.state.k))
 
-        tr_ammend = TrAmmendment(self.state,meta_data_file_k,meta_data_file_kp1,newparamdir_k,newparamdir_kp1)
+        tr_ammend = TrAmmendment(self.state,newparamdir_k,newparamdir_kp1)
         tr_ammend.perform_tr_update()
         tr_ammend.check_stopping_conditions()
         if self.state.algorithm_status.status_val == 0:
@@ -141,7 +139,7 @@ class OptimizaitionTask(object):
         else:
             self.check_whether_to_stop()
 
-    def initialize(self,meta_data_file):
+    def initialize(self):
         debug = OutputLevel.is_debug(self.state.output_level)
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
@@ -157,21 +155,22 @@ class OptimizaitionTask(object):
             print("Min Phy bnd \t= {}".format(self.state.min_param_bounds))
             print("Min Phy bnd \t= {}".format(self.state.max_param_bounds))
 
-
+        param_meta_data = None
         if rank == 0:
             expected_folder_name = self.state.working_directory.get_log_path("MC_RUN_1_k{}".format(self.state.k))
-            self.state.mc_object.write_param(parameters=[self.state.tr_center],
+            param_meta_data = self.state.mc_object.write_param(parameters=[self.state.tr_center],
                                              parameter_names=self.state.param_names,
                                              at_fidelities=[0],
                                              run_fidelities=[self.state.fidelity],
-                                             file=meta_data_file,
                                              mc_run_folder=self.state.mc_run_folder_path,
                                              expected_folder_name = expected_folder_name,
                                              fnamep=self.parameter_file,
                                              fnamerf=self.run_fidelity_file)
+        param_meta_data = comm.bcast(param_meta_data,root=0)
+        self.state.update_parameter_metadata(self.state.k,"1",param_ds=param_meta_data)
 
 
-    def mc_caller_interpretor_resolver(self, meta_data_file, next_step:str):
+    def mc_caller_interpretor_resolver(self, next_step:str):
         # Run MC
         if self.state.mc_call_on_workflow:
             try:
@@ -183,7 +182,7 @@ class OptimizaitionTask(object):
                 self.state.change_mc_ran(False)
             else:
                 self.state.change_mc_ran(True)
-                self.state.save(meta_data_file=meta_data_file,next_step=next_step)
+                self.state.save(next_step=next_step)
                 #todo check if this works on script call. Otherwise change to number and read next_step from state
                 sys.exit(next_step)
         elif self.state.mc_call_using_function_call:
@@ -193,9 +192,13 @@ class OptimizaitionTask(object):
         max_sigma = self.state.mc_object.merge_statistics_and_get_max_sigma()
 
         # Update current fid (run_fid+at_fid) && get current fidelities
-        current_fidelities = self.state.mc_object.get_updated_current_fidelities(meta_data_file)
+        type = "Np" if next_step == "ops_model" else "1"
+        k = self.state.k+1 if next_step == "ops_tr" else self.state.k
+        current_fidelities = self.state.mc_object.get_updated_current_fidelities(self.state.get_paramerter_metadata(k,type))
         self.state.update_fidelity(max(current_fidelities))
-        self.state.update_simulation_budget_used(sum(self.state.mc_object.get_run_fidelity_from_metadata(meta_data_file)))
+        self.state.update_simulation_budget_used(sum(self.state.mc_object.get_run_fidelity_from_metadata(
+                                                        self.state.get_paramerter_metadata(k, type)
+                                                        )))
         bound = self.state.kappa*(self.state.tr_radius**2)
 
         new_fidelities = []
@@ -212,12 +215,14 @@ class OptimizaitionTask(object):
                 nf = 0
             new_fidelities.append(nf)
         # pprint.pprint(new_fidelities)
-        self.state.mc_object.write_fidelity_to_metadata_and_directory(meta_data_file,current_fidelities,
+        self.state.mc_object.write_fidelity_to_metadata_and_directory(self.state.get_paramerter_metadata(k,type),
+                                                                      current_fidelities,
                                                                       metadata_file_key="at fidelity",
                                                                       fnamef="at_fidelity.dat")
-        self.state.mc_object.write_fidelity_to_metadata_and_directory(meta_data_file,new_fidelities)
+        self.state.mc_object.write_fidelity_to_metadata_and_directory(self.state.get_paramerter_metadata(k,type),
+                                                                      new_fidelities)
         if sum(new_fidelities) >0:
-            self.mc_caller_interpretor_resolver(meta_data_file,next_step)
+            self.mc_caller_interpretor_resolver(next_step)
         else:
             method_to_call = getattr(self,next_step)
             method_to_call()

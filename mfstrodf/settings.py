@@ -10,9 +10,10 @@ import numpy as np
 
 class Settings(object):
 
-    def __init__(self,working_dir=None, algorithm_parameters_file=None, config_file=None):
+    def __init__(self,working_dir=None, algorithm_parameters_file=None, config_file=None,param_matadata_file=None):
         self.algorithm_parameters_dict = {}
         self.config_dict = {}
+        self.param_meta_data = {}
         if algorithm_parameters_file is None and config_file is None:
             WD = WorkingDirectory(working_dir)
             algorithm_parameters_file = WD.get_log_path('algorithm_parameters_dump.json')
@@ -21,23 +22,17 @@ class Settings(object):
         self.initialize_algorithm_parameters(algorithm_parameters_file)
         self.initialize_config(config_file, working_dir)
 
+        if param_matadata_file is None:
+            param_metadata_file = self.working_directory.get_log_path("parameter_metadata_dump.json")
+            if os.path.exists(param_metadata_file):
+                self.param_meta_data = self.read_setting_file(param_metadata_file)
+
     def read_setting_file(self, file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        ds = None
-        if rank == 0:
-            try:
-                with open(file, 'r') as f:
-                    ds = json.load(f)
-            except:
-                ds = None
-                pass
-        ds = comm.bcast(ds, root=0)
-        if ds is None:
-            if rank == 0:
-                raise Exception("setting file type not supported")
-            else: exit(8)
+        try:
+            with open(file, 'r') as f:
+                ds = json.load(f)
+        except:
+            raise Exception("setting file type not supported")
         return ds
 
     def write_setting_file(self, ds, file):
@@ -133,18 +128,18 @@ class Settings(object):
         else:
             self.algorithm_status.update_status(0)
 
-    def save(self, meta_data_file=None,next_step=None, to_log = False):
+    def save(self, next_step=None, to_log = False):
         if to_log:
             algorithm_parameters_file = self.working_directory.get_log_path('algorithm_parameters_dump_k{}.json'.format(self.k))
             config_file = self.working_directory.get_log_path('config_dump_k{}.json'.format(self.k))
+            param_metadata_file = self.working_directory.get_log_path('parameter_metadata_dump_k{}.json'.format(self.k))
         else:
             algorithm_parameters_file = self.working_directory.get_log_path('algorithm_parameters_dump.json')
             config_file = self.working_directory.get_log_path('config_dump.json')
+            param_metadata_file = self.working_directory.get_log_path("parameter_metadata_dump.json")
 
         if next_step is not None:
             self.config_dict['next_step'] = next_step
-        if meta_data_file is not None:
-            self.config_dict['meta_data_file'] = meta_data_file
 
         self.config_dict['algorithm_status_dict'] = self.algorithm_status.as_dict()
         if 'comm' in self.config_dict['f_structure']['parameters']['optimization']:
@@ -157,6 +152,8 @@ class Settings(object):
         if 'algorithm_status' in config_dict_to_save: config_dict_to_save.pop('algorithm_status')
         self.write_setting_file(self.algorithm_parameters_dict,algorithm_parameters_file)
         self.write_setting_file(config_dict_to_save,config_file)
+        self.write_setting_file(self.param_meta_data, config_file)
+        self.write_setting_file(self.param_meta_data, param_metadata_file)
 
     def update_simulation_budget_used(self, simulation_count):
         self.algorithm_parameters_dict['simulation_budget_used'] += simulation_count
@@ -468,6 +465,30 @@ class Settings(object):
             self.config_dict['algorithm_status'] = AlgorithmStatus(0)
             return self.config_dict['algorithm_status']
 
+    def update_parameter_metadata(self,k,p_type,param_ds):
+        k_str = "k{}".format(k)
+        if k_str not in self.param_meta_data:
+            self.param_meta_data[k_str] = {}
+        self.param_meta_data[k_str][p_type] = param_ds
+
+    def get_paramerter_metadata(self,k,p_type):
+        k_str = "k{}".format(k)
+        if k_str in self.param_meta_data and p_type in self.param_meta_data[k_str]:
+            return self.param_meta_data[k_str][p_type]
+        else:
+            raise Exception("Parameter metadata {} not found in iteration {}".format(p_type,k))
+
+    def copy_type_in_paramerter_metadata(self,k,curr_type_key,new_type_key):
+        k_str = "k{}".format(k)
+        meta_data = copy.deepcopy(self.param_meta_data[k_str][curr_type_key])
+        self.param_meta_data[k_str][new_type_key] = meta_data
+
+    def delete_data_at_index_from_paramerter_metadata(self,k,p_type,index):
+        k_str = "k{}".format(k)
+        for key in self.param_meta_data[k_str][p_type].keys():
+            del self.param_meta_data[k_str][p_type][key][index]
+
+
     def __repr__(self):
         return self.__str__()
 
@@ -476,6 +497,8 @@ class Settings(object):
         s+=pprint.pformat(self.algorithm_parameters_dict)
         s += "\n\n------ config dictionary ------\n"
         s+=pprint.pformat(self.config_dict)
+        s += "\n\n------ param metadata ------\n"
+        s += pprint.pformat(self.param_meta_data)
         return s
 
 

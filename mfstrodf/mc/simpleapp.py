@@ -98,7 +98,8 @@ class SimpleApp(MCTask):
             self.save_mc_out_as_csv(header="name,MC,DMC",
                                     term_names=term_names,data=[_Y,_E],out_path=prev_mc_out_path
                                     ) # from super class
-            DiskUtil.remove_file(curr_mc_out_path)
+            if rank == 0:
+                DiskUtil.remove_file(curr_mc_out_path)
             max_sigma = max(max_sigma,np.max(_E))
         return max_sigma
 

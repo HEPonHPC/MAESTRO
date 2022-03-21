@@ -67,20 +67,11 @@ class MCTask(object):
             raise Exception("Something went wrong. Cannot get parameter")
         return param
 
-    def get_param_from_metadata(self, metadata_file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        parameters = None
-        if rank == 0:
-            with open(metadata_file, 'r') as f:
-                ds = json.load(f)
-            parameters = ds['parameters']
-        parameters = comm.bcast(parameters, root=0)
-        return parameters
+    def get_param_from_metadata(self, param_metadata):
+        return param_metadata['parameters']
 
     def write_param(self, parameters, parameter_names, at_fidelities, run_fidelities,
-                    file, mc_run_folder, expected_folder_name,
+                    mc_run_folder, expected_folder_name,
                     fnamep="params.dat", fnamerf="run_fidelity.dat",
                     fnameaf="at_fidelity.dat"):
         from mfstrodf import MPI_
@@ -115,66 +106,57 @@ class MCTask(object):
                 "param directory": param_dir,
                 "mc param directory":mc_param_dir
             }
-            with open(file,'w') as f:
-                json.dump(ds, f, indent=4)
+            return ds
+            # with open(file,'w') as f:
+            #     json.dump(ds, f, indent=4)
 
     def set_current_iterate_as_next_iterate(self,
-                                            current_iterate_meta_data_file,
-                                            next_iterate_meta_data_file,
+                                            current_iterate_parameter_data,
+                                            next_iterate_parameter_data=None,
                                             next_iterate_mc_directory=None
                                             ):
 
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
+        curr_mc_dir_name = os.path.join(os.path.dirname(current_iterate_parameter_data['param directory'][0]),
+                                        '__' + os.path.basename(current_iterate_parameter_data['param directory'][0]))
+        if next_iterate_parameter_data is not None:
+            new_mc_dir_name = next_iterate_parameter_data['param directory'][0]
+            current_iterate_parameter_data['param directory'] = next_iterate_parameter_data['param directory']
+        else:
+            new_mc_dir_name = os.path.join(next_iterate_mc_directory, os.path.basename(
+                current_iterate_parameter_data['param directory'][0]))
+            current_iterate_parameter_data['param directory'] = [new_mc_dir_name]
+
         if rank == 0:
-            with open(current_iterate_meta_data_file,'r') as f:
-                curr_md_ds = json.load(f)
-            curr_mc_dir_name = os.path.join(os.path.dirname(curr_md_ds['param directory'][0]),
-                                            '__'+os.path.basename(curr_md_ds['param directory'][0]))
-            if os.path.exists(next_iterate_meta_data_file):
-                with open(next_iterate_meta_data_file,'r') as f:
-                    next_md_ds = json.load(f)
-                new_mc_dir_name = next_md_ds['param directory'][0]
-                curr_md_ds['param directory'] = next_md_ds['param directory']
-            else:
-                new_mc_dir_name = os.path.join(next_iterate_mc_directory,os.path.basename(curr_md_ds['param directory'][0]))
-                curr_md_ds['param directory'] = [new_mc_dir_name]
+            DiskUtil.copyanything(curr_mc_dir_name, new_mc_dir_name)
 
-            with open(next_iterate_meta_data_file,'w') as f:
-                json.dump(curr_md_ds,f,indent=4)
+        pprint.pprint(current_iterate_parameter_data)
+        return current_iterate_parameter_data
 
-            DiskUtil.copyanything(curr_mc_dir_name,new_mc_dir_name)
 
-    def update_current_fidelities(self,metadata_file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        new_at_fid = None
-        if rank == 0:
-            with open(metadata_file, 'r') as f:
-                ds = json.load(f)
-            new_at_fid = [i+j for (i,j) in zip(ds['at fidelity'], ds['run fidelity'])]
-            ds['at fidelity'] = new_at_fid
-            with open(metadata_file,'w') as f:
-                json.dump(ds, f, indent=4)
-        new_at_fid = comm.bcast(new_at_fid, root=0)
+    def update_current_fidelities(self,param_metadata):
+        new_at_fid = [i+j for (i,j) in zip(param_metadata['at fidelity'], param_metadata['run fidelity'])]
+        param_metadata['at fidelity'] = new_at_fid
         return new_at_fid
 
-    def get_updated_current_fidelities(self,metadata_file):
-        return self.update_current_fidelities(metadata_file)
+    def get_updated_current_fidelities(self,param_metadata):
+        return self.update_current_fidelities(param_metadata)
 
-    def get_current_fidelities(self,metadata_file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        at_fid = None
-        if rank == 0:
-            with open(metadata_file, 'r') as f:
-                ds = json.load(f)
-            at_fid = ds['at fidelity']
-        at_fid = comm.bcast(at_fid, root=0)
-        return at_fid
+    def get_current_fidelities(self,param_metadata):
+        return param_metadata['at fidelity']
+
+    def get_parameter_data_from_metadata(self,param_metadata,param_index,include_parameter = False):
+        ds = {
+            'at fidelity': param_metadata['at fidelity'][param_index],
+            'run fidelity': param_metadata['run fidelity'][param_index],
+            'param directory':param_metadata['param directory'][param_index],
+            'mc param directory':param_metadata['mc param directory'][param_index]
+        }
+        if include_parameter:
+            ds['parameters'] = param_metadata['parameters'][param_index]
+        return ds
 
     def get_fidelity_from_directory(self,param_directory,fnamef="run_fidelity.dat"):
         re_fnamerf = re.compile(fnamef) if fnamef else None
@@ -213,35 +195,23 @@ class MCTask(object):
         newINDIRSLIST = comm.bcast(newINDIRSLIST, root=0)
         return newINDIRSLIST
 
-    def write_fidelity_to_metadata_and_directory(self,metadata_file,fidelities,metadata_file_key='run fidelity',
+    def write_fidelity_to_metadata_and_directory(self,param_metadata,fidelities,metadata_file_key='run fidelity',
                                                  fnamef="run_fidelity.dat"):
+        param_metadata[metadata_file_key] = fidelities
+
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         if rank == 0:
-            with open(metadata_file, 'r') as f:
-                ds = json.load(f)
-            ds[metadata_file_key] = fidelities
-            with open(metadata_file,'w') as f:
-                json.dump(ds, f, indent=4)
-            for (fid,exp_d,mc_d) in zip(fidelities,ds['param directory'],ds['mc param directory']):
+            for (fid,exp_d,mc_d) in zip(fidelities,param_metadata['param directory'],param_metadata['mc param directory']):
                 d=exp_d if os.path.exists(exp_d) else mc_d
                 outffidelities = os.path.join(d, fnamef)
                 with open(outffidelities, "w") as ff:
                     ff.write("{}".format(fid))
 
 
-    def get_run_fidelity_from_metadata(self,metadata_file):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        run_fid = None
-        if rank == 0:
-            with open(metadata_file, 'r') as f:
-                ds = json.load(f)
-            run_fid = ds['run fidelity']
-        run_fid = comm.bcast(run_fid, root=0)
-        return run_fid
+    def get_run_fidelity_from_metadata(self,param_metadata):
+        return param_metadata['run fidelity']
 
     def save_mc_out_as_csv(self,header,term_names,data,out_path):
         from mfstrodf import MPI_
