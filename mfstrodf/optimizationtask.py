@@ -207,8 +207,8 @@ class OptimizaitionTask(object):
                 nf = 0
             elif max_sigma > bound:
                 diff_sigma = max_sigma - bound
-                # nf = int(np.ceil((cf/max_sigma)*diff_sigma))
-                nf = 1/(diff_sigma**2)
+                nf = int(np.ceil((cf/max_sigma)*diff_sigma))
+                # nf = 1/(diff_sigma**2)
                 nf = max(self.state.min_fidelity,nf)
                 if cf + nf > self.state.max_fidelity:
                     nf = self.state.max_fidelity - cf
