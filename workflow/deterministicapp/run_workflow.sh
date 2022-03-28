@@ -1,8 +1,8 @@
 #! /bin/bash
 
 #sample runs:
-# sh run_workflow.sh /tmp/deterministicapp/WD_workflow ../../../parameter_config_backup/deterministicapp/
-# sh run_workflow.sh ../../../../log/workflow/deterministicapp/WD_workflow ../../../parameter_config_backup/deterministicapp/
+# sh run_workflow.sh /tmp/deterministicapp/WD_workflow ../../parameter_config_backup/deterministicapp
+# sh run_workflow.sh ../../../log/workflow/deterministicapp/WD_workflow ../../parameter_config_backup/deterministicapp
 rm -rf $1
 mkdir -p $1
 mkdir -p $1/conf
