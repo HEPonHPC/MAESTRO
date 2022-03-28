@@ -34,10 +34,11 @@ class InterpolationSample(object):
         self.i_pool = []
         self.p_sel = None
         self.p_sel_metadata = None
-        self.p_sel_files = []
+        self.p_sel_iters = []
+        self.p_sel_types = []
         self.p_sel_indices = []
 
-    def add_params_to_pool(self, file, iterno, paramtype):
+    def add_params_to_pool(self, param_metadata, iterno, paramtype):
         """
         Add all acceptable (in current trust region and not the same parameter) to the pool.
 
@@ -52,38 +53,38 @@ class InterpolationSample(object):
         :rtype: list, list
 
         """
-        params = self.state.mc_object.get_param_from_metadata(file)
-        at_fidelity = self.state.mc_object.get_current_fidelities(file)
+        params = self.state.mc_object.get_param_from_metadata(param_metadata)
         for pno, p in enumerate(params):
             if ParameterPointUtil.check_if_point_in_TR(p, self.state.tr_center, self.state.tr_radius):
                 if not ParameterPointUtil.check_if_same_point(p, self.state.tr_center):
                     if self.p_pool is None:
                         self.p_pool = np.array([p])
-                        self.p_pool_metadata["0"] = {"file": file,
-                                                     "fidelity to reuse": at_fidelity[pno],
-                                                     "index": pno, "k": iterno, "ptype": paramtype}
+                        self.p_pool_metadata["0"] = {"index":pno,"k": iterno, "ptype": paramtype}
                     else:
                         self.p_pool = np.concatenate((self.p_pool, np.array([p])))
-                        self.p_pool_metadata[str(len(self.p_pool) - 1)] = {"file": file,
-                                                                           "fidelity to reuse": at_fidelity[pno],
-                                                                           "index": pno, "k": iterno,
+                        self.p_pool_metadata[str(len(self.p_pool) - 1)] = {"index":pno,"k": iterno,
                                                                            "ptype": paramtype}
-                    self.p_pool_at_fidelity.append(at_fidelity[pno])
+                    self.p_pool_at_fidelity.append(param_metadata['at fidelity'][pno])
 
-    def add_tr_center_to_selected_params(self, file):
-        at_fidelity = self.state.mc_object.get_current_fidelities(file)
-        self.add_param_to_selected_params(self.state.tr_center, at_fidelity[0],file=file,index=0)
-        self.p_sel_files.append(file)
+    def add_tr_center_to_selected_params(self):
+        param_metadata = self.state.get_paramerter_metadata(self.state.k,"1")
+        param_specific_metadata = self.state.mc_object.get_parameter_data_from_metadata(param_metadata,0)
+        self.add_param_to_selected_params(self.state.tr_center,param_specific_metadata)
+        self.p_sel_iters.append(self.state.k)
+        self.p_sel_types.append("1")
         self.p_sel_indices.append(0)
 
     def add_prev_param_to_selected_params(self, pool_index):
         param = self.p_pool[pool_index]
-        at_fidelity = self.p_pool_at_fidelity[pool_index]
-        file = self.p_pool_metadata[str(pool_index)]['file']
-        file_index = self.p_pool_metadata[str(pool_index)]['index']
-        self.add_param_to_selected_params(param, at_fidelity,file=file,index=file_index)
-        self.p_sel_files.append(file)
-        self.p_sel_indices.append(file_index)
+        metadata_index = self.p_pool_metadata[str(pool_index)]['index']
+        metadata_type = self.p_pool_metadata[str(pool_index)]['ptype']
+        metadata_iter = self.p_pool_metadata[str(pool_index)]['k']
+        param_metadata = self.state.get_paramerter_metadata(metadata_iter,metadata_type)
+        param_specific_metadata = self.state.mc_object.get_parameter_data_from_metadata(param_metadata, metadata_index)
+        self.add_param_to_selected_params(param, param_specific_metadata)
+        self.p_sel_iters.append(metadata_iter)
+        self.p_sel_types.append(metadata_type)
+        self.p_sel_indices.append(metadata_index)
 
     def add_new_param_to_selected_params(self):
         for pino, pi in enumerate(self.p_init):
@@ -96,78 +97,76 @@ class InterpolationSample(object):
                         break
 
             if result:
-                self.add_param_to_selected_params(pi, 0, None)
+                self.add_param_to_selected_params(pi, {"at fidelity":0})
                 self.i_init[pino] = False
 
             if self.p_sel is not None:
                 if len(self.p_sel) == self.n_to_get:
                     break
 
-    def add_param_to_selected_params(self, param, at_fidelity,file=None,index=None):
-        from mfstrodf import MPI_
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
+    def add_param_to_selected_params(self, param,param_metadata):
         if self.p_sel is None:
             self.p_sel = np.array([param])
         else:
             self.p_sel = np.concatenate((self.p_sel, np.array([param])))
         if self.p_sel_metadata is None:
             self.p_sel_metadata = {"at fidelity": [], "run fidelity": [],"param dir":[]}
-        self.p_sel_metadata["at fidelity"].append(at_fidelity)
-        if file is None:
+        self.p_sel_metadata["at fidelity"].append(param_metadata['at fidelity'])
+
+        if 'param directory' not in param_metadata:
             param_dir=None
         else:
-            ds = None
-            if rank == 0:
-                with open(file, 'r') as f:
-                    ds = json.load(f)
-            ds = comm.bcast(ds, root=0)
-            value = ds['param directory']
-            dir_to_remove = value[index]
+            dir_to_remove = param_metadata['param directory']
             fname = os.path.basename(dir_to_remove)
             dname = os.path.dirname(dir_to_remove)
             param_dir = os.path.join(dname, "__" + fname)
         self.p_sel_metadata["param dir"].append(param_dir)
-        diff = self.state.fidelity - at_fidelity
+        diff = self.state.fidelity - param_metadata['at fidelity']
         self.p_sel_metadata["run fidelity"].append(max(self.state.min_fidelity, diff) if diff > 0 else 0)
 
     def remove_selected_params_from_prev_metadata_and_directory(self):
         comm = MPI_.COMM_WORLD
         rank = comm.rank
-        u_files, u_argindices, u_count = np.unique(self.p_sel_files, return_inverse=True,return_counts=True)
-        for fno,file in enumerate(u_files):
-            p_sel_argindices = np.argwhere(u_argindices == fno).ravel()
-            f_indicies = np.array(self.p_sel_indices)[p_sel_argindices]
-            f_rev_argindices =  np.argsort(f_indicies)
-            f_rev_argindices = f_rev_argindices[::-1]
+        p_sel_loc = ["{}_{}".format(i,j) for (i,j) in zip(self.p_sel_iters,self.p_sel_types)]
+        u_loc, u_argindices, u_count = np.unique(p_sel_loc, return_inverse=True,return_counts=True)
+        for (lno,loc) in enumerate(u_loc):
+            p_sel_argindices = np.argwhere(u_argindices == lno).ravel()
+            l_indicies = np.array(self.p_sel_indices)[p_sel_argindices]
+            l_rev_argindices =  np.argsort(l_indicies)
+            l_rev_argindices = l_rev_argindices[::-1]
 
             # Always save metadata file for start/iterate parameters and not for sample set parameters
-            if rank == 0:
-                if '_1_' in file and '_Np_' not in file:
-                    fname = os.path.basename(file)
-                    dname = os.path.dirname(file)
-                    new_file = os.path.join(dname, "__" + fname)
-                    DiskUtil.copyanything(file, new_file)
-                with open(file, 'r') as f:
-                    ds = json.load(f)
-                for f_a_index in f_rev_argindices:
-                    index = f_indicies[f_a_index]
-                    for key in ['parameters', 'at fidelity', 'run fidelity', 'mc param directory']:
-                        value = ds[key]
-                        del value[index]
-                        ds[key] = value
-                    value = ds['param directory']
-                    dir_to_remove = value[index]
-                    fname = os.path.basename(dir_to_remove)
-                    dname = os.path.dirname(dir_to_remove)
-                    new_dir = os.path.join(dname, "__" + fname)
+            k = loc.split('_')[0]
+            t = loc.split('_')[1]
+            param_metadata = self.state.get_paramerter_metadata(k, t)
+            for l_a_index in l_rev_argindices:
+                index = l_indicies[l_a_index]
+                dir_to_remove = param_metadata['param directory'][index]
+                fname = os.path.basename(dir_to_remove)
+                dname = os.path.dirname(dir_to_remove)
+                new_dir = os.path.join(dname, "__" + fname)
+                if rank == 0:
                     DiskUtil.copyanything(dir_to_remove, new_dir)
                     DiskUtil.remove_directory(dir_to_remove)
-                    del value[index]
-                    ds["param directory"] = value
+                if t == "1":
+                    self.state.copy_type_in_paramerter_metadata(k, t, "__{}".format(t))
+                self.state.delete_data_at_index_from_paramerter_metadata(k, t, index)
 
-                with open(file, 'w') as f:
-                    json.dump(ds, f, indent=4)
+
+        # for iter,type,index in zip(self.p_sel_iters,self.p_sel_types,self.p_sel_indices):
+        #     param_metadata = self.state.get_paramerter_metadata(iter,type)
+        #     dir_to_remove = param_metadata['param directory'][index]
+        #     fname = os.path.basename(dir_to_remove)
+        #     dname = os.path.dirname(dir_to_remove)
+        #     new_dir = os.path.join(dname, "__" + fname)
+        #     if rank == 0:
+        #         DiskUtil.copyanything(dir_to_remove, new_dir)
+        #         DiskUtil.remove_directory(dir_to_remove)
+        #     if type == "1":
+        #         self.state.copy_type_in_paramerter_metadata(iter,type,"__{}".format(type))
+        #
+        #     self.state.delete_data_at_index_from_paramerter_metadata(iter,type,index)
+
 
     @staticmethod
     def get_lhs_samples(dim, npoints, criterion, minarr, maxarr, seed=87236):
@@ -179,7 +178,7 @@ class InterpolationSample(object):
         s = apprentice.Scaler(np.array(X, dtype=np.float64), a=minarr, b=maxarr)
         return s.scaledPoints
 
-    def build_interpolation_points(self, meta_data_file):
+    def build_interpolation_points(self):
         comm = MPI_.COMM_WORLD
         rank = comm.rank
         factor = 1
@@ -215,15 +214,15 @@ class InterpolationSample(object):
         ############################################################
         # polulate p_pool
         ############################################################
-        tr_center_param_fn = self.state.working_directory.get_log_path(
-            "parameter_metadata_1")  # + "_k{}.json".format(k)
-        prev_np_param_fn = self.state.working_directory.get_log_path("parameter_metadata_Np")  # + "_k{}.json".format(k)
+        # tr_center_param_fn = self.state.working_directory.get_log_path(
+        #     "parameter_metadata_1")  # + "_k{}.json".format(k)
+        # prev_np_param_fn = self.state.working_directory.get_log_path("parameter_metadata_Np")  # + "_k{}.json".format(k)
         for i in range(self.state.k):
-            tr_center_param = tr_center_param_fn + "_k{}.json".format(i)
-            self.add_params_to_pool(tr_center_param, i, "1")
+            # tr_center_param = tr_center_param_fn + "_k{}.json".format(i)
+            self.add_params_to_pool(self.state.get_paramerter_metadata(i,"1"), i, "1")
 
-            prev_np_param = prev_np_param_fn + "_k{}.json".format(i)
-            self.add_params_to_pool(prev_np_param, i, "Np")
+            # prev_np_param = prev_np_param_fn + "_k{}.json".format(i)
+            self.add_params_to_pool(self.state.get_paramerter_metadata(i,"Np"), i, "Np")
 
         if self.p_pool is not None:
             self.i_pool = [True for i in self.p_pool]
@@ -251,8 +250,8 @@ class InterpolationSample(object):
         ############################################################
         # Add tr_center to p_sel
         ############################################################
-        tr_center_param = tr_center_param_fn + "_k{}.json".format(self.state.k)
-        self.add_tr_center_to_selected_params(tr_center_param)
+        # tr_center_param = tr_center_param_fn + "_k{}.json".format(self.state.k)
+        self.add_tr_center_to_selected_params()
         if self.debug:
             print("p_sel after adding tr_center")
             pprint.pprint(self.p_sel)
@@ -333,26 +332,26 @@ class InterpolationSample(object):
         ############################################################
         self.state.update_close_to_min_condition(False)
 
-        if rank == 0:
-            if self.p_sel is not None:
+        if self.p_sel is not None:
+            param_meta_data = None
+            if rank == 0:
                 expected_folder_name = self.state.working_directory.get_log_path("MC_RUN_Np_k{}".format(self.state.k))
-                self.state.mc_object.write_param(parameters=self.p_sel.tolist(),
+                param_meta_data = self.state.mc_object.write_param(parameters=self.p_sel.tolist(),
                                                  parameter_names=self.state.param_names,
                                                  at_fidelities=self.p_sel_metadata['at fidelity'],
                                                  run_fidelities=self.p_sel_metadata['run fidelity'],
-                                                 file=meta_data_file,
                                                  mc_run_folder=self.state.mc_run_folder_path,
                                                  expected_folder_name=expected_folder_name,
                                                  fnamep=self.parameter_file,
                                                  fnamerf=self.run_fidelity_file,
                                                  fnameaf=self.at_fidelity_file)
-                with open(meta_data_file,'r') as f:
-                    ds = json.load(f)
                 for no,d_from in enumerate(self.p_sel_metadata['param dir']):
                     if d_from is not None:
-                        d_to = ds['mc param directory'][no]
+                        d_to = param_meta_data['mc param directory'][no]
                         DiskUtil.copy_directory_contents(d_from,d_to,exclude=[self.parameter_file,self.at_fidelity_file,self.run_fidelity_file])
+            param_meta_data = comm.bcast(param_meta_data, root=0)
+            self.state.update_parameter_metadata(self.state.k, "Np", param_ds=param_meta_data)
+        else:
+            raise Exception("Something went horribly wrong in InterpolationSample.build_interpolation_points")
 
-            else:
-                raise Exception("Something went horribly wrong in InterpolationSample.build_interpolation_points")
 

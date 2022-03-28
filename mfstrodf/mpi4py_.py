@@ -1,4 +1,7 @@
 import numpy as np
+import sys
+
+
 class COMM_():
     def __init__(self):
         self.rank = 0
@@ -31,15 +34,19 @@ class MPI_():
 
     @staticmethod
     def chunk_it(sequence):
+
         size = MPI_.COMM_WORLD.size
         avg = np.ceil(len(sequence) / float(size))
 
         out = []
         last = 0.0
         while last < len(sequence):
-            out.append(sequence[int(last):int(last + avg)])
+            end = len(sequence) if last + avg > len(sequence) else last+avg
+            out.append(sequence[int(last):int(end)])
             last += avg
 
+        if len(out)<size:
+            for i in range(size-len(out)): out.append([])
         return out
 
     @staticmethod
@@ -53,4 +60,4 @@ class MPI_():
     @staticmethod
     def print_MPI_message():
         if not MPI_.mpi4py_installed():
-            print("WARNING: mpi4py not available. Only 1 rank will be used")
+            print("Warning: mpi4py not available. Only 1 rank will be used")

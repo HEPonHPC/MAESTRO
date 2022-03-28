@@ -4,7 +4,7 @@
         "nodes": [
             {
              	"start_proc": 0,
-                "nprocs": 1,
+                "nprocs": 4,
                 "cmdline": "./optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
                 "func": "opt_task_py",
                 "inports": [],
@@ -12,9 +12,9 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 1,
-                "cmdline": "./sumofdiffpowers.py -d log/MC_RUN",
-                "func": "miniappinitial_py",
+                "nprocs": 4,
+                "cmdline": "./deterministicapp.py -d log/MC_RUN -c conf/config.json",
+                "func": "mc_task_py",
                 "inports": [],
                 "outports": []
             }

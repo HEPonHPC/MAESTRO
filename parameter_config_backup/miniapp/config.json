@@ -7,7 +7,7 @@
       "parameters":{
         "mc_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp",
         "__does not work on my mac__yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge",
-        "yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/YODA/dummyyodamerge.py",
+        "yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/YODA/dummyyodamerge.sh",
         "min_fidelity":50,
         "weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights"
       }

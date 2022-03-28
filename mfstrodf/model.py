@@ -49,13 +49,11 @@ class ModelConstruction(object):
     def appr_ra_m_1_construct(self,data_name):
         self.appr_appx_construct(data_name)
 
-    #TODO run in parallel for cnum in range(1,len(columnnames))
     def appr_appx_construct(self,data_name):
         t4 = time.time()
         app = {}
         appscaled = {}
         comm = MPI_.COMM_WORLD
-        size = comm.Get_size()
         rank = comm.Get_rank()
         columnnames = list(self.mc_data_df.index)
 
@@ -64,11 +62,16 @@ class ModelConstruction(object):
                                     pnames=self.state.param_names)
         self.state.set_tr_center_scaled(Sclocal.scale(self.state.tr_center).tolist())
         self.state.set_scaled_min_max_parameter_bounds(Sclocal.box_scaled[:,0].tolist(),Sclocal.box_scaled[:,1].tolist())
-        num = -1
-        for cnum in range(0,len(columnnames),2):
-            num += 1
-            X = self.mc_data_df[data_name]['{}'.format(columnnames[cnum])]
-            Y = self.mc_data_df[data_name]['{}'.format(columnnames[cnum+1])]
+        X_indicies = [cnum for cnum in range(0,len(columnnames),2)]
+        Y_indicies = [cnum+1 for cnum in range(0,len(columnnames),2)]
+        assert(len(X_indicies) == len(Y_indicies))
+        rank_indicies = None
+        if rank == 0:
+            rank_indicies = MPI_.chunk_it([i for i in range(len(X_indicies))])
+        rank_indicies = comm.scatter(rank_indicies, root=0)
+        for ri in rank_indicies:
+            X = self.mc_data_df[data_name]['{}'.format(columnnames[X_indicies[ri]])]
+            Y = self.mc_data_df[data_name]['{}'.format(columnnames[Y_indicies[ri]])]
             m = self.state.model_parameters[data_name]['m']\
                 if data_name in self.state.model_parameters and 'm' in self.state.model_parameters[data_name] \
                 else 1
@@ -76,33 +79,33 @@ class ModelConstruction(object):
                 if data_name in self.state.model_parameters and 'n' in self.state.model_parameters[data_name] \
                 else 0
             if self.debug:
-                if ((num + 1) % 5 == 0):
+                if ((ri + 1) % 5 == 0):
                     now = time.time()
                     tel = now - t4
-                    ttg = tel * (len(columnnames)/2 - num) / (num + 1)
+                    ttg = tel * (len(columnnames)/2 - ri) / (ri + 1)
                     eta = now + ttg
                     eta = datetime.datetime.fromtimestamp(now + ttg)
                     sys.stdout.write(
                         "{}[{}] {}/{} (elapsed: {:.1f}s, to go: {:.1f}s, ETA: {})\r".format(
-                            80 * " " if rank > 0 else "", rank, num + 1, len(columnnames)/2, tel, ttg,
+                            80 * " " if rank > 0 else "", rank, ri + 1, len(columnnames)/2, tel, ttg,
                             eta.strftime('%Y-%m-%d %H:%M:%S')), )
                     sys.stdout.flush()
             try:
                 val = apprentice.RationalApproximation(X, Y, order=(m,n), pnames=self.state.param_names)
                 if self.additional_data is not None and data_name in self.additional_data:
                     if '_xmin' in self.additional_data[data_name] and '_xmax' in self.additional_data[data_name]:
-                        val._xmin = self.additional_data[data_name]["_xmin"][num]
-                        val._xmax = self.additional_data[data_name]["_xmax"][num]
+                        val._xmin = self.additional_data[data_name]["_xmin"][ri]
+                        val._xmax = self.additional_data[data_name]["_xmax"][ri]
 
                 Xscaled = [Sclocal.scale(x) for x in X]
                 valscaled = apprentice.RationalApproximation(Xscaled, Y, order=(m,n), pnames=self.state.param_names)
             except AssertionError as error:
                 raise(error)
-            term_name = columnnames[cnum].split('.')[0]
+            term_name = columnnames[X_indicies[ri]].split('.')[0]
             app[term_name] = val.asDict
             appscaled[term_name] = valscaled.asDict
-        all_apps = [app]
-        all_apps_scaled = [appscaled]
+        all_apps = comm.gather(app, root=0)
+        all_apps_scaled = comm.gather(appscaled, root=0)
         val_out_file = self.state.working_directory.get_log_path(
             "{}_model_k{}.json".format(data_name,self.state.k))
         scaled_val_out_file = self.state.working_directory.get_log_path(

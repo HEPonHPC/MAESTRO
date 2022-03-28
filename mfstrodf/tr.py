@@ -5,10 +5,10 @@ encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import numpy as np
 import pprint
 class TrAmmendment(object):
-    def __init__(self,state,meta_data_file_k, meta_data_file_kp1, mc_run_folder_k, mc_run_folder_kp1):
+    def __init__(self,state, mc_run_folder_k, mc_run_folder_kp1):
         self.state:Settings = state
-        self.meta_data_file_k = meta_data_file_k
-        self.meta_data_file_kp1 = meta_data_file_kp1
+        # self.meta_data_file_k = meta_data_file_k
+        # self.meta_data_file_kp1 = meta_data_file_kp1
         self.mc_run_folder_k =  mc_run_folder_k
         self.mc_run_folder_kp1 = mc_run_folder_kp1
 
@@ -24,24 +24,16 @@ class TrAmmendment(object):
         rank = comm.Get_rank()
 
         if self.state.algorithm_status.status_val == 0:
-            ds = None
-            if rank == 0:
-                with open(self.meta_data_file_k, 'r') as f:
-                    ds = json.load(f)
-            ds = comm.bcast(ds, root=0)
-            p_star_k = ds['parameters'][0]
+            metadata_k = self.state.get_paramerter_metadata(self.state.k,"__1")
+            p_star_k = metadata_k['parameters'][0]
             f_structure = Fstructure(self.state)
             sp_object = self.state.f_structure_function_handle(f_structure) # calls Fstructure.appr_tuning_objective
             if self.debug: print("inside tr update w gradcond", self.state.close_to_min_condition)
             sys.stdout.flush()
 
             if not self.state.close_to_min_condition:
-                ds = None
-                if rank == 0:
-                    with open(self.meta_data_file_kp1, 'r') as f:
-                        ds = json.load(f)
-                ds = comm.bcast(ds, root=0)
-                p_star_kp1 = ds['parameters'][0]
+                metadata_kp1 = self.state.get_paramerter_metadata(self.state.k+1, "1")
+                p_star_kp1 = metadata_kp1['parameters'][0]
 
                 approx_obj_val_k = sp_object.objective(p_star_k)
                 approx_obj_val_kp1 = sp_object.objective(p_star_kp1)
@@ -71,10 +63,11 @@ class TrAmmendment(object):
                                                                  tr_update_code="R")
                     # DiskUtil.copyanything(self.meta_data_file_k,self.meta_data_file_kp1)
                     # DiskUtil.copyanything(self.mc_run_folder_k,self.mc_run_folder_kp1)
-
-                    self.state.mc_object.set_current_iterate_as_next_iterate(current_iterate_meta_data_file=self.meta_data_file_k,
-                                                                             next_iterate_meta_data_file=self.meta_data_file_kp1
-                                                                             )
+                    metadata_kp1_new = self.state.mc_object.set_current_iterate_as_next_iterate(
+                                                                current_iterate_parameter_data=metadata_k,
+                                                                next_iterate_parameter_data=metadata_kp1
+                                            )
+                    self.state.update_parameter_metadata(self.state.k + 1, "1", metadata_kp1_new)
                     if rank==0 and self.one_line_output:
                         str = ""
                         if self.state.k %10 == 0:
@@ -124,10 +117,11 @@ class TrAmmendment(object):
                                                              tr_update_code="R")
                 # DiskUtil.copyanything(self.meta_data_file_k,self.meta_data_file_kp1)
                 # DiskUtil.copyanything(self.mc_run_folder_k,self.mc_run_folder_kp1)
-                self.state.mc_object.set_current_iterate_as_next_iterate(current_iterate_meta_data_file=self.meta_data_file_k,
-                                                                         next_iterate_meta_data_file=self.meta_data_file_kp1,
+                metadata_kp1_new = self.state.mc_object.set_current_iterate_as_next_iterate(current_iterate_parameter_data=metadata_k,
+                                                                         next_iterate_parameter_data=None,
                                                                          next_iterate_mc_directory=self.mc_run_folder_kp1
                                                                          )
+                self.state.update_parameter_metadata(self.state.k+1,"1",metadata_kp1_new)
                 if rank==0 and self.one_line_output:
                     str = ""
                     if self.state.k %10 == 0:

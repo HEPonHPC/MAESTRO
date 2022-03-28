@@ -1,0 +1,25 @@
+{
+    "workflow": {
+        "filter_level": "NONE",
+        "nodes": [
+            {
+             	"start_proc": 0,
+                "nprocs": 4,
+                "cmdline": "./optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
+                "func": "opt_task_py",
+                "inports": [],
+                "outports": []
+            },
+            {
+             	"start_proc": 0,
+                "nprocs": 4,
+                "cmdline": "./simpleapp.py -d log/MC_RUN -c conf/config.json",
+                "func": "mc_task_py",
+                "inports": [],
+                "outports": []
+            }
+        ],
+        "edges": [
+        ]
+    }
+}
