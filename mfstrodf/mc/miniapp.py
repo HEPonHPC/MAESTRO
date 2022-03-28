@@ -144,12 +144,11 @@ class MiniApp(MCTask):
     def convert_mc_output_to_df(self, all_param_directory):
         import pandas as pd
         main_object = {}
-        comm = MPI_.COMM_WORLD
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
         main_object['MC'] = {}
         main_object['DMC'] = {}
-        DATA, binids, pnames, rankIdx, xmin, xmax = apprentice.io.readInputDataYODA(
-            [all_param_directory], "params.dat",wtfile,storeAsH5=None, comm=comm)
+        DATA, binids, pnames, xmin, xmax = apprentice.io.read_input_data_YODA_on_all_ranks(
+            [all_param_directory], "params.dat",wtfile,storeAsH5=None)
         for num, (X, Y, E) in enumerate(DATA):
             bin = binids[num]
             main_object["MC"]["{}.P".format(bin)] = X
