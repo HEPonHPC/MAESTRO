@@ -13,7 +13,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 1,
-                "cmdline": "./sumofdiffpowers.py -d log/MC_RUN",
+                "cmdline": "./deterministicapp.py -d log/MC_RUN -c conf/config.json",
                 "func": "miniappinitial_py",
                 "inports": [],
                 "outports": []
