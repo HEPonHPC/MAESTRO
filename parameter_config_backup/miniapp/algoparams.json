@@ -33,6 +33,7 @@
     "__fidelity": 1000,
     "fidelity": 100,
     "max_iteration":50,
+    "__max_iteration":2,
     "max_fidelity_iteration":5,
     "min_gradient_norm": 0.00001,
     "max_simulation_budget":100000000000000000,

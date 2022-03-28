@@ -1,0 +1,34 @@
+{
+    "mc":{
+      "caller_type":"function call",
+      "class_str":"MiniApp",
+      "__only for script run__location_str":"miniapp.py",
+      "__only for script run__ranks":10,
+      "parameters":{
+        "mc_location":"/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp",
+        "yodamerge_location":"/home/oyildiz/mohan/mc_miniapp/YODA-1.8.1/bin/yodamerge",
+        "min_fidelity":50,
+        "weights":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/weights"
+      }
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2},
+        "DMC":{"m":1}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct",
+        "DMC":"appr_pa_m_construct"
+      }
+    },
+    "f_structure":{
+      "parameters":{
+        "data":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/data.json",
+        "weights":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/weights",
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective"
+    }
+}

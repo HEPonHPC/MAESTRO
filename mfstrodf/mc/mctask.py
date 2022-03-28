@@ -132,7 +132,6 @@ class MCTask(object):
         if rank == 0:
             DiskUtil.copyanything(curr_mc_dir_name, new_mc_dir_name)
 
-        pprint.pprint(current_iterate_parameter_data)
         return current_iterate_parameter_data
 
 
