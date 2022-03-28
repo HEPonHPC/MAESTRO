@@ -8,7 +8,7 @@
         "mc_location":"/home/oyildiz/mohan/mc_miniapp/pythia8rivetminiapp/miniapp",
         "yodamerge_location":"/home/oyildiz/mohan/mc_miniapp/YODA-1.8.1/bin/yodamerge",
         "min_fidelity":50,
-        "weights":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/weights"
+        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/miniapp/weights"
       }
     },
     "model":{
@@ -23,8 +23,8 @@
     },
     "f_structure":{
       "parameters":{
-        "data":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/data.json",
-        "weights":"/home/oyildiz/mohan/workflow/parameter_config_backup/miniapp/weights",
+        "data":"/home/mkrishnamoorthy/workflow/parameter_config_backup/miniapp/data.json",
+        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/miniapp/weights",
         "optimization":{
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }

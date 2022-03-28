@@ -125,8 +125,9 @@ class MCTask(object):
             new_mc_dir_name = next_iterate_parameter_data['param directory'][0]
             current_iterate_parameter_data['param directory'] = next_iterate_parameter_data['param directory']
         else:
-            new_mc_dir_name = os.path.join(next_iterate_mc_directory, os.path.basename(
-                current_iterate_parameter_data['param directory'][0]))
+            nex_iterate_basename = os.path.basename(current_iterate_parameter_data['param directory'][0])
+            if nex_iterate_basename.startswith('__'):nex_iterate_basename = nex_iterate_basename[2:]
+            new_mc_dir_name = os.path.join(next_iterate_mc_directory, nex_iterate_basename)
             current_iterate_parameter_data['param directory'] = [new_mc_dir_name]
 
         if rank == 0:
