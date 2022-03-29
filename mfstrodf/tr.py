@@ -114,7 +114,7 @@ class TrAmmendment(object):
                 curr_p = p_star_k
                 self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                              tr_center_messaage="TR center remains the same",
-                                                             tr_update_code="R")
+                                                             tr_update_code="CM/R")
                 # DiskUtil.copyanything(self.meta_data_file_k,self.meta_data_file_kp1)
                 # DiskUtil.copyanything(self.mc_run_folder_k,self.mc_run_folder_kp1)
                 metadata_kp1_new = self.state.mc_object.set_current_iterate_as_next_iterate(current_iterate_parameter_data=metadata_k,
