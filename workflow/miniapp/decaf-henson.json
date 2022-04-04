@@ -4,7 +4,7 @@
         "nodes": [
             {
              	"start_proc": 0,
-                "nprocs": 36,
+                "nprocs": 32,
                 "cmdline": "./optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
                 "func": "opt_task_py",
                 "inports": [],
@@ -12,7 +12,7 @@
             },
             {
              	"start_proc": 0,
-                "nprocs": 36,
+                "nprocs": 32,
                 "cmdline": "./miniapp.py -d log/MC_RUN -c conf/config.json",
                 "func": "mc_task_py",
                 "inports": [],
