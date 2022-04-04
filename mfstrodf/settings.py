@@ -3,6 +3,7 @@ import pprint
 
 import os,sys
 import json
+import time
 from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import numpy as np
@@ -128,6 +129,12 @@ class Settings(object):
         else:
             self.algorithm_status.update_status(0)
 
+    def set_start_time(self):
+        self.config_dict['start_time'] = time.time()
+
+    def set_end_time(self):
+        self.config_dict['end_time'] = time.time()
+
     def save(self, next_step=None, to_log = False):
         if to_log:
             algorithm_parameters_file = self.working_directory.get_log_path('algorithm_parameters_dump_k{}.json'.format(self.k))
@@ -141,6 +148,8 @@ class Settings(object):
         if next_step is not None:
             self.config_dict['next_step'] = next_step
 
+        self.set_end_time()
+
         self.config_dict['algorithm_status_dict'] = self.algorithm_status.as_dict()
         if 'comm' in self.config_dict['f_structure']['parameters']['optimization']:
             self.config_dict['f_structure']['parameters']['optimization'].pop('comm')
@@ -152,7 +161,6 @@ class Settings(object):
         if 'algorithm_status' in config_dict_to_save: config_dict_to_save.pop('algorithm_status')
         self.write_setting_file(self.algorithm_parameters_dict,algorithm_parameters_file)
         self.write_setting_file(config_dict_to_save,config_file)
-        self.write_setting_file(self.param_meta_data, config_file)
         self.write_setting_file(self.param_meta_data, param_metadata_file)
 
     def update_simulation_budget_used(self, simulation_count):

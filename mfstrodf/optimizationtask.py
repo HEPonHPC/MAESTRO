@@ -46,6 +46,7 @@ class OptimizaitionTask(object):
     def ops_start(self):
         # meta_data_file = self.state.working_directory.get_log_path(
         #     "parameter_metadata_1_k{}.json".format(self.state.k))
+        self.state.set_start_time()
         self.initialize()
         self.mc_caller_interpretor_resolver(next_step="ops_sample")
         self.check_whether_to_stop()
