@@ -1,3 +1,5 @@
+import sys
+
 import pprint
 
 import re,glob,os
@@ -119,6 +121,7 @@ class MCTask(object):
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
+        comm.barrier()
         curr_mc_dir_name = os.path.join(os.path.dirname(current_iterate_parameter_data['param directory'][0]),
                                         '__' + os.path.basename(current_iterate_parameter_data['param directory'][0]))
         if next_iterate_parameter_data is not None:
