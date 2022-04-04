@@ -18,4 +18,4 @@ cp $2/config_workflow.json $1/conf/config.json
 
 #rm -r logs/*
 cd $1 || exit
-mpirun -np 4 ./decaf-henson_python
+mpirun -np 36 ./decaf-henson_python
