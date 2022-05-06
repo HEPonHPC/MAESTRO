@@ -175,6 +175,7 @@ class OptimizaitionTask(object):
         # Run MC
         if self.state.mc_call_on_workflow:
             try:
+                self.state.save(next_step=next_step)
                 self.henson.yield_()
             except:
                 raise Exception("Workflow yield failed")

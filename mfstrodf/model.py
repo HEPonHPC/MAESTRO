@@ -37,9 +37,14 @@ class ModelConstruction(object):
         for data_name in self.state.data_names:
             fh = self.state.get_model_function_handle(data_name)
             fh(self,data_name) if fh is not None else self.appr_pa_m_construct(data_name)
-    #TODO to implement. We need this for calculating values that were nan/inf of MC(\widetilde{\p}^{(k+1})
-    def get_model_objects(self):
-        pass
+
+    @staticmethod
+    def get_model_object(function_str,data):
+        import apprentice
+        if function_str in ['appr_pa_m_construct','appr_ra_m_n_construct','appr_ra_m_1_construct','appr_appx_construct']:
+            return apprentice.RationalApproximation(initDict=data)
+        else:
+            raise Exception("Model not implemented")
 
     #TODO: === Change appr_* functions after changes to apprentice
     def appr_pa_m_construct(self,data_name):
