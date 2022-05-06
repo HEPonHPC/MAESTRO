@@ -1,0 +1,39 @@
+! File: main29.cmnd
+! This file contains commands to be read in for a Pythia8 run.
+! Lines not beginning with a letter or digit are comments.
+! Names are case-insensitive  -  but spellings-sensitive!
+! The changes here are illustrative, not always physics-motivated.
+Tune:ee = 7
+Tune:pp = 14
+
+!RivetAnalyses = ATLAS_2011_S8924791,ATLAS_2011_S8971293,ATLAS_2011_I919017,ATLAS_2011_S9128077
+!RivetAnalyses = ATLAS_2011_S9131140,ATLAS_2014_I1300647
+!RivetAnalyses = ATLAS_2012_I1094568,ATLAS_2013_I1243871
+
+! PDF:useLHAPDF = on
+! PDF:LHAPDFset = NNPDF23_lo_as_0130_qed
+! PDF:LHAPDFmember = 0
+! PDF:extrapolateLHAPDF = off
+
+! 3) Beam parameter settings. Values below agree with default ones.
+Beams:idA = 2212                   ! first beam, p = 2212, pbar = -2212
+Beams:idB = 2212                   ! second beam, p = 2212, pbar = -2212
+Beams:eCM = 7000.                ! CM energy of collision
+
+!HardQCD:all = on
+!PhaseSpace:bias2Selection = on
+SpaceShower:rapidityOrder = on
+! changing 20 to 15
+! changing 15 to 10
+!PhaseSpace:bias2SelectionRef = 10.0
+!PhaseSpace:pTHatMin = 10.0
+
+ParticleDecays:limitTau0 = on
+ParticleDecays:tau0Max = 10
+! ParticleDecays:allowPhotonRadiation = on
+Top:qqbar2ttbar = on
+Top:gg2ttbar = on
+
+SpaceShower:pTmaxMatch = 2
+SpaceShower:pTmaxFudge = 1
+SpaceShower:pTdampMatch = 1
