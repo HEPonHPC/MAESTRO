@@ -180,7 +180,18 @@ class A14App(MCTask):
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
-        rivett_analysis = ["qcd","z","ttbar"]
+        # If pythia8-diy-050522 USES the filename from the -o option passed to it
+        # rivet_filenames = [
+        #     "out_rivet_qcd.yoda",
+        #     "out_rivet_z.yoda",
+        #     "out_rivet_ttbar.yoda"
+        # ]
+        # If pythia8-diy-050522 DOES NOT USE the filename from the -o option passed to it
+        rivet_filenames = [
+            "main30_rivet_withp.qcd.cmnd.yoda",
+            "main30_rivet_withp.z.cmnd.yoda",
+            "main30_rivet_withp.ttbar.cmnd.yoda"
+        ]
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         rank_dirs = None
         if rank == 0:
@@ -196,12 +207,12 @@ class A14App(MCTask):
             move out_curr.yoda to out.yoda 
             """
             outfile_tmp = os.path.join(d, "out_curr_tmp.yoda")
-            rivet_file_exists = [os.path.exists(os.path.join(d,"out_rivet_{}.yoda".format(rname)))
-                                 for rname in rivett_analysis]
+            rivet_file_exists = [os.path.exists(os.path.join(d,rfile_name))
+                                 for rfile_name in rivet_filenames]
             with open(outfile_tmp, 'w') as outfile_tmp_file_handle:
-                for rno,rname in enumerate(rivett_analysis):
+                for rno,rfile_name in enumerate(rivet_filenames):
                     if np.all(rivet_file_exists):
-                        rivet_fpath = os.path.join(d,"out_rivet_{}.yoda".format(rname))
+                        rivet_fpath = os.path.join(d,rfile_name)
                         with open(rivet_fpath,'r') as rivetfile_file_handle:
                             for line in rivetfile_file_handle:
                                 outfile_tmp_file_handle.write(line)
