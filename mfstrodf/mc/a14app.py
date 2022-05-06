@@ -179,8 +179,8 @@ class A14App(MCTask):
 
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
-        size = comm.Get_size()
         rank = comm.Get_rank()
+        rivett_analysis = ["qcd","z","ttbar"]
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         rank_dirs = None
         if rank == 0:
@@ -189,14 +189,30 @@ class A14App(MCTask):
         rank_max_sigma = 0.
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
         for dno,d in enumerate(rank_dirs):
+            """
+            Rivet files from MC: out_rivet_qcd.yoda, out_rivet_z.yoda,out_rivet_ttbar.yoda
+            merges into: out_curr_tmp.yoda
+            out.yoda (if exists) and out_curr_tmp.yoda (if exists) merges into out_curr.yoda
+            move out_curr.yoda to out.yoda 
+            """
+            outfile_tmp = os.path.join(d, "out_curr_tmp.yoda")
+            rivet_file_exists = [os.path.exists(os.path.join(d,"out_rivet_{}.yoda".format(rname)))
+                                 for rname in rivett_analysis]
+            with open(outfile_tmp, 'w') as outfile_tmp_file_handle:
+                for rno,rname in enumerate(rivett_analysis):
+                    if np.all(rivet_file_exists):
+                        rivet_fpath = os.path.join(d,"out_rivet_{}.yoda".format(rname))
+                        with open(rivet_fpath,'r') as rivetfile_file_handle:
+                            for line in rivetfile_file_handle:
+                                outfile_tmp_file_handle.write(line)
+                        os.remove(rivet_fpath)
+                        outfile_tmp_file_handle.write("\n")
             yodafiles = []
             mainfile = os.path.join(d, "out.yoda")
             if os.path.exists(mainfile):
                 yodafiles.append(mainfile)
-            for r in range(size):
-                curr_file = os.path.join(d,"out_curr_r{}.yoda".format(r))
-                if os.path.exists(curr_file):
-                    yodafiles.append(curr_file)
+            if os.path.exists(outfile_tmp):
+                yodafiles.append(outfile_tmp)
             outfile = os.path.join(d, "out_curr.yoda")
             self.__merge_yoda_files(yodafiles,outfile)
             for i in range(len(yodafiles)):
@@ -208,8 +224,11 @@ class A14App(MCTask):
             sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
             rank_max_sigma = max(sigma)
         all_sigma = comm.gather(rank_max_sigma,root=0)
-        all_sigma = comm.bcast(all_sigma,root=0)
-        return max(all_sigma)
+        max_sigma = None
+        if rank == 0:
+            max_sigma = max(all_sigma)
+        max_sigma = comm.bcast(max_sigma,root=0)
+        return max_sigma
 
     def check_df_structure_sanity(self,df):
         rownames = list(df.columns.values)
@@ -241,3 +260,20 @@ class A14App(MCTask):
         df = self.check_df_structure_sanity(df)
         additional_data = {"MC":{"xmin":xmin,"xmax":xmax},"DMC":{"xmin":xmin,"xmax":xmax}}
         return (df,additional_data)
+
+    def write_param(self, parameters, parameter_names, at_fidelities, run_fidelities,
+                    mc_run_folder, expected_folder_name,
+                    fnamep="params.dat", fnamerf="run_fidelity.dat",
+                    fnameaf="at_fidelity.dat"):
+        ds = super().write_param(parameters,parameter_names,at_fidelities,run_fidelities,mc_run_folder,
+                            expected_folder_name,fnamep,fnamerf,fnameaf)
+        from mfstrodf import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            dirlist = self.get_param_directory_array(mc_run_folder)
+            for d in dirlist:
+                for rc_path in self.mc_parmeters['run_card_paths']:
+                    dst = os.path.join(d,os.path.basename(rc_path))
+                    DiskUtil.copyanything(rc_path,dst)
+        return ds
