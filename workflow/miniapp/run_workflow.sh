@@ -10,6 +10,8 @@ mkdir -p $1/logs
 cp decaf-henson.json $1/decaf-henson.json
 cp ../bin/decaf-henson_python $1/.
 #cp $2 $3/. #process.dat
+cp $2/data.json $1/conf/.
+cp $2/weights $1/conf/.
 cp ../../mfstrodf/optimizationtask.py $1/.
 cp ../../mfstrodf/mc/bin/miniapp.py $1/.
 
