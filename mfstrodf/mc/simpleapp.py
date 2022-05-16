@@ -9,11 +9,14 @@ class SimpleApp(MCTask):
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
+            sd_weight = self.mc_parmeters['standard_deviation_weight'] \
+                if 'standard_deviation_weight' in self.mc_parmeters else 1
+
             if run_fidelity>0:
                 Y = [np.random.normal(clss.mapping(param),
-                                      1 / np.sqrt(run_fidelity), 1)[0]
+                                      sd_weight / np.sqrt(run_fidelity), 1)[0]
                                         for clss in term_class]
-                DY = [1 / np.sqrt(run_fidelity) for clss in term_class]
+                DY = [sd_weight / np.sqrt(run_fidelity) for clss in term_class]
 
                 outfile = os.path.join(d,"out_curr.csv")
                 self.save_mc_out_as_csv(header="name,MC,DMC",
@@ -86,6 +89,8 @@ class SimpleApp(MCTask):
             _Y = []
             _E = []
 
+            sd_weight = self.mc_parmeters['standard_deviation_weight'] \
+                if 'standard_deviation_weight' in self.mc_parmeters else 1
             for cno in range(len(columnnames)):
                 curr_val = curr_df[rownames[1]][columnnames[cno]]
                 prev_val = prev_df[rownames[1]][columnnames[cno]]
@@ -94,7 +99,7 @@ class SimpleApp(MCTask):
                     _Y.append(np.average([curr_val,prev_val]))
                 else:
                     _Y.append(np.nan)
-                _E.append(1 / np.sqrt((at_fidelity+run_fidelity)))
+                _E.append(sd_weight / np.sqrt((at_fidelity+run_fidelity)))
             self.save_mc_out_as_csv(header="name,MC,DMC",
                                     term_names=term_names,data=[_Y,_E],out_path=prev_mc_out_path
                                     ) # from super class
