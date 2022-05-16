@@ -1,0 +1,38 @@
+{
+    "mc":{
+      "caller_type":"function call",
+      "class_str":"A14App",
+      "__only for script run__ranks":32,
+      "parameters":{
+        "rivetmerge_location":"rivet-merge",
+        "mc_location":"home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/pythia8-diy-050522",
+        "min_fidelity":100,
+        "weights":"conf/weights",
+        "run_card_paths":[
+            "conf/main30_rivet.qcd.cmnd",
+            "conf/main30_rivet.ttbar.cmnd",
+            "conf/main30_rivet.z.cmnd"
+        ]
+      }
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2},
+        "DMC":{"m":1}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct",
+        "DMC":"appr_pa_m_construct"
+      }
+    },
+    "f_structure":{
+      "parameters":{
+        "data":"conf/data.json",
+        "weights":"conf/weights",
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective"
+    }
+}

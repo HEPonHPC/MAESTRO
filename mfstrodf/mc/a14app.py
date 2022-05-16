@@ -6,8 +6,79 @@ from subprocess import Popen, PIPE
 import apprentice
 
 class A14App(MCTask):
+    rivett_analysis = {
+        "qcd":["ATLAS_2011_S8924791", "ATLAS_2011_S8971293","ATLAS_2011_I919017","ATLAS_2011_S9128077","ATLAS_2012_I1125575","ATLAS_2014_I1298811","ATLAS_2012_I1094564"],
+        # "qcd":["ATLAS_2011_S8924791"], #shortened
+        "z":["ATLAS_2011_S9131140","ATLAS_2014_I1300647"],
+        # "z":["ATLAS_2011_S9131140"], #shortened
+        "ttbar":["ATLAS_2012_I1094568","ATLAS_2013_I1243871"]
+    }
+    @staticmethod
+    def __chunk_fidelity(run_at_fidelity,min_fidelity=50):
+        comm = MPI_.COMM_WORLD
+        size = comm.Get_size()
+
+        split_fidelity = np.ceil(run_at_fidelity/size)
+        if split_fidelity >min_fidelity:
+            run_fidelity_arr = [int(split_fidelity)] * size
+        else:
+            run_fidelity_arr = [0] * size
+            fidelity_remaining = run_at_fidelity
+            for rank in range(size):
+                if fidelity_remaining < min_fidelity:
+                    run_fidelity_arr[rank] = min_fidelity
+                    break
+                run_fidelity_arr[rank] = min_fidelity
+                fidelity_remaining -= min_fidelity
+        return run_fidelity_arr
+
+    def __run_mc_command(self,runcard,fidelity,anaylysis_name,seed,output_loc):
+        """
+        Run the miniapp MC command
+
+        :param pp: parameter values
+        :param fidelity: number of events to use
+        :param output_loc: output location
+        :type pp: list
+        :type fidelity: int
+        :type loc: str
+        :return: return code obtained after running miniapp
+        :rtype: int
+
+        """
+        runcardstr = "{}".format(runcard)
+        fidstr = "{}".format(fidelity)
+        seedstr = "{}".format(str(seed))
+        outstr = "{}".format(output_loc)
+        argarr = [self.mc_parmeters['mc_location'], "-p",runcardstr, "-n",fidstr, "-s",seedstr, "-o",outstr]
+        for ra in A14App.rivett_analysis[anaylysis_name]:
+            argarr.append("-a")
+            argarr.append(ra)
+        p = Popen(argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p.communicate(b"input data that is passed to subprocess' stdin")
+        return p.returncode
+
     def run_mc(self):
-        raise Exception("A14 MC cannot be run using a function call")
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
+        for dno,d in enumerate(dirlist):
+            # param = self.get_param_from_directory(d) # from super class
+            run_fidelity = self.get_fidelity_from_directory(d) # from super class
+            rank_run_fidelity = None
+            if rank==0:
+                min_f = self.mc_parmeters['min_fidelity'] \
+                    if 'min_fidelity' in self.mc_parmeters else 50
+                rank_run_fidelity = A14App.__chunk_fidelity(run_fidelity,min_f)
+            rank_run_fidelity = comm.scatter(rank_run_fidelity,root=0)
+            if rank_run_fidelity !=0:
+                for ano, anlysis_name in enumerate(A14App.rivett_analysis.keys()):
+                    runcard = os.path.join(d, "main30_rivet.{}.cmnd".format(anlysis_name))
+                    outfile = os.path.join(d,"out_{}_curr_r{}.yoda".format(anlysis_name,rank))
+                    seed = np.random.randint(1,9999999)
+                    self.__run_mc_command(runcard,rank_run_fidelity,anlysis_name,seed,outfile)
+        comm.barrier()
+
 
     def __merge_yoda_files(self,yoda_files,outfile):
         """
@@ -23,19 +94,13 @@ class A14App(MCTask):
         if len(yoda_files) == 1:
             DiskUtil.copyanything(yoda_files[0], outfile)
         else:
-            for filenum,files in enumerate(yoda_files):
-                if filenum == len(yoda_files)-1:
-                    break
-                if filenum==0:
-                    file1=yoda_files[filenum]
-                    file2=yoda_files[filenum+1]
-                else:
-                    file1=outfile
-                    file2=yoda_files[filenum+1]
-                p = Popen(
-                    [self.mc_parmeters['yodamerge_location'],'-o',outfile,file1,file2],
-                    stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                p.communicate(b"input data that is passed to subprocess' stdin")
+            argarr = [self.mc_parmeters['rivetmerge_location'],'-o',outfile]
+            for file in yoda_files:
+                argarr.append(file)
+            argarr.append("-e")
+            p = Popen(
+                argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p.communicate(b"input data that is passed to subprocess' stdin")
 
     def __check_and_resolve_nan_inf(self,data, binids,all_param_directory):
         def interpolate_nan_inf(data_array):
@@ -180,6 +245,7 @@ class A14App(MCTask):
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
+        size = comm.Get_size()
         # If pythia8-diy-050522 USES the filename from the -o option passed to it
         # rivet_filenames = [
         #     "out_rivet_qcd.yoda",
@@ -187,11 +253,11 @@ class A14App(MCTask):
         #     "out_rivet_ttbar.yoda"
         # ]
         # If pythia8-diy-050522 DOES NOT USE the filename from the -o option passed to it
-        rivet_filenames = [
-            "main30_rivet_withp.qcd.cmnd.yoda",
-            "main30_rivet_withp.z.cmnd.yoda",
-            "main30_rivet_withp.ttbar.cmnd.yoda"
-        ]
+        # rivet_filenames = [
+        #     "main30_rivet_withp.qcd.cmnd.yoda",
+        #     "main30_rivet_withp.z.cmnd.yoda",
+        #     "main30_rivet_withp.ttbar.cmnd.yoda"
+        # ]
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         rank_dirs = None
         if rank == 0:
@@ -201,39 +267,31 @@ class A14App(MCTask):
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
         for dno,d in enumerate(rank_dirs):
             """
-            Rivet files from MC: out_rivet_qcd.yoda, out_rivet_z.yoda,out_rivet_ttbar.yoda
-            merges into: out_curr_tmp.yoda
-            out.yoda (if exists) and out_curr_tmp.yoda (if exists) merges into out_curr.yoda
-            move out_curr.yoda to out.yoda 
+            Rivet files from MC: out_{}_curr_r{}.yoda
+            out_{}.yoda (if exists) and out_{}_curr_r{}.yoda (if exists) merges into out_{}_curr.yoda
+            move out_{}_curr.yoda to out_{}.yoda 
             """
-            outfile_tmp = os.path.join(d, "out_curr_tmp.yoda")
-            rivet_file_exists = [os.path.exists(os.path.join(d,rfile_name))
-                                 for rfile_name in rivet_filenames]
-            with open(outfile_tmp, 'w') as outfile_tmp_file_handle:
-                for rno,rfile_name in enumerate(rivet_filenames):
-                    if np.all(rivet_file_exists):
-                        rivet_fpath = os.path.join(d,rfile_name)
-                        with open(rivet_fpath,'r') as rivetfile_file_handle:
-                            for line in rivetfile_file_handle:
-                                outfile_tmp_file_handle.write(line)
-                        os.remove(rivet_fpath)
-                        outfile_tmp_file_handle.write("\n")
-            yodafiles = []
-            mainfile = os.path.join(d, "out.yoda")
-            if os.path.exists(mainfile):
-                yodafiles.append(mainfile)
-            if os.path.exists(outfile_tmp):
-                yodafiles.append(outfile_tmp)
-            outfile = os.path.join(d, "out_curr.yoda")
-            self.__merge_yoda_files(yodafiles,outfile)
-            for i in range(len(yodafiles)):
-                if i == 0 and "out.yoda" in yodafiles[i]: continue
-                file = yodafiles[i]
-                os.remove(file)
-            DiskUtil.moveanything(outfile,mainfile)
-            (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, "params.dat", wtfile)
-            sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
-            rank_max_sigma = max(sigma)
+            rank_max_sigma = 0.
+            for analysis_name in A14App.rivett_analysis.keys():
+
+                yodafiles = []
+                mainfile = os.path.join(d, "out_{}.yoda".format(analysis_name))
+                if os.path.exists(mainfile):
+                    yodafiles.append(mainfile)
+                for r in range(size):
+                    curr_file = os.path.join(d,"out_{}_curr_r{}.yoda".format(analysis_name,r))
+                    if os.path.exists(curr_file):
+                        yodafiles.append(curr_file)
+                outfile = os.path.join(d, "out_{}_curr.yoda".format(analysis_name))
+                self.__merge_yoda_files(yodafiles,outfile)
+                for i in range(len(yodafiles)):
+                    if i == 0 and mainfile in yodafiles[i]: continue
+                    file = yodafiles[i]
+                    os.remove(file)
+                DiskUtil.moveanything(outfile,mainfile)
+                (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, "params.dat", wtfile)
+                sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
+                rank_max_sigma = max(rank_max_sigma,max(sigma))
         all_sigma = comm.gather(rank_max_sigma,root=0)
         max_sigma = None
         if rank == 0:
