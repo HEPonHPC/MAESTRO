@@ -4,6 +4,7 @@
       "class_str":"A14App",
       "__only for script run__ranks":32,
       "parameters":{
+        "print_nan_inf_status_code":true,
         "rivetmerge_location":"rivet-merge",
         "mc_location":"home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/pythia8-diy-050522",
         "min_fidelity":100,

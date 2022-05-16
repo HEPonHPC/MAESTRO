@@ -103,6 +103,12 @@ class A14App(MCTask):
             p.communicate(b"input data that is passed to subprocess' stdin")
 
     def __check_and_resolve_nan_inf(self,data, binids,all_param_directory):
+        self.did_middle = False
+        self.did_left = False
+        self.did_right = False
+        self.did_model_eval = False
+        self.did_V_discard = False
+        self.did_DV_discard = False
         def interpolate_nan_inf(data_array):
             resolved = True
             if np.isnan(data_array).any() or np.isinf(data_array).any():
@@ -120,6 +126,7 @@ class A14App(MCTask):
                                 data_array[i] = data_array[i-1]+increment
                             ni_count = 0
                             not_ni_left = data_array[ninum]
+                            self.did_middle = True
                         else:
                             not_ni_left = data_array[ninum]
                             ni_count = 0
@@ -135,6 +142,7 @@ class A14App(MCTask):
                             difference = data_array[ninum+1] - data_array[ninum]
                             for i in range(ninum-1,-1,-1):
                                 data_array[i] = max(data_array[i+1] - difference,0.0)
+                            self.did_left = True
                         else:resolved = False
                         break
 
@@ -149,6 +157,7 @@ class A14App(MCTask):
                             difference = data_array[ninum] - data_array[ninum-1]
                             for i in range(ninum+1,len(nan_inf)):
                                 data_array[i] = data_array[i-1] + difference
+                            self.did_right = True
                         else:resolved = False
                         break
 
@@ -192,6 +201,7 @@ class A14App(MCTask):
                                         bin_model_ds = model_ds[binid]
                                         model = ModelConstruction.get_model_object(function_str_dict[mc_prefix],bin_model_ds)
                                         data_array[ninum] = model(x)
+                                        self.did_model_eval = True
                 #   If more than one parameter:
                 if apd_arr[2] == 'Np':
                     if np.isnan(V).any() or np.isinf(V).any():
@@ -200,12 +210,14 @@ class A14App(MCTask):
                         V =  np.array(V)[np.invert(nan_inf)].tolist()
                         X_DV = np.array(X_DV)[np.invert(nan_inf)].tolist()
                         DV = np.array(DV)[np.invert(nan_inf)].tolist()
+                        self.did_V_discard = True
                     if np.isnan(DV).any() or np.isinf(DV).any():
                         nan_inf = [i or j for (i,j) in zip(np.isnan(DV), np.isinf(DV))]
                         X_V = np.array(X_V)[np.invert(nan_inf)].tolist()
                         V =  np.array(V)[np.invert(nan_inf)].tolist()
                         X_DV = np.array(X_DV)[np.invert(nan_inf)].tolist()
                         DV = np.array(DV)[np.invert(nan_inf)].tolist()
+                        self.did_DV_discard = True
                 data['MC']["{}.P".format(binid)] =X_V
                 data['MC']["{}.V".format(binid)] =V
                 data['DMC']["{}.P".format(binid)] =X_DV
@@ -241,6 +253,18 @@ class A14App(MCTask):
                     resolved = resolved and False
         if not resolved:
             use_model_to_resolve_nan_inf_or_drop()
+        nan_inf_status_code = ""
+        nan_inf_status_code += 'L' if self.did_left else '-'
+        nan_inf_status_code += 'M' if self.did_middle else '-'
+        nan_inf_status_code += 'R' if self.did_right else '-'
+        nan_inf_status_code += 'E' if self.did_model_eval else '-'
+        nan_inf_status_code += 'D' if self.did_V_discard else '-'
+        nan_inf_status_code += 'DD' if self.did_DV_discard else '--'
+
+        print_nan_inf_status_code = self.mc_parmeters['print_nan_inf_status_code'] \
+            if 'print_nan_inf_status_code' in self.mc_parmeters else False
+        if print_nan_inf_status_code:
+            print("NaN/Inf Status Code: {}".format(nan_inf_status_code))
 
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD

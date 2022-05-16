@@ -4,6 +4,7 @@
       "class_str":"A14App",
       "__only for script run__ranks":32,
       "parameters":{
+        "print_nan_inf_status_code":true,
         "yodamerge_location":"yodamerge",
         "min_fidelity":100,
         "weights":"conf/weights",
