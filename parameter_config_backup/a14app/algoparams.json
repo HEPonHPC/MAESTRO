@@ -58,6 +58,6 @@
     "max_fidelity_iteration":5,
     "min_gradient_norm": 0.00001,
     "max_simulation_budget":100000000000000000,
-    "__output_level":50,
-    "output_level":10
+    "output_level":50,
+    "__output_level":10
 }

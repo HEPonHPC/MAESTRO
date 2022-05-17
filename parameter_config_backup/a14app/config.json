@@ -6,13 +6,13 @@
       "parameters":{
         "print_nan_inf_status_code":true,
         "rivetmerge_location":"rivet-merge",
-        "mc_location":"home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/pythia8-diy-050522",
+        "mc_location":"/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/pythia8-diy-050522",
         "min_fidelity":100,
-        "weights":"conf/weights",
+        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/weights",
         "run_card_paths":[
-            "conf/main30_rivet.qcd.cmnd",
-            "conf/main30_rivet.ttbar.cmnd",
-            "conf/main30_rivet.z.cmnd"
+            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.qcd.cmnd",
+            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.ttbar.cmnd",
+            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.z.cmnd"
         ]
       }
     },
@@ -28,8 +28,8 @@
     },
     "f_structure":{
       "parameters":{
-        "data":"conf/data.json",
-        "weights":"conf/weights",
+        "data":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/data.json",
+        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/weights",
         "optimization":{
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }
