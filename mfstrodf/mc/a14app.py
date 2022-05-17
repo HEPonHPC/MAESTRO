@@ -366,7 +366,15 @@ class A14App(MCTask):
         if rank == 0:
             dirlist = self.get_param_directory_array(mc_run_folder)
             for d in dirlist:
+                fin = open(os.path.join(d,fnamep), "r")
+                param_data = fin.read()
+                fin.close()
                 for rc_path in self.mc_parmeters['run_card_paths']:
                     dst = os.path.join(d,os.path.basename(rc_path))
                     DiskUtil.copyanything(rc_path,dst)
+                    fout = open(dst, "a")
+                    fout.write("\n")
+                    fout.write(param_data)
+                    fout.close()
+
         return ds
