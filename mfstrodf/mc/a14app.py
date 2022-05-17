@@ -1,3 +1,5 @@
+import sys
+
 from mfstrodf.mc import MCTask,DiskUtil
 import numpy as np
 import pprint,os
@@ -15,22 +17,26 @@ class A14App(MCTask):
     }
     @staticmethod
     def __chunk_fidelity(run_at_fidelity,min_fidelity=50):
-        comm = MPI_.COMM_WORLD
-        size = comm.Get_size()
-
-        split_fidelity = np.ceil(run_at_fidelity/size)
-        if split_fidelity >min_fidelity:
-            run_fidelity_arr = [int(split_fidelity)] * size
-        else:
-            run_fidelity_arr = [0] * size
-            fidelity_remaining = run_at_fidelity
-            for rank in range(size):
-                if fidelity_remaining < min_fidelity:
-                    run_fidelity_arr[rank] = min_fidelity
-                    break
-                run_fidelity_arr[rank] = min_fidelity
-                fidelity_remaining -= min_fidelity
-        return run_fidelity_arr
+        import warnings
+        warnings.warn("RUN MC for A14 depricated")
+        sys.stdout.flush()
+        return None
+        # comm = MPI_.COMM_WORLD
+        # size = comm.Get_size()
+        #
+        # split_fidelity = np.ceil(run_at_fidelity/size)
+        # if split_fidelity >min_fidelity:
+        #     run_fidelity_arr = [int(split_fidelity)] * size
+        # else:
+        #     run_fidelity_arr = [0] * size
+        #     fidelity_remaining = run_at_fidelity
+        #     for rank in range(size):
+        #         if fidelity_remaining < min_fidelity:
+        #             run_fidelity_arr[rank] = min_fidelity
+        #             break
+        #         run_fidelity_arr[rank] = min_fidelity
+        #         fidelity_remaining -= min_fidelity
+        # return run_fidelity_arr
 
     def __run_mc_command(self,runcard,fidelity,anaylysis_name,seed,output_loc):
         """
@@ -46,38 +52,47 @@ class A14App(MCTask):
         :rtype: int
 
         """
-        runcardstr = "{}".format(runcard)
-        fidstr = "{}".format(fidelity)
-        seedstr = "{}".format(str(seed))
-        outstr = "{}".format(output_loc)
-        argarr = [self.mc_parmeters['mc_location'], "-p",runcardstr, "-n",fidstr, "-s",seedstr, "-o",outstr]
-        for ra in A14App.rivett_analysis[anaylysis_name]:
-            argarr.append("-a")
-            argarr.append(ra)
-        p = Popen(argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        p.communicate(b"input data that is passed to subprocess' stdin")
-        return p.returncode
+        import warnings
+        warnings.warn("RUN MC for A14 depricated")
+        sys.stdout.flush()
+        return
+        # runcardstr = "{}".format(runcard)
+        # fidstr = "{}".format(fidelity)
+        # seedstr = "{}".format(str(seed))
+        # outstr = "{}".format(output_loc)
+        # argarr = [self.mc_parmeters['mc_location'], "-p",runcardstr, "-n",fidstr, "-s",seedstr, "-o",outstr]
+        # for ra in A14App.rivett_analysis[anaylysis_name]:
+        #     argarr.append("-a")
+        #     argarr.append(ra)
+        # p = Popen(argarr,stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        # p.communicate(b"input data that is passed to subprocess' stdin")
+        # return p.returncode
 
     def run_mc(self):
-        comm = MPI_.COMM_WORLD
-        rank = comm.Get_rank()
-        dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        for dno,d in enumerate(dirlist):
-            # param = self.get_param_from_directory(d) # from super class
-            run_fidelity = self.get_fidelity_from_directory(d) # from super class
-            rank_run_fidelity = None
-            if rank==0:
-                min_f = self.mc_parmeters['min_fidelity'] \
-                    if 'min_fidelity' in self.mc_parmeters else 50
-                rank_run_fidelity = A14App.__chunk_fidelity(run_fidelity,min_f)
-            rank_run_fidelity = comm.scatter(rank_run_fidelity,root=0)
-            if rank_run_fidelity !=0:
-                for ano, anlysis_name in enumerate(A14App.rivett_analysis.keys()):
-                    runcard = os.path.join(d, "main30_rivet.{}.cmnd".format(anlysis_name))
-                    outfile = os.path.join(d,"out_{}_curr_r{}.yoda".format(anlysis_name,rank))
-                    seed = np.random.randint(1,9999999)
-                    self.__run_mc_command(runcard,rank_run_fidelity,anlysis_name,seed,outfile)
-        comm.barrier()
+        raise Exception("A14 MC cannot be run using a function call")
+
+        # import warnings
+        # warnings.warn("RUN MC for A14 depricated")
+        # sys.stdout.flush()
+        # comm = MPI_.COMM_WORLD
+        # rank = comm.Get_rank()
+        # dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
+        # for dno,d in enumerate(dirlist):
+        #     # param = self.get_param_from_directory(d) # from super class
+        #     run_fidelity = self.get_fidelity_from_directory(d) # from super class
+        #     rank_run_fidelity = None
+        #     if rank==0:
+        #         min_f = self.mc_parmeters['min_fidelity'] \
+        #             if 'min_fidelity' in self.mc_parmeters else 50
+        #         rank_run_fidelity = A14App.__chunk_fidelity(run_fidelity,min_f)
+        #     rank_run_fidelity = comm.scatter(rank_run_fidelity,root=0)
+        #     if rank_run_fidelity !=0:
+        #         for ano, anlysis_name in enumerate(A14App.rivett_analysis.keys()):
+        #             runcard = os.path.join(d, "main30_rivet.{}.cmnd".format(anlysis_name))
+        #             outfile = os.path.join(d,"out_{}_curr_r{}.yoda".format(anlysis_name,rank))
+        #             seed = np.random.randint(1,9999999)
+        #             self.__run_mc_command(runcard,rank_run_fidelity,anlysis_name,seed,outfile)
+        # comm.barrier()
 
 
     def __merge_yoda_files(self,yoda_files,outfile):
@@ -277,11 +292,11 @@ class A14App(MCTask):
         #     "out_rivet_ttbar.yoda"
         # ]
         # If pythia8-diy-050522 DOES NOT USE the filename from the -o option passed to it
-        # rivet_filenames = [
-        #     "main30_rivet_withp.qcd.cmnd.yoda",
-        #     "main30_rivet_withp.z.cmnd.yoda",
-        #     "main30_rivet_withp.ttbar.cmnd.yoda"
-        # ]
+        rivet_filenames = {
+            "qcd":"main30_rivet.qcd.cmnd.yoda",
+            "z":"main30_rivet.z.cmnd.yoda",
+            "ttbar":"main30_rivet.ttbar.cmnd.yoda"
+        }
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         rank_dirs = None
         if rank == 0:
@@ -291,8 +306,8 @@ class A14App(MCTask):
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
         for dno,d in enumerate(rank_dirs):
             """
-            Rivet files from MC: out_{}_curr_r{}.yoda
-            out_{}.yoda (if exists) and out_{}_curr_r{}.yoda (if exists) merges into out_{}_curr.yoda
+            Rivet files from MC: See rivet_filenames array above
+            out_{}.yoda (if exists) and corresponding file name from rivet_filenames (if exists) merges into out_{}_curr.yoda
             move out_{}_curr.yoda to out_{}.yoda 
             """
             rank_max_sigma = 0.
@@ -302,10 +317,8 @@ class A14App(MCTask):
                 mainfile = os.path.join(d, "out_{}.yoda".format(analysis_name))
                 if os.path.exists(mainfile):
                     yodafiles.append(mainfile)
-                for r in range(size):
-                    curr_file = os.path.join(d,"out_{}_curr_r{}.yoda".format(analysis_name,r))
-                    if os.path.exists(curr_file):
-                        yodafiles.append(curr_file)
+                if os.path.exists(rivet_filenames[analysis_name]):
+                    yodafiles.append(rivet_filenames[analysis_name])
                 outfile = os.path.join(d, "out_{}_curr.yoda".format(analysis_name))
                 self.__merge_yoda_files(yodafiles,outfile)
                 for i in range(len(yodafiles)):
