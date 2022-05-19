@@ -2,7 +2,7 @@
     "mc":{
       "caller_type":"workflow",
       "class_str":"SimpleApp",
-      "__only required for script run caller type__location_str":"simpleapp.py",
+      "__only for script run__commands":["simpleapp.py"],
       "__only required for script run caller type__ranks":1,
       "parameters":{
         "standard_deviation_weight":1,
