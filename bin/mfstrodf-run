@@ -66,11 +66,13 @@ do
       break
     fi
     #Run MC Task
-    jq -c '.mc.commands |.[]' $new_config_file | while read mc_command;
+    jq -r '.mc.commands |.[]' $new_config_file | while read mc_command;
     do
-#      echo "mpirun -np $NRANKS $mc_command"
-      eval "mpirun -np $NRANKS $mc_command"
+      echo "mpirun -np $NRANKS $mc_command > /dev/null 2>&1"
+      eval "mpirun -np $NRANKS $mc_command > /dev/null 2>&1"
+      # eval "mpirun -np $NRANKS $mc_command"
       mc_exit_code=$?
+      echo $mc_exit_code
       # Check whether to quit
       if [[ $mc_exit_code -ne 0 ]] ; then
         break
