@@ -2,7 +2,7 @@
 
 # For A14 (If you want to use the local copy)
 # mfstrodf-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -d ../log/workflow/a14app/WD_scriptrun -n 1
-# For A14 (If you want to use the install copy)
+# For A14 (If you want to use the installed copy)
 # mfstrodf-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -d ../log/workflow/a14app/WD_scriptrun -n 1
 POSITIONAL_ARGS=()
 
