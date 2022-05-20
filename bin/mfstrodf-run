@@ -54,7 +54,7 @@ cp $current_directory/$CONFIGFILEPATH $WORKINGDIR/$new_config_file
 cd $WORKINGDIR || exit
 new_working_dir=${PWD}
 
-optimization_task_command="mpirun -np $NRANKS $current_directory/../mfstrodf/optimizationtask.py -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
+optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
 
 while true
 do
@@ -77,7 +77,7 @@ do
       fi
     done
     # Reset optimization task command
-    optimization_task_command="mpirun -np $NRANKS $current_directory/../mfstrodf/optimizationtask.py -d $new_working_dir"
+    optimization_task_command="mpirun -np $NRANKS optimization-task -d $new_working_dir"
     exit
 done
 

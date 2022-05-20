@@ -18,7 +18,7 @@ setup(
         'pyDOE2>=1.3.0',
 
     ],
-    scripts=["bin/mfstrodf-run"],
+    scripts=["bin/mfstrodf-run","mfstrodf/optimization-task"],
     extras_require = {
     },
     entry_points = {
