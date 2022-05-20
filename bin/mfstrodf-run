@@ -66,21 +66,22 @@ do
       break
     fi
     #Run MC Task
-    jq -r '.mc.commands |.[]' $new_config_file | while read mc_command;
+    mc_command=""
+    while read i;
     do
-      echo "mpirun -np $NRANKS $mc_command > /dev/null 2>&1"
-      eval "mpirun -np $NRANKS $mc_command > /dev/null 2>&1"
-      # eval "mpirun -np $NRANKS $mc_command"
-      mc_exit_code=$?
-      echo $mc_exit_code
-      # Check whether to quit
-      if [[ $mc_exit_code -ne 0 ]] ; then
-        break
-      fi
-    done
+      mc_command="${mc_command} mpirun -np $NRANKS $i > /dev/null 2>&1;"
+    done <<< "$(jq -r '.mc.commands |.[]' $new_config_file)"
+
+    eval "$mc_command"
+    mc_exit_code=$?
+#    echo $mc_exit_code
+#    Check whether to quit
+    if [[ $mc_exit_code -ne 0 ]] ; then
+      break
+    fi
+    
     # Reset optimization task command
     optimization_task_command="mpirun -np $NRANKS optimization-task -d $new_working_dir"
-    exit
 done
 
 cd $current_directory || exit
