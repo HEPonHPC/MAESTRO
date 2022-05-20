@@ -3,7 +3,6 @@
       "caller_type":"function call",
       "class_str":"SimpleApp",
       "__only for script run__commands":["simpleapp.py"],
-      "__only required for script run caller type__ranks":1,
       "parameters":{
         "standard_deviation_weight":1,
         "functions":[
