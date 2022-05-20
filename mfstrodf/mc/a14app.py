@@ -315,10 +315,11 @@ class A14App(MCTask):
 
                 yodafiles = []
                 mainfile = os.path.join(d, "out_{}.yoda".format(analysis_name))
+                rivet_filepath = os.path.join(d,rivet_filenames[analysis_name])
                 if os.path.exists(mainfile):
                     yodafiles.append(mainfile)
-                if os.path.exists(rivet_filenames[analysis_name]):
-                    yodafiles.append(rivet_filenames[analysis_name])
+                if os.path.exists(rivet_filepath):
+                    yodafiles.append(rivet_filepath)
                 outfile = os.path.join(d, "out_{}_curr.yoda".format(analysis_name))
                 self.__merge_yoda_files(yodafiles,outfile)
                 for i in range(len(yodafiles)):
