@@ -1,18 +1,21 @@
 {
     "mc":{
-      "caller_type":"function call",
+      "caller_type":"script run",
       "class_str":"A14App",
-      "__only for script run__ranks":32,
+      "commands":[
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_qcd.yoda -i log/MC_RUN -p main30_rivet_withp.qcd.cmnd -a ATLAS_2011_S8924791 -a ATLAS_2011_S8971293 -a ATLAS_2011_I919017 -a ATLAS_2011_S9128077 -a ATLAS_2012_I1125575 -a ATLAS_2014_I1298811 -a ATLAS_2012_I1094564",
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_z.yoda -i log/MC_RUN -p main30_rivet_withp.z.cmnd -a ATLAS_2011_S9131140 -a ATLAS_2014_I1300647",
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_ttbar.yoda -i log/MC_RUN -p main30_rivet_withp.ttbar.cmnd -a ATLAS_2012_I1094568 -a ATLAS_2013_I1243871"
+      ],
       "parameters":{
         "print_nan_inf_status_code":true,
         "rivetmerge_location":"rivet-merge",
-        "mc_location":"/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/pythia8-diy-050522",
         "min_fidelity":100,
-        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/weights",
+        "weights":"conf/weights",
         "run_card_paths":[
-            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.qcd.cmnd",
-            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.ttbar.cmnd",
-            "/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/main30_rivet.z.cmnd"
+            "conf/main30_rivet.qcd.cmnd",
+            "conf/main30_rivet.ttbar.cmnd",
+            "conf/main30_rivet.z.cmnd"
         ]
       }
     },
@@ -28,8 +31,8 @@
     },
     "f_structure":{
       "parameters":{
-        "data":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/data.json",
-        "weights":"/home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/weights",
+        "data":"conf/data.json",
+        "weights":"conf/weights",
         "optimization":{
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }

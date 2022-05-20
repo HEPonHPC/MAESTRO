@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 import argparse
 import json
 from json import encoder
@@ -186,7 +186,7 @@ class OptimizaitionTask(object):
                 self.state.change_mc_ran(True)
                 self.state.save(next_step=next_step)
                 #todo check if this works on script call. Otherwise change to number and read next_step from state
-                sys.exit(next_step)
+                sys.exit(0)
         elif self.state.mc_call_using_function_call:
             self.state.mc_object.run_mc()
 

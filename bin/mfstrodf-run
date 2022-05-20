@@ -1,30 +1,85 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import argparse
+# For A14 (in non-dev mode)
+# mfstrodf-run -a ../parameter_config_backup/a14app/algoparams.json -c ../parameter_config_backup/a14app/config.json -d ../../log/workflow/a14app/WD_scriptrun -n 1
+POSITIONAL_ARGS=()
 
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -a|--algorithmfile)
+      ALGOFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -c|--configfile)
+      CONFIGFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -d|--workingdir)
+      WORKINGDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -n|--nranks)
+      NRANKS="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+      -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
 
+#echo $ALGOFILE $CONFIGFILE, $WORKINGDIR
 
-class SaneFormatter(argparse.RawTextHelpFormatter,
-                    argparse.ArgumentDefaultsHelpFormatter):
-    """
-    Helper class for better formatting of the script usage.
-    """
-    pass
+current_directory=${PWD}
+ALGOFILE=$(basename "$ALGOFILEPATH")
+CONFIGFILE=$(basename "$CONFIGFILEPATH")
+new_algorithm_file="conf/$ALGOFILE"
+new_config_file="conf/$CONFIGFILE"
+cp $current_directory/$ALGOFILEPATH $WORKINGDIR/$new_algorithm_file
+cp $current_directory/$CONFIGFILEPATH $WORKINGDIR/$new_config_file
 
+cd $WORKINGDIR || exit
+new_working_dir=${PWD}
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run the MF-STRO-DF algorithm',
-                                     formatter_class=SaneFormatter)
-    parser.add_argument("-o", "--outlevel", dest="OUTLEVEL", type=int, default=0,
-                        help="Output level")
-    parser.add_argument("-d", dest="WORKINGDIR", type=str, default=None,
-                        help="Working Directory")
-    parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
-                        help="Algorithm Parameters (JSON)")
-    parser.add_argument("-c", dest="CONFIG", type=str, default=None,
-                        help="Config file location")
+optimization_task_command="mpirun -np $NRANKS $current_directory/../mfstrodf/optimizationtask.py -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
 
+while true
+do
+    # Run Optimization task
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      break
+    fi
+    #Run MC Task
+    jq -c '.mc.commands |.[]' $new_config_file | while read mc_command;
+    do
+#      echo "mpirun -np $NRANKS $mc_command"
+      eval "mpirun -np $NRANKS $mc_command"
+      mc_exit_code=$?
+      # Check whether to quit
+      if [[ $mc_exit_code -ne 0 ]] ; then
+        break
+      fi
+    done
+    # Reset optimization task command
+    optimization_task_command="mpirun -np $NRANKS $current_directory/../mfstrodf/optimizationtask.py -d $new_working_dir"
+    exit
+done
 
-
-
+cd $current_directory || exit
 

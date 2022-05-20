@@ -2,10 +2,9 @@
     "mc":{
       "caller_type":"workflow",
       "class_str":"A14App",
-      "__only for script run__ranks":32,
       "parameters":{
         "print_nan_inf_status_code":true,
-        "yodamerge_location":"yodamerge",
+        "rivetmerge_location":"rivet-merge",
         "min_fidelity":100,
         "weights":"conf/weights",
         "run_card_paths":[
