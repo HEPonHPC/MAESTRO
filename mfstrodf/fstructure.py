@@ -1,3 +1,5 @@
+import os.path
+
 from mfstrodf import Settings, OutputLevel, DiskUtil
 import numpy as np
 import sys
@@ -155,7 +157,7 @@ class Fstructure(object):
             my_wtfile = self.state.working_directory.get_conf_path("weights")
             if 'weights' in self.state.f_structure_parameters:
                 wtfile = self.state.f_structure_parameters['weights']
-                if wtfile != my_wtfile:
+                if not os.path.samefile(wtfile,my_wtfile):
                     DiskUtil.copyanything(wtfile, my_wtfile)
             else:
                 wtstr = ""
