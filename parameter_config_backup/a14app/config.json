@@ -10,7 +10,7 @@
       "parameters":{
         "print_nan_inf_status_code":true,
         "rivetmerge_location":"rivet-merge",
-        "min_fidelity":100,
+        "min_fidelity":50,
         "weights":"conf/weights",
         "run_card_paths":[
             "conf/main30_rivet.qcd.cmnd",
