@@ -16,7 +16,7 @@ class COMM_():
     def barrier(self):
         pass
 
-    def gather(self,r):
+    def gather(self,r,root=0):
         return [np.array(r)]
 
     def scatter(self,s,root=0):
