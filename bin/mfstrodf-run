@@ -50,6 +50,7 @@ done
 
 #echo $ALGOFILE $CONFIGFILE, $WORKINGDIR
 
+mkdir -p $WORKINGDIR
 cp -r $CONFDIR "$WORKINGDIR/conf"
 current_directory=${PWD}
 ALGOFILE=$(basename "$ALGOFILEPATH")
