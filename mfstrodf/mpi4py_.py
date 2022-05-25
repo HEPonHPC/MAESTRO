@@ -17,7 +17,7 @@ class COMM_():
         pass
 
     def gather(self,r,root=0):
-        return [np.array(r)]
+        return [r]
 
     def scatter(self,s,root=0):
         return s[0]
