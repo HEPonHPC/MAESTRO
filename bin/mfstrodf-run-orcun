@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # For A14 (Calling on the local copy)
-# ./mfstrodf-run-orcun -a ../parameter_config_backup/a14app/algoparams.json -c ../parameter_config_backup/a14app/config.json -f ../parameter_config_backup/a14app -d ../log/workflow/a14app/WD_backup_MC_run -b ../log/workflow/a14app/WD_MC_BACKUP -n 1
+# ./mfstrodf-run-orcun -a ../parameter_config_backup/a14app/algoparams.json -c ../parameter_config_backup/a14app/config.json -f ../parameter_config_backup/a14app -d ../../log/workflow/a14app/WD_backup_MC_run -b ../../log/workflow/a14app/WD_MC_BACKUP -n 1
+# For A14 (Calling on the local copy on bebop)
+# ./mfstrodf-run-orcun -a /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/algoparams.json -c /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/config.json -f /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app -d /home/mkrishnamoorthy/log/workflow/a14app/WD_backup_MC_run -b /home/mkrishnamoorthy/log/workflow/a14app/WD_MC_BACKUP -n 1
 POSITIONAL_ARGS=()
-
-
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -53,6 +53,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+#for d in $BACKUPMCDIR/log/MC_RUN_1_k0/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#for d in $BACKUPMCDIR/log/MC_RUN_Np_k0/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#for d in $BACKUPMCDIR/log/MC_RUN_1_k1/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#exit
 #echo $ALGOFILE $CONFIGFILE, $WORKINGDIR
 
 mkdir -p $WORKINGDIR
@@ -80,7 +96,7 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
       exit
     fi
     #Use backup MC data
-    cp -r $BACKUPMCDIR/log/MC_RUN_1_k0 $WORKINGDIR/log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k0/ log/MC_RUN/
 
     # Reset optimization task command
     optimization_task_command="mpirun -np $NRANKS optimization-task -d $new_working_dir"
@@ -92,7 +108,7 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
       exit
     fi
     #Use backup MC data
-    cp -r $BACKUPMCDIR/log/MC_RUN_Np_k0 $WORKINGDIR/log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_Np_k0/ log/MC_RUN/
 
     eval "$optimization_task_command"
     optimization_exit_code=$?
@@ -101,7 +117,7 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
       exit
     fi
     #Use backup MC data
-    cp -r $BACKUPMCDIR/log/MC_RUN_1_k1 $WORKINGDIR/log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k1/ log/MC_RUN/
 
     eval "$optimization_task_command"
     optimization_exit_code=$?
