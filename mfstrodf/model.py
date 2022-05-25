@@ -33,7 +33,7 @@ class ModelConstruction(object):
         { MC:{xmin:[],xmax:[]}, DMC:{xmin:[],xmax:[]}}
         
         """
-    def consturct_models(self):
+    def construct_models(self):
         for data_name in self.state.data_names:
             fh = self.state.get_model_function_handle(data_name)
             fh(self,data_name) if fh is not None else self.appr_pa_m_construct(data_name)

@@ -79,7 +79,7 @@ class OptimizaitionTask(object):
         if rank == 0:
             DiskUtil.copyanything(oldparamdir,newparamdir)
         model = ModelConstruction(self.state,newparamdir)
-        model.consturct_models()
+        model.construct_models()
         self.check_whether_to_stop()
         f_structure = Fstructure(self.state)
         f_structure.check_close_to_optimal_conditions()
