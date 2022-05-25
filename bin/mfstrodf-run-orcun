@@ -2,8 +2,6 @@
 
 # For A14 (Calling on the local copy)
 # ./mfstrodf-run-orcun -a ../parameter_config_backup/a14app/algoparams.json -c ../parameter_config_backup/a14app/config.json -f ../parameter_config_backup/a14app -d ../../log/workflow/a14app/WD_backup_MC_run -b ../../log/workflow/a14app/WD_MC_BACKUP -n 1
-# For A14 (Calling on the local copy on bebop)
-# ./mfstrodf-run-orcun -a /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/algoparams.json -c /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app/config.json -f /home/mkrishnamoorthy/workflow/parameter_config_backup/a14app -d /home/mkrishnamoorthy/log/workflow/a14app/WD_backup_MC_run -b /home/mkrishnamoorthy/log/workflow/a14app/WD_MC_BACKUP -n 1
 POSITIONAL_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -96,6 +94,7 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
       exit
     fi
     #Use backup MC data
+    rm -r log/MC_RUN
     cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k0/ log/MC_RUN/
 
     # Reset optimization task command
@@ -107,7 +106,9 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
     if [[ $optimization_exit_code -ne 0 ]] ; then
       exit
     fi
+    echo "DONE WITH SAMPLING"
     #Use backup MC data
+    rm -r log/MC_RUN
     cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_Np_k0/ log/MC_RUN/
 
     eval "$optimization_task_command"
@@ -117,6 +118,7 @@ optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorith
       exit
     fi
     #Use backup MC data
+    rm -r log/MC_RUN
     cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k1/ log/MC_RUN/
 
     eval "$optimization_task_command"
