@@ -333,7 +333,8 @@ class A14App(MCTask):
                     file = yodafiles[i]
                     os.remove(file)
                 DiskUtil.moveanything(outfile,mainfile)
-                os.remove(os.path.join(d,parameter_conf_filenames[analysis_name]))
+                if os.path.exists(os.path.join(d,parameter_conf_filenames[analysis_name])):
+                    os.remove(os.path.join(d,parameter_conf_filenames[analysis_name]))
                 (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, "params.dat", wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 rank_max_sigma = max(rank_max_sigma,max(sigma))
@@ -390,17 +391,18 @@ class A14App(MCTask):
             parameters = ds['parameters']
             random_seed = np.random.randint(1,9999999)
             for dno, d in enumerate(dirlist):
-                for rc_path in self.mc_parmeters['run_card_paths']:
-                    dst = os.path.join(d,os.path.basename(rc_path))
-                    DiskUtil.copyanything(rc_path,dst)
-                    fout = open(dst, "a")
-                    fout.write("\n")
-                    for k, v in zip(parameter_names, parameters[dno]):
-                        fout.write("{name} {val:.16e}\n".format(name=k, val=v))
-                    fout.write("\n")
-                    fout.write("Main:numberOfEvents = {}\n".format(run_fidelities[dno]))
-                    fout.write("Random:setSeed = on\n")
-                    fout.write("Random:seed = {}\n".format(random_seed))
-                    fout.close()
+                if run_fidelities[dno] > 0:
+                    for rc_path in self.mc_parmeters['run_card_paths']:
+                        dst = os.path.join(d,os.path.basename(rc_path))
+                        DiskUtil.copyanything(rc_path,dst)
+                        fout = open(dst, "a")
+                        fout.write("\n")
+                        for k, v in zip(parameter_names, parameters[dno]):
+                            fout.write("{name} {val:.16e}\n".format(name=k, val=v))
+                        fout.write("\n")
+                        fout.write("Main:numberOfEvents = {}\n".format(run_fidelities[dno]))
+                        fout.write("Random:setSeed = on\n")
+                        fout.write("Random:seed = {}\n".format(random_seed))
+                        fout.close()
 
         return ds
