@@ -46,6 +46,10 @@ For running with the mpi4py parallelism:
 * A functional MPI 1.x/2.x/3.x implementation, such as MPICH_, built with shared/dynamic libraries
 * mpi4py_ v3.0.0 or above
 
+For compiling this documentation:
+
+* Sphinx-RTD_
+
 .. _mfstrodf_initial_install:
 
 Installation
@@ -90,15 +94,16 @@ the following four functions that are used to emulate the Monte Carlo simulator:
 If everything is running properly, then you should see the optimization output as
 described in :ref:`MF-STRO-DF output<mfstrodf_output>`::
 
-    python optimizationtask.py
-      -a ../parameter_config_backup/simpleapp/algoparams.json
-      -c ../parameter_config_backup/simpleapp/config.json
-      -d ../../log/workflow/simpleapp/WD
+    optimization-task
+      -a parameter_config_backup/simpleapp/algoparams.json
+      -c parameter_config_backup/simpleapp/config.json
+      -d ../log/workflow/simpleapp/WD
+where ``parameter_config_backup`` is a directory at the same location where the workflow project was installed above.
 
-The ouput log files are stored in ``../../log/workflow/simpleapp/WD/log/``. At the end of the
+The output log files are stored in ``../log/workflow/simpleapp/WD/log/``. At the end of the
 optimization run, you can see the optimal parameters obtained under the
 ``tr/center`` keys of the JSON file at
-``../../log/workflow/simpleapp/WD/log/algorithm_parameters_dump_k<last_iteration>.json``, where
+``../log/workflow/simpleapp/WD/log/algorithm_parameters_dump_k<last_iteration>.json``, where
 ``last_iteration`` is the last iteration number displayed on your console.
 
 .. _`sum of different powers`: https://www.sfu.ca/~ssurjano/sumpow.html
@@ -121,3 +126,4 @@ optimization run, you can see the optimal parameters obtained under the
 .. _SciPy: http://www.scipy.org
 .. _Python: http://www.python.org
 .. _GPy: https://gpy.readthedocs.io/en/deploy/
+.. _Sphinx-RTD: https://sphinx-rtd-tutorial.readthedocs.io/en/latest/install.html
