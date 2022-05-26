@@ -3,9 +3,9 @@
       "caller_type":"script run",
       "class_str":"A14App",
       "commands":[
-          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_qcd.yoda -i log/MC_RUN -p main30_rivet.qcd.cmnd -a ATLAS_2011_S8924791 -a ATLAS_2011_S8971293 -a ATLAS_2011_I919017 -a ATLAS_2011_S9128077 -a ATLAS_2012_I1125575 -a ATLAS_2014_I1298811 -a ATLAS_2012_I1094564",
-          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_z.yoda -i log/MC_RUN -p main30_rivet.z.cmnd -a ATLAS_2011_S9131140 -a ATLAS_2014_I1300647",
-          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -n 1000 -s 1234 -o out_rivet_ttbar.yoda -i log/MC_RUN -p main30_rivet.ttbar.cmnd -a ATLAS_2012_I1094568 -a ATLAS_2013_I1243871"
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -o out_rivet_qcd.yoda -i log/MC_RUN -p main30_rivet.qcd.cmnd -a ATLAS_2011_S8924791 -a ATLAS_2011_S8971293 -a ATLAS_2011_I919017 -a ATLAS_2011_S9128077 -a ATLAS_2012_I1125575 -a ATLAS_2014_I1298811 -a ATLAS_2012_I1094564",
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -o out_rivet_z.yoda -i log/MC_RUN -p main30_rivet.z.cmnd -a ATLAS_2011_S9131140 -a ATLAS_2014_I1300647",
+          "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -o out_rivet_ttbar.yoda -i log/MC_RUN -p main30_rivet.ttbar.cmnd -a ATLAS_2012_I1094568 -a ATLAS_2013_I1243871"
       ],
       "parameters":{
         "print_nan_inf_status_code":true,

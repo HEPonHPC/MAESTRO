@@ -285,17 +285,23 @@ class A14App(MCTask):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()
-        # If pythia8-diy-050522 USES the filename from the -o option passed to it
+        # If pythia8-diy USES the filename from the -o option passed to it
         # rivet_filenames = [
         #     "out_rivet_qcd.yoda",
         #     "out_rivet_z.yoda",
         #     "out_rivet_ttbar.yoda"
         # ]
-        # If pythia8-diy-050522 DOES NOT USE the filename from the -o option passed to it
+        # If pythia8-diy DOES NOT USE the filename from the -o option passed to it
         rivet_filenames = {
             "qcd":"main30_rivet.qcd.cmnd.yoda",
             "z":"main30_rivet.z.cmnd.yoda",
             "ttbar":"main30_rivet.ttbar.cmnd.yoda"
+        }
+
+        parameter_conf_filenames = {
+            "qcd":"main30_rivet.qcd.cmnd",
+            "z":"main30_rivet.z.cmnd",
+            "ttbar":"main30_rivet.ttbar.cmnd"
         }
         dirlist = self.get_param_directory_array(self.mc_run_folder)
         rank_dirs = None
@@ -327,6 +333,7 @@ class A14App(MCTask):
                     file = yodafiles[i]
                     os.remove(file)
                 DiskUtil.moveanything(outfile,mainfile)
+                os.remove(os.path.join(d,parameter_conf_filenames[analysis_name]))
                 (DATA,BNAMES) = apprentice.io.readSingleYODAFile(d, "params.dat", wtfile)
                 sigma = [_E[0] for mcnum, (_X, _Y, _E) in enumerate(DATA)]
                 rank_max_sigma = max(rank_max_sigma,max(sigma))
@@ -378,17 +385,22 @@ class A14App(MCTask):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         if rank == 0:
-            dirlist = self.get_param_directory_array(mc_run_folder)
-            for d in dirlist:
-                fin = open(os.path.join(d,fnamep), "r")
-                param_data = fin.read()
-                fin.close()
+            dirlist = ds['mc param directory']
+            run_fidelities = ds['run fidelity']
+            parameters = ds['parameters']
+            random_seed = np.random.randint(1,9999999)
+            for dno, d in enumerate(dirlist):
                 for rc_path in self.mc_parmeters['run_card_paths']:
                     dst = os.path.join(d,os.path.basename(rc_path))
                     DiskUtil.copyanything(rc_path,dst)
                     fout = open(dst, "a")
                     fout.write("\n")
-                    fout.write(param_data)
+                    for k, v in zip(parameter_names, parameters[dno]):
+                        fout.write("{name} {val:.16e}\n".format(name=k, val=v))
+                    fout.write("\n")
+                    fout.write("Main:numberOfEvents = {}\n".format(run_fidelities[dno]))
+                    fout.write("Random:setSeed = on\n")
+                    fout.write("Random:seed = {}\n".format(random_seed))
                     fout.close()
 
         return ds
