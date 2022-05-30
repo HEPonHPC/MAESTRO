@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# For A14 (If you want to use the local copy)
-# mfstrodf-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -f parameter_config_backup/a14app -d ../log/workflow/a14app/WD_scriptrun -n 1
 # For A14 (If you want to use the installed copy)
 # mfstrodf-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -f parameter_config_backup/a14app -d ../log/workflow/a14app/WD_scriptrun -n 1
+# For A14-mpirun with hostfile (If you want to use the installed copy)
+# mfstrodf-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -f parameter_config_backup/a14app -d ../log/workflow/a14app/WD_scriptrun -h hostfile_workflow.txt -n 1
 POSITIONAL_ARGS=()
 
 while [[ $# -gt 0 ]]; do
   case $1 in
+    -h|--hostfile)
+      HOSTFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
     -f|--confdir)
       CONFDIR="$2"
       shift # past argument
@@ -62,9 +67,14 @@ cp $current_directory/$CONFIGFILEPATH $WORKINGDIR/$new_config_file
 
 cd $WORKINGDIR || exit
 new_working_dir=${PWD}
-
-optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
-
+if [ -z "$HOSTFILEPATH" ]; then
+  mpicmdprefix="mpirun -np $NRANKS"
+else
+  HOSTFILE=$(basename "$HOSTFILEPATH")
+  cp $current_directory/$HOSTFILEPATH conf/$HOSTFILE
+  mpicmdprefix="mpirun --hostfile conf/$HOSTFILE -np $NRANKS"
+fi
+optimization_task_command="$mpicmdprefix optimization-task -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
 while true
 do
     # Run Optimization task
@@ -78,7 +88,7 @@ do
     mc_command=""
     while read i;
     do
-      mc_command="${mc_command} mpirun -np $NRANKS $i > /dev/null 2>&1;"
+      mc_command="${mc_command} $mpicmdprefix $i > /dev/null 2>&1;"
     done <<< "$(jq -r '.mc.commands |.[]' $new_config_file)"
 
     eval "$mc_command"
@@ -90,7 +100,7 @@ do
     fi
     
     # Reset optimization task command
-    optimization_task_command="mpirun -np $NRANKS optimization-task -d $new_working_dir"
+    optimization_task_command="$mpicmdprefix optimization-task -d $new_working_dir"
 done
 
 cd $current_directory || exit
