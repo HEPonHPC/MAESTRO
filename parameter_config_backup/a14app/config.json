@@ -21,8 +21,8 @@
     },
     "model":{
       "parameters":{
-        "MC":{"m":2},
-        "DMC":{"m":1}
+        "MC":{"m":3},
+        "DMC":{"m":2}
       },
       "function_str":{
         "MC":"appr_pa_m_construct",
@@ -34,7 +34,7 @@
         "data":"conf/data.json",
         "weights":"conf/weights",
         "optimization":{
-          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+          "nstart":5,"nrestart":50,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }
       },
       "function_str":"appr_tuning_objective"
