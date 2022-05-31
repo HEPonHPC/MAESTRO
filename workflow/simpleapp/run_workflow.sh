@@ -8,9 +8,9 @@ mkdir -p $1
 mkdir -p $1/conf
 mkdir -p $1/logs
 cp decaf-henson.json $1/decaf-henson.json
-cp ../bin/decaf-henson_python $1/.
+cp /home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/decaf-henson_python $1/.
 #cp $2 $3/. #process.dat
-cp ../../mfstrodf/optimizationtask.py $1/.
+cp ../../mfstrodf/optimization-task $1/optimization-task.py
 cp ../../mfstrodf/mc/bin/simpleapp.py $1/.
 
 cp $2/algoparams.json $1/conf/algoparams.json
