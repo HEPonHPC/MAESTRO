@@ -12,7 +12,7 @@ cp ../bin/decaf-henson_python $1/.
 cp $2/*.cmnd $1/conf/.
 cp $2/data.json $1/conf/.
 cp $2/weights $1/conf/.
-cp ../../mfstrodf/optimizationtask.py $1/.
+cp ../../mfstrodf/optimization-task $1/.
 #cp ../../mfstrodf/mc/bin/miniapp.py $1/.
 
 cp $2/algoparams.json $1/conf/algoparams.json
