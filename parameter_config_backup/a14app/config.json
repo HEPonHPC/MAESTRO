@@ -21,8 +21,8 @@
     },
     "model":{
       "parameters":{
-        "MC":{"m":3},
-        "DMC":{"m":2}
+        "MC":{"m":2},
+        "DMC":{"m":1}
       },
       "function_str":{
         "MC":"appr_pa_m_construct",
