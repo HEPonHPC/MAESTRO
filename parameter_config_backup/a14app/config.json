@@ -8,6 +8,7 @@
           "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy-standalone-160522 -o out_rivet_ttbar.yoda -i log/MC_RUN -p main30_rivet.ttbar.cmnd -a ATLAS_2012_I1094568 -a ATLAS_2013_I1243871"
       ],
       "parameters":{
+        "__seed":1234,
         "print_nan_inf_status_code":true,
         "rivetmerge_location":"rivet-merge",
         "min_fidelity":50,

@@ -396,7 +396,10 @@ class A14App(MCTask):
             dirlist = ds['mc param directory']
             run_fidelities = ds['run fidelity']
             parameters = ds['parameters']
-            random_seed = np.random.randint(1,9999999)
+            if 'seed' in self.mc_parmeters:
+                random_seed =  self.mc_parmeters['seed']
+            else:
+                random_seed = np.random.randint(1,9999999)
             for dno, d in enumerate(dirlist):
                 if run_fidelities[dno] > 0:
                     for rc_path in self.mc_parmeters['run_card_paths']:
