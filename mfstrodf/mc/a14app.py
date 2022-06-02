@@ -126,7 +126,9 @@ class A14App(MCTask):
         self.did_DV_discard = False
         def interpolate_nan_inf(data_array):
             resolved = True
-            if np.isnan(data_array).any() or np.isinf(data_array).any():
+            if np.isnan(data_array).all() or np.isinf(data_array).all():
+                resolved = False
+            elif np.isnan(data_array).any() or np.isinf(data_array).any():
                 nan_inf = [i or j for (i,j) in zip(np.isnan(data_array), np.isinf(data_array))]
                 # Do (any) middle
                 not_ni_left = None
@@ -254,18 +256,20 @@ class A14App(MCTask):
             # Find bins in the observable
             bins_in_obs = np.sort(binids[np.flatnonzero(np.core.defchararray.find(binids,obs)!=-1)])
             for pnum,param in enumerate(data['MC']["{}.P".format(bins_in_obs[0])]):
-                V = [data['MC']["{}.V".format(binid)] for binid in bins_in_obs]
-                DV = [data['DMC']["{}.V".format(binid)] for binid in bins_in_obs]
+                V = [data['MC']["{}.V".format(binid)][pnum] for binid in bins_in_obs]
+                DV = [data['DMC']["{}.V".format(binid)][pnum] for binid in bins_in_obs]
                 # Try to interpolate
                 (V,V_resolved) = interpolate_nan_inf(V)
-                (DV,DV_resolved) = interpolate_nan_inf(DV)
-                if V_resolved and DV_resolved:
+                if V_resolved:
                     for bno,binid in enumerate(bins_in_obs):
-                        data['MC']["{}.V".format(binid)] = V[bno]
-                        data['DMC']["{}.V".format(binid)] = DV[bno]
+                        data['MC']["{}.V".format(binid)][pnum] = V[bno]
+                (DV,DV_resolved) = interpolate_nan_inf(DV)
+                if DV_resolved:
+                    for bno,binid in enumerate(bins_in_obs):
+                        data['DMC']["{}.V".format(binid)][pnum] = DV[bno]
                 # If not possible to interpolate
-                else:
-                    resolved = resolved and False
+                resolved = resolved and V_resolved
+                resolved = resolved and DV_resolved
         if not resolved:
             use_model_to_resolve_nan_inf_or_drop()
         nan_inf_status_code = ""
@@ -278,7 +282,9 @@ class A14App(MCTask):
 
         print_nan_inf_status_code = self.mc_parmeters['print_nan_inf_status_code'] \
             if 'print_nan_inf_status_code' in self.mc_parmeters else False
-        if print_nan_inf_status_code:
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        if print_nan_inf_status_code and rank == 0:
             print("NaN/Inf Status Code: {}".format(nan_inf_status_code))
 
     def merge_statistics_and_get_max_sigma(self):
