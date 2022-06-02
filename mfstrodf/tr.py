@@ -56,7 +56,7 @@ class TrAmmendment(object):
                     self.state.algorithm_status.update_status(10)
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
-                    if self.state.usefixedfidelity or
+                    if self.state.usefixedfidelity or \
                         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) ==
                         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
                         tr_radius = min(self.state.tr_radius,norm_of_step)/2
