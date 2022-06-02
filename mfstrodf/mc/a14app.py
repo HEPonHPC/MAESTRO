@@ -286,6 +286,7 @@ class A14App(MCTask):
         rank = comm.Get_rank()
         if print_nan_inf_status_code and rank == 0:
             print("NaN/Inf Status Code: {}".format(nan_inf_status_code))
+            sys.stdout.flush()
 
     def merge_statistics_and_get_max_sigma(self):
         comm = MPI_.COMM_WORLD
