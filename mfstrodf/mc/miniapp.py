@@ -9,6 +9,10 @@ import apprentice
 import math
 
 class MiniApp(MCTask):
+    """
+    MC task for a minified problem with a small subset of observables generated
+    using https://pythia.org
+    """
     @staticmethod
     def __chunk_fidelity(run_at_fidelity,min_fidelity=50):
         comm = MPI_.COMM_WORLD
@@ -78,6 +82,11 @@ class MiniApp(MCTask):
                 p.communicate(b"input data that is passed to subprocess' stdin")
 
     def run_mc(self):
+        """
+
+        Run the miniapp app MC task
+
+        """
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
@@ -97,6 +106,15 @@ class MiniApp(MCTask):
         comm.barrier()
 
     def merge_statistics_and_get_max_sigma(self):
+        """
+
+        Merge MC output statistics and find the maximum standard deviation of the
+        MC output.
+
+        :return: maximum standard deviation of the MC output
+        :rtype: float
+
+        """
         comm = MPI_.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
@@ -131,6 +149,17 @@ class MiniApp(MCTask):
         return max(all_sigma)
 
     def check_df_structure_sanity(self,df):
+        """
+
+        Check the sanity of the pandas data frame created from the
+        MC output
+
+        :param df: pandas data frame created from the MC output
+        :type df: pandas.DataFrame
+        :return: corrected structure of the data frame
+        :rtype: pandas.DataFrame
+
+        """
         rownames = list(df.columns.values)
         columnnames = list(df.index)
         if len(rownames)>1 and ('.P' not in rownames[0] and '.V' not in rownames[1]) and \
@@ -142,6 +171,32 @@ class MiniApp(MCTask):
         return df
 
     def convert_mc_output_to_df(self, all_param_directory):
+        """
+
+        Convert CSV MC output to a pandas dataframe.
+
+        :Example:
+            Example of the returned pandas dataframe is given below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values. You can add more rows, i.e, more sets of parameter and values  for additional terms in the objective function
+            or more columns, i.e., more components of the each term of the objective that
+            come from the MC simulator::
+
+                >df
+                                MC                      DMC
+                Term1.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term1.V        [19, 18, 17]            [99, 98, 97]
+                Term2.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term2.V        [29, 28, 27]            [89, 88, 87]
+
+        :param all_param_directory: MC outout directory path
+        :type all_param_directory: str
+        :return: pandas dataframe formatted MC output
+        :rtype: pandas.DataFrame
+
+        """
         import pandas as pd
         main_object = {}
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None

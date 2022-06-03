@@ -10,13 +10,26 @@ import pprint
 
 
 class Fstructure(object):
+    """
+    Construct and interface with all possible objective function structures
+    """
     def __init__(self, state):
+        """
+
+        Initialize the function structure object
+
+        :param state: algortithm state containing algorithm, configuration and
+            other parameters and state information
+        :type state: mfstrodf.Settings
+
+        """
         self.state: Settings = state
         self.debug = OutputLevel.is_debug(self.state.output_level)
 
     @staticmethod
     def projection(X, MIN, MAX):
         """
+
         Project gradient onto a box
     
         :param X: graient to be projected
@@ -34,6 +47,16 @@ class Fstructure(object):
         ])
 
     def check_close_to_optimal_conditions(self):
+        """
+
+        Helper function to check whether the current trust region center
+        is close to optimal. If projected gradient is small enough at maximum fidelity
+        or fixed fidelity is in used, then we claim that we are close to minmum without the
+        ability to improve.  Otherwise, if projected gradient is small enough, then the
+        trust region radius is halved to try to certify the minimum since we are dealing
+        with a noisy function
+
+        """
         try:
             sp_object = self.state.f_structure_function_handle(self,
                                                               parameter=self.state.tr_center_scaled,
@@ -61,6 +84,17 @@ class Fstructure(object):
         sys.stdout.flush()
 
     def solve_f_structure_subproblem(self, f_structure_subproblem_result_file):
+        """
+
+        Solve the subproblem within the trust region by calling minimize on the function structure function handle
+        referrenced in the configuration input:f_structure:function_str
+
+        :param f_structure_subproblem_result_file: subproblem result file path in
+            which an object with minimum and argmin of the subproblem optimization
+            solution is stored
+        :type f_structure_subproblem_result_file: str
+
+        """
         try:
             from mfstrodf.mpi4py_ import MPI_
             comm = MPI_.COMM_WORLD
@@ -89,6 +123,19 @@ class Fstructure(object):
             raise
 
     def appr_tuning_objective(self, parameter=None, use_scaled=False):
+        """
+
+        Construct apprentice.appset.TuningObjective2 objective function with MC standard deviation values
+
+        :param parameter: (optional) if parameter is provided, then the tuning objective recurrence
+            is set to that parameter (default: None)
+        :type parameter: list
+        :param use_scaled: true is scaled parameters are to be used, false otherwise (default: False)
+        :type use_scaled: bool
+        :return: TuningObjective2 objective function object
+        :rtype: apprentice.appset.TuningObjective2
+
+        """
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.rank
@@ -184,6 +231,19 @@ class Fstructure(object):
         return IO
 
     def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False):
+        """
+
+        Construct apprentice.appset.TuningObjective2 objective function without MC standard deviation values
+
+        :param parameter: (optional) if parameter is provided, then the tuning objective recurrence
+            is set to that parameter (default: None)
+        :type parameter: list
+        :param use_scaled: true is scaled parameters are to be used, false otherwise (default: False)
+        :type use_scaled: bool
+        :return: TuningObjective2 objective function object
+        :rtype: apprentice.appset.TuningObjective2
+
+        """
         if len(self.state.data_names) > 1:
             m_type = 'model_scaled' if use_scaled else 'model'
             self.state.f_structure_parameters[m_type][self.state.data_names[1]] = None

@@ -19,9 +19,9 @@ will go through the follwoing steps:
 * Set the algorithm parameters
 * Set the configuration inputs
 
-  * Select a simple MC function
-  * Select a surrogate model function
-  * Select a subprobmel function
+  * Select a simple MC function and setup its parameters
+  * Select a surrogate model function and setup its parameters
+  * Select a function structure and setup its parameters
 
 * Run MF-STRO-DF on simpleapp
 * Understand the output
@@ -270,14 +270,13 @@ Then, we install the workflow code by typing the following commands::
 
   cd workflow
   pip install .
-  cd mfstrodf
 
 Then try the MF-STRO-DF algorithm on the simpleapp using the command::
 
-  python optimizationtask.py
+  optimization-task
     -a <algorithm_parameters_JSON_location>
     -c <configuration_input_JSON_location>
-    -d ../../log/workflow/simpleapp/<working_dir_name>
+    -d ../log/workflow/simpleapp/<working_dir_name>
 
 Here, replace ``<algorithm_parameters_JSON_location>`` and ``<configuration_input_JSON_location>``
 with the correct location and assign an appropriate name in ``<working_dir_name>``.

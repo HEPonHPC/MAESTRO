@@ -98,6 +98,7 @@ described in :ref:`MF-STRO-DF output<mfstrodf_output>`::
       -a parameter_config_backup/simpleapp/algoparams.json
       -c parameter_config_backup/simpleapp/config.json
       -d ../log/workflow/simpleapp/WD
+
 where ``parameter_config_backup`` is a directory at the same location where the workflow project was installed above.
 
 The output log files are stored in ``../log/workflow/simpleapp/WD/log/``. At the end of the

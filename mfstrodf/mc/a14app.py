@@ -8,6 +8,11 @@ from subprocess import Popen, PIPE
 import apprentice
 
 class A14App(MCTask):
+    """
+    MC task for Pythia 8 Monte Carlo event generator’s [https://pythia.org] parton shower and
+    multiple parton interaction parameters to a range of data observables from ATLAS Run 1 from 2014 (A14)
+    [https://cds.cern.ch/record/1966419/files/ATL-PHYS-PUB-2014-021.pdf]
+    """
     rivett_analysis = {
         "qcd":["ATLAS_2011_S8924791", "ATLAS_2011_S8971293","ATLAS_2011_I919017","ATLAS_2011_S9128077","ATLAS_2012_I1125575","ATLAS_2014_I1298811","ATLAS_2012_I1094564"],
         # "qcd":["ATLAS_2011_S8924791"], #shortened
@@ -69,6 +74,13 @@ class A14App(MCTask):
         # return p.returncode
 
     def run_mc(self):
+        """
+
+        This method cannot be used with the A14 MC. See documentation on
+        how to use the MC task using the ``script run``or ``workflow`` caller_type
+        to run the this task for the A14 MC
+
+        """
         raise Exception("A14 MC cannot be run using a function call")
 
         # import warnings
@@ -289,6 +301,15 @@ class A14App(MCTask):
             sys.stdout.flush()
 
     def merge_statistics_and_get_max_sigma(self):
+        """
+
+        Merge MC output statistics and find the maximum standard deviation of the
+        MC output.
+
+        :return: maximum standard deviation of the MC output
+        :rtype: float
+
+        """
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()
@@ -353,6 +374,17 @@ class A14App(MCTask):
         return max_sigma
 
     def check_df_structure_sanity(self,df):
+        """
+
+        Check the sanity of the pandas data frame created from the
+        MC output
+
+        :param df: pandas data frame created from the MC output
+        :type df: pandas.DataFrame
+        :return: corrected structure of the data frame
+        :rtype: pandas.DataFrame
+
+        """
         rownames = list(df.columns.values)
         columnnames = list(df.index)
         if len(rownames)>1 and ('.P' not in rownames[0] and '.V' not in rownames[1]) and \
@@ -364,6 +396,32 @@ class A14App(MCTask):
         return df
 
     def convert_mc_output_to_df(self, all_param_directory):
+        """
+
+        Convert CSV MC output to a pandas dataframe.
+
+        :Example:
+            Example of the returned pandas dataframe is given below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values. You can add more rows, i.e, more sets of parameter and values  for additional terms in the objective function
+            or more columns, i.e., more components of the each term of the objective that
+            come from the MC simulator::
+
+                >df
+                                MC                      DMC
+                Term1.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term1.V        [19, 18, 17]            [99, 98, 97]
+                Term2.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term2.V        [29, 28, 27]            [89, 88, 87]
+
+        :param all_param_directory: MC outout directory path
+        :type all_param_directory: str
+        :return: pandas dataframe formatted MC output
+        :rtype: pandas.DataFrame
+
+        """
         import pandas as pd
         main_object = {}
         wtfile = self.mc_parmeters['weights'] if 'weights' in self.mc_parmeters else None
@@ -387,6 +445,37 @@ class A14App(MCTask):
                     mc_run_folder, expected_folder_name,
                     fnamep="params.dat", fnamerf="run_fidelity.dat",
                     fnameaf="at_fidelity.dat"):
+        """
+
+        Write parameters to parameter directory and generate parameter metadata
+        Additionally, also write the pythia parameter configuration files for the three
+        categories of A14 observables with all relevant and pertinent information as required by
+        phytia8-diy
+
+        :param parameters: list of parameters points
+        :type parameters: list of lists
+        :param parameter_names: names of the parameter dimensions
+        :type parameter_names: list
+        :param at_fidelities: current fidelity of the parameters
+        :type at_fidelities: list
+        :param run_fidelities: expected fidelity of the parameters i.e., these are the
+            fidelities at which the MC should be run at the corresponding parameters
+        :type run_fidelities: list
+        :param mc_run_folder: MC run folder path
+        :type mc_run_folder: str
+        :param expected_folder_name: expected MC run folder path with the
+            type of run (single or sample) and iteration number
+        :type expected_folder_name: str
+        :param fnamep: name of the parameter file (default: params.dat)
+        :type fnamep: str
+        :param fnamerf: name of the run fidelity file (default: run_fidelity.dat)
+        :type fnamerf: str
+        :param fnameaf: name of the at fidelity file (default: at_fidelity.dat)
+        :type fnameaf: str
+        :return: parameter metadata object
+        :rtype: dict
+
+        """
         ds = super().write_param(parameters,parameter_names,at_fidelities,run_fidelities,mc_run_folder,
                             expected_folder_name,fnamep,fnamerf,fnameaf)
         from mfstrodf import MPI_

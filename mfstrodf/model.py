@@ -5,7 +5,23 @@ import sys,os,json
 from mfstrodf import OutputLevel,Settings
 import pprint
 class ModelConstruction(object):
+
+    """
+    Construct and interface with all possible surrogate models
+    """
+
     def __init__(self,state,mc_run_folder):
+        """
+
+        Initialize the surrogate model object
+
+        :param state: algortithm state containing algorithm, configuration and
+            other parameters and state information
+        :type state: mfstrodf.Settings
+        :param mc_run_folder: MC run folder path
+        :type mc_run_folder: str
+
+        """
         self.state:Settings = state
         self.mc_run_folder = mc_run_folder
         self.debug = OutputLevel.is_debug(self.state.output_level)
@@ -33,28 +49,91 @@ class ModelConstruction(object):
         { MC:{xmin:[],xmax:[]}, DMC:{xmin:[],xmax:[]}}
         
         """
-    def construct_models(self):
-        for data_name in self.state.data_names:
-            fh = self.state.get_model_function_handle(data_name)
-            fh(self,data_name) if fh is not None else self.appr_pa_m_construct(data_name)
-
     @staticmethod
     def get_model_object(function_str,data):
+        """
+
+        Get surrogate model object based on previously calculated model parameters
+
+        :param function_str: function string for the specific data name
+        :type function_str: str
+        :param data: previously calculated model parameters. The data type of this
+            argument should make sence to the the class that this data structure is passed to
+        :type data: Any
+        :return: model object
+        :rtype: Any
+
+        """
         import apprentice
         if function_str in ['appr_pa_m_construct','appr_ra_m_n_construct','appr_ra_m_1_construct','appr_appx_construct']:
             return apprentice.RationalApproximation(initDict=data)
         else:
             raise Exception("Model not implemented")
 
+    def construct_models(self):
+        """
+
+        Contruct the surrogate model. This function will read the function specified
+        in the configuration input:model:function_str and call that function from within this
+        class
+
+        """
+        for data_name in self.state.data_names:
+            fh = self.state.get_model_function_handle(data_name)
+            fh(self,data_name) if fh is not None else self.appr_pa_m_construct(data_name)
+
     #TODO: === Change appr_* functions after changes to apprentice
     def appr_pa_m_construct(self,data_name):
+        """
+
+        Contruct apprentice.PolynomialApproximation model for order of numerator m
+
+        :param data_name: data/term name
+        :type data_name: str
+        :return: polynomial approximation surrogate model object
+        :rtype: apprentice.PolynomialApproximation
+
+        """
         self.appr_appx_construct(data_name)
     def appr_ra_m_n_construct(self,data_name):
+        """
+
+        Contruct apprentice.RationalApproximation model for order of numerator m and
+        denominator n
+
+        :param data_name: data/term name
+        :type data_name: str
+        :return: rational approximation surrogate model object
+        :rtype: apprentice.RationalApproximation
+
+        """
         self.appr_appx_construct(data_name)
     def appr_ra_m_1_construct(self,data_name):
+        """
+
+        Contruct apprentice.RationalApproximation model for order of numerator m and
+        denominator 1. This is a special case of the the model construction function
+        appr_ra_m_n_construct
+
+        :param data_name: data/term name
+        :type data_name: str
+        :return: rational approximation surrogate model object
+        :rtype: apprentice.RationalApproximation
+
+        """
         self.appr_appx_construct(data_name)
 
     def appr_appx_construct(self,data_name):
+        """
+
+        Contruct apprentice.PolynomialApproximation or apprentice.RationalApproximation model.
+
+        :param data_name: data/term name
+        :type data_name: str
+        :return: polynomail or rational approximation surrogate model object
+        :rtype: apprentice.RationalApproximation or apprentice.PolynomailApproximation
+
+        """
         t4 = time.time()
         app = {}
         appscaled = {}

@@ -10,27 +10,102 @@ encoder.FLOAT_REPR = lambda o: format(o, '.16f')
 import math
 from mfstrodf import DiskUtil
 class MCTask(object):
+    """
+    MC Task base class
+    """
     def __init__(self,mc_working_directory, mc_parameters=None):
+        """
+
+        Create an MC Task object
+
+        :param mc_working_directory: MC working directory path
+        :type mc_working_directory: str
+        :param mc_parameters: MC parameters set in the configuration input
+        :type mc_parameters: dict
+
+        """
         self.mc_run_folder = mc_working_directory
         self.mc_parmeters = mc_parameters
 
     # todo === add to doc
     # todo === can be called from __main__ or directly on object (should work as a blackbox -- like a task in the workflow)
     def run_mc(self):
+        """
+
+        Run the MC (abstract). This function needs to be implemented in a class that
+        inherits this class
+
+        """
         raise Exception("This function must be implemented in the derived class")
 
     # todo === add to doc
     # todo === return max sigma. If sigma cannot be found return None
     def merge_statistics_and_get_max_sigma(self):
+        """
+
+        Merge MC output statistics and find the maximum standard deviation of the
+        MC output (abstract). This function needs to be implemented in a class that
+        inherits this class
+
+        :return: class that inherits this class should return the
+            maximum standard deviation of the MC output
+        :rtype: float
+
+        """
         raise Exception("This function must be implemented in the derived class")
 
     # todo === add to doc
     # todo === return df and additional_data object (additional_data can be none)
     def convert_mc_output_to_df(self, all_param_directory):
+        """
+
+        Convert MC output to a pandas dataframe (abstract). This function needs to be implemented in a class that
+        inherits this class
+
+        :Example:
+            Example of the returned pandas dataframe is given below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values. You can add more rows, i.e, more sets of parameter and values  for additional terms in the objective function
+            or more columns, i.e., more components of the each term of the objective that
+            come from the MC simulator::
+
+                >df
+                                MC                      DMC
+                Term1.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term1.V        [19, 18, 17]            [99, 98, 97]
+                Term2.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term2.V        [29, 28, 27]            [89, 88, 87]
+
+        :param all_param_directory: MC outout directory path
+        :type all_param_directory: str
+        :return: pandas dataframe formatted MC output
+        :rtype: pandas.DataFrame
+
+        """
         raise Exception("This function must be implemented in the derived class")
 
     @staticmethod
     def read_params_file(path):
+        """
+
+        Read parameters from parameters file.
+
+        :Example:
+            Example of the format of parameter file on the file path ``path`` is given below. The first
+            column is the parameter name and the second column is the value associated with
+            the parameter::
+
+                dimension1 0.2
+                dimension2 0.4
+
+        :param path: parameter file path
+        :type path: str
+        :return: list of parameter values in the same order as found in the parameter file
+        :rtype: list
+
+        """
         parameters = []
         with open(path, "r") as f:
             L = [l.strip() for l in f if not l.startswith("#")]
@@ -46,10 +121,24 @@ class MCTask(object):
 
     def get_param_from_directory(self,param_directory,fnamep="params.dat"):
         """
-        Get all parameters from MC run directory
-        :param pfname: parameter file name with extension (to search for)
-        :type pfname: str
-        :return: parameter values (in order of how they a listed in fnamep)
+
+        Get all parameters from parameter file with name fnamep in directory
+        param_directory
+
+        :Example:
+            Example of the format of parameter file with file name ``fnamep`` is given below. The first
+            column is the parameter name and the second column is the value associated with
+            the parameter::
+
+                dimension1 0.2
+                dimension2 0.4
+
+
+        :param param_directory: path of the parameter directory
+        :type param_directory: str
+        :param fnamep: name of the parameter file
+        :type fnamep: str
+        :return: list of parameter values in the same order as found in the parameter file
         :rtype: list
 
         """
@@ -70,12 +159,49 @@ class MCTask(object):
         return param
 
     def get_param_from_metadata(self, param_metadata):
+        """
+        Get parameters from the metadata object
+
+        :param param_metadata:  parameter metadata object
+        :type param_metadata: dict
+        :return: list of parameter values
+        :rtype: list
+
+        """
         return param_metadata['parameters']
 
     def write_param(self, parameters, parameter_names, at_fidelities, run_fidelities,
                     mc_run_folder, expected_folder_name,
                     fnamep="params.dat", fnamerf="run_fidelity.dat",
                     fnameaf="at_fidelity.dat"):
+        """
+
+        Write parameters to parameter directory and generate parameter metadata
+
+        :param parameters: list of parameters points
+        :type parameters: list of lists
+        :param parameter_names: names of the parameter dimensions
+        :type parameter_names: list
+        :param at_fidelities: current fidelity of the parameters
+        :type at_fidelities: list
+        :param run_fidelities: expected fidelity of the parameters i.e., these are the
+            fidelities at which the MC should be run at the corresponding parameters
+        :type run_fidelities: list
+        :param mc_run_folder: MC run folder path
+        :type mc_run_folder: str
+        :param expected_folder_name: expected MC run folder path with the
+            type of run (single or sample) and iteration number
+        :type expected_folder_name: str
+        :param fnamep: name of the parameter file (default: params.dat)
+        :type fnamep: str
+        :param fnamerf: name of the run fidelity file (default: run_fidelity.dat)
+        :type fnamerf: str
+        :param fnameaf: name of the at fidelity file (default: at_fidelity.dat)
+        :type fnameaf: str
+        :return: parameter metadata object
+        :rtype: dict
+
+        """
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
@@ -117,6 +243,20 @@ class MCTask(object):
                                             next_iterate_parameter_data=None,
                                             next_iterate_mc_directory=None
                                             ):
+        """
+        Copy current iterate as the next iterate
+
+        :param current_iterate_parameter_data: parameter metadata of the current iterate (from the current
+            iteration
+        :type current_iterate_parameter_data: dict
+        :param next_iterate_parameter_data: parameter metadata of the next iterate (from the next
+            iteration (default: None)
+        :type next_iterate_parameter_data: dict
+        :param next_iterate_mc_directory: MC directory path of the next iterate (default: None)
+        :type next_iterate_mc_directory: str
+        :return: updated current iterate parameter metadata
+        :rtype: dict
+        """
 
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
@@ -140,17 +280,62 @@ class MCTask(object):
 
 
     def update_current_fidelities(self,param_metadata):
+        """
+
+        Update current fidelity in parameter metadata of all parameters
+        as the sum of current fidelity and run fidelity
+
+        :param param_metadata: parameter metadata
+        :type param_metadata: dict
+        :return: list of updated fidelities
+        :rtype: list
+
+        """
         new_at_fid = [i+j for (i,j) in zip(param_metadata['at fidelity'], param_metadata['run fidelity'])]
         param_metadata['at fidelity'] = new_at_fid
         return new_at_fid
 
     def get_updated_current_fidelities(self,param_metadata):
+        """
+
+        Get updated current fidelities after adding the run fidelity
+
+        :param param_metadata: parameter metadata
+        :type param_metadata: dict
+        :return: list of updated fidelities
+        :rtype: list
+
+        """
         return self.update_current_fidelities(param_metadata)
 
     def get_current_fidelities(self,param_metadata):
+        """
+
+        Get current fidelity from parameter metadata
+
+        :param param_metadata: parameter metadata
+        :type param_metadata: dict
+        :return: list of current fidelities
+        :rtype: list
+
+        """
         return param_metadata['at fidelity']
 
     def get_parameter_data_from_metadata(self,param_metadata,param_index,include_parameter = False):
+        """
+
+        Get parameter data at a particular index in the metadata
+
+        :param param_metadata: parameter metadata of all parameters
+        :type param_metadata: dict
+        :param param_index: index of the parameter of interest
+        :type param_index: int
+        :param include_parameter: true if parameter value at index should also to be included (default: False)
+        :type include_parameter: bool
+        :return: parameter metadata at the index of interest
+        :rtype: dict
+
+        """
         ds = {
             'at fidelity': param_metadata['at fidelity'][param_index],
             'run fidelity': param_metadata['run fidelity'][param_index],
@@ -162,6 +347,18 @@ class MCTask(object):
         return ds
 
     def get_fidelity_from_directory(self,param_directory,fnamef="run_fidelity.dat"):
+        """
+
+        Get fidelity (current or run fidelity) from a parameter directory
+
+        :param param_directory: path of the parameter directory
+        :type param_directory: str
+        :param fnamef: path of the fidelity file (current or run fidelity) (default: run_fidelity.dat)
+        :type fnamef: str
+        :return: fidelity value
+        :rtype: int
+
+        """
         re_fnamerf = re.compile(fnamef) if fnamef else None
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
@@ -187,6 +384,31 @@ class MCTask(object):
         return fid
 
     def get_param_directory_array(self,all_param_directory):
+        """
+
+        From the MC run directory, get a list of parameter directory
+
+        :Example:
+            If <path>/MC_RUN is the MC run directory (``all_param_directory``), and it has the the following contents::
+
+                <path>/MC_RUN/00
+                <path>/MC_RUN/01
+                <path>/MC_RUN/02
+
+            Then this function return::
+
+                [
+                    <path>/MC_RUN/00,
+                    <path>/MC_RUN/01,
+                    <path>/MC_RUN/02
+                ]
+
+        :param all_param_directory: MC run directory path
+        :type all_param_directory: str
+        :return: paths of sub directories within the MC run directory
+        :rtype: list
+
+        """
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
@@ -200,6 +422,21 @@ class MCTask(object):
 
     def write_fidelity_to_metadata_and_directory(self,param_metadata,fidelities,metadata_file_key='run fidelity',
                                                  fnamef="run_fidelity.dat"):
+        """
+
+        Write (updated) current or run fidelity to metadata and in the fidelity file in the
+        parameter directory
+
+        :param param_metadata: all parameter metadata
+        :type param_metadata: dict
+        :param fidelities: fidelity values for all parameters
+        :type fidelities: list
+        :param metadata_file_key: metadata file key (corresponding to current or run fidelity) (default: run fidelity)
+        :type metadata_file_key: str
+        :param fnamef: file name of fidelity file (corresponding to current or run fidelity) (default: run_fidelity.dat)
+        :type fnamef: str
+
+        """
         param_metadata[metadata_file_key] = fidelities
 
         from mfstrodf import MPI_
@@ -214,9 +451,48 @@ class MCTask(object):
 
 
     def get_run_fidelity_from_metadata(self,param_metadata):
+        """
+
+        Get run fidelity from parameter metadata
+
+        :param param_metadata: parameter metadata
+        :type param_metadata: dict
+        :return: run fidelity values
+        :rtype: list
+
+        """
         return param_metadata['run fidelity']
 
     def save_mc_out_as_csv(self,header,term_names,data,out_path):
+        """
+
+        Save MC output in CSV format
+
+        :Example:
+            If::
+
+                header = ["name", "MC", "DMC"]
+                term_names = ["Term1", "Term2"]
+                # data: two arrays for MC and DMC respectively and within each
+                # array, two values for the two terms
+                data = [[19,29],[99,89]]
+
+            Then CSV output is::
+
+                name,MC,DMC
+                Term1,19,99
+                Term2,29,89
+
+        :param header: CSV header line
+        :type header: str
+        :param term_names:  objective function term names to use in the
+        :type term_names: list
+        :param data: parameter and value data
+        :type data: list
+        :param out_path: path of the output CSV file
+        :type out_path: str
+
+        """
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
@@ -231,6 +507,33 @@ class MCTask(object):
                 ff.write(s)
 
     def convert_csv_data_to_df(self,all_param_directory,mc_out_file_name):
+        """
+
+        Read CSV data from all parameter directories and convert them
+        into pandas dataframe
+
+        :Example:
+            Example of the returned pandas dataframe is given below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values. You can add more rows, i.e, more sets of parameter and values  for additional terms in the objective function
+            or more columns, i.e., more components of the each term of the objective that
+            come from the MC simulator::
+
+                >df
+                                MC                      DMC
+                Term1.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term1.V        [19, 18, 17]            [99, 98, 97]
+                Term2.P        [[1,2],[3,4],[6,3]]     [[1,2],[3,4],[6,3]]
+                Term2.V        [29, 28, 27]            [89, 88, 87]
+
+        :param all_param_directory: MC run directory path
+        :type all_param_directory: str
+        :param mc_out_file_name: MC out CSV file name
+        :type mc_out_file_name: str
+
+        """
         import pandas as pd
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD

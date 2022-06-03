@@ -11,8 +11,8 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    :caption: User Guide:
 
    Quickstart<introduction>
-   advanced_installation
    code_documentation
+   mctask
    models_and_fstructure
    inputs_and_outputs
    running_as_a_function_call
@@ -24,8 +24,7 @@ Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochast
    :caption: Tutorials:
 
    tutorials/mdstrodf_with_simpleapp
-   tutorials/mdstrodf_with_miniapp
-   tutorials/mdstrodf_with_A14
+   tutorials/mdstrodf_with_mc
 
 
 
