@@ -10,8 +10,26 @@ import numpy as np
 
 
 class Settings(object):
+    """
+    Settings and state object
+    """
 
     def __init__(self,working_dir=None, algorithm_parameters_file=None, config_file=None,param_matadata_file=None):
+        """
+
+        Initialize the algorithms state and settings. Three main settings/state
+        file include the algorithm file, configuration and parameter metadata file
+
+        :param working_dir: working directory path
+        :type working_dir: str
+        :param algorithm_parameters_file: algorithm parameter file path
+        :type algorithm_parameters_file: str
+        :param config_file: configuration file path
+        :type config_file: str
+        :param param_matadata_file: parameter metadata file path
+        :type param_matadata_file: str
+
+        """
         self.algorithm_parameters_dict = {}
         self.config_dict = {}
         self.param_meta_data = {}
@@ -29,6 +47,16 @@ class Settings(object):
                 self.param_meta_data = self.read_setting_file(param_metadata_file)
 
     def read_setting_file(self, file):
+        """
+
+        Read settings and state JSON file
+
+        :param file: file path
+        :type file: str
+        :return: JSON structure from the file
+        :rtype: dict
+
+        """
         try:
             with open(file, 'r') as f:
                 ds = json.load(f)
@@ -37,6 +65,16 @@ class Settings(object):
         return ds
 
     def write_setting_file(self, ds, file):
+        """
+
+        Write the settings/state file
+
+        :param ds: Dictionary of state/settings
+        :type ds: dict
+        :param file: output file path
+        :type file: str
+
+        """
         from mfstrodf import MPI_
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
@@ -45,6 +83,15 @@ class Settings(object):
                 json.dump(ds, f, indent=4)
 
     def initialize_algorithm_parameters(self, file:str):
+        """
+
+        Check whether all required algorithm parameter keys are defined and
+        initialize algorithm parameters
+
+        :param file: algorithm file path
+        :type file: str
+
+        """
         ds = self.read_setting_file(file)
         self.algorithm_parameters_dict = ds
         """
@@ -78,6 +125,17 @@ class Settings(object):
             self.algorithm_parameters_dict['current_iteration'] = 0
 
     def initialize_config(self, file:str,working_dir:str=None):
+        """
+
+        Check whether all required configuration keys are defined and
+        initialize configuration parameters
+
+        :param file: configuration file path
+        :type file: str
+        :param working_dir: working directory path
+        :type working_dir: str
+
+        """
         ds = self.read_setting_file(file)
         self.config_dict = ds
         if working_dir is None and 'working_directory_str' not in self.config_dict:
@@ -130,12 +188,34 @@ class Settings(object):
             self.algorithm_status.update_status(0)
 
     def set_start_time(self):
+        """
+
+        Set start time
+
+        """
         self.config_dict['start_time'] = time.time()
 
     def set_end_time(self):
+        """
+
+        Set end time
+
+        """
         self.config_dict['end_time'] = time.time()
 
     def save(self, next_step=None, to_log = False):
+        """
+
+        Save all setting/state parameters and variables
+
+        :param next_step: next step in the optimization algorithm
+        :type next_step: str
+        :param to_log: true if the save is to log iteration state at the
+            end of the iteration and if false the save is for dumping the
+            state within an iteration
+        :type to_log: bool
+
+        """
         if to_log:
             algorithm_parameters_file = self.working_directory.get_log_path('algorithm_parameters_dump_k{}.json'.format(self.k))
             config_file = self.working_directory.get_log_path('config_dump_k{}.json'.format(self.k))
@@ -164,18 +244,48 @@ class Settings(object):
         self.write_setting_file(self.param_meta_data, param_metadata_file)
 
     def update_simulation_budget_used(self, simulation_count):
+        """
+
+        Upadte used simulation budget by adding simulation_count to current
+        simulation budget
+
+        :param simulation_count: simulation count to be added to current simulation budget
+        :type simulation_count: int
+
+        """
         self.algorithm_parameters_dict['simulation_budget_used'] += simulation_count
 
     @property
     def simulation_budget_used(self):
+        """
+
+        Get simulation budget used
+
+        :return: current simulation budget
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['simulation_budget_used']
 
     @property
     def no_iters_at_max_fidelity(self):
+        """
+
+        Get number of iterations where the fidelity have been at maximum fidelity
+
+        :return: number of iterations where the fidelity have been at maximum fidelity
+        :rtype: int
+
+        """
         if "no_iters_at_max_fidelity" in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['no_iters_at_max_fidelity']
         return 0
     def increment_no_iters_at_max_fidelity(self):
+        """
+
+        Increment number of iterations where the fidelity have been at maximum fidelity
+
+        """
         if "no_iters_at_max_fidelity" in self.algorithm_parameters_dict:
             self.algorithm_parameters_dict['no_iters_at_max_fidelity']+=1
         else:
@@ -183,139 +293,384 @@ class Settings(object):
 
     @property
     def radius_at_which_max_fidelity_reached(self):
+        """
+
+        Get trust region radius when the fidelity reached the maximum fidelity
+
+        :return: trust region radius when the fidelity reached the maximum fidelity
+        :rtype: float
+
+        """
         if "radius_at_which_max_fidelity_reached" in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['radius_at_which_max_fidelity_reached']
         return None
 
     def set_radius_at_which_max_fidelity_reached(self,tr_radius):
+        """
+
+        Set trust region radius when the fidelity reached the maximum fidelity
+
+        :param tr_radius: trust region radius when the fidelity reached the maximum fidelity
+        :type tr_radius: float
+
+        """
         if not "radius_at_which_max_fidelity_reached" in self.algorithm_parameters_dict:
             if self.fidelity>=self.max_fidelity:
                 self.algorithm_parameters_dict['radius_at_which_max_fidelity_reached'] = tr_radius
 
     @property
     def optimization_parameters(self):
+        """
+
+        Get trust region subproblem optimziation parameters
+
+        :return: trust region subproblem optimziation parameters
+        :rtype: dict
+
+        """
         return self.config_dict['f_structure']['parameters']['optimization']
 
     @property
     def tr_eta(self):
+        """
+
+        Get trust region parameter :math:`\eta`
+
+        :return: :math:`\eta`
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['eta']
 
     @property
     def tr_min_radius(self):
+        """
+
+        Get minimum allowed trust region radius
+
+        :return: minimum allowed trust region radius
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['min_radius']
 
     @property
     def tr_max_radius(self):
+        """
+
+        Get maximum allowed trust region radius
+
+        :return: maximum allowed trust region radius
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['max_radius']
 
     @property
     def min_gradient_norm(self):
+        """
+
+        Get minimum norm of projected gradient
+
+        :return: minimum norm of projected gradient
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['min_gradient_norm']
     @property
     def tr_center_scaled(self):
+        """
+
+        Get scaled trust region center
+
+        :return: scaled trust region center
+        :rtype: list
+
+        """
         if 'tr_center_scaled' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['tr_center_scaled']
         raise Exception("\"tr_center_scaled\" not set in algorithm state")
 
     @property
     def min_parameter_bounds_scaled(self):
+        """
+
+        Get minimum parameter parameter bounds (scaled)
+
+        :return: minimum parameter parameter bounds (scaled)
+        :rtype: list
+
+        """
         if 'min_param_bounds_scaled' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['min_param_bounds_scaled']
         raise Exception("\"min_param_bounds_scaled\" not set in algorithm state")
 
     @property
     def max_parameter_bounds_scaled(self):
+        """
+
+        Get maximum parameter parameter bounds (scaled)
+
+        :return: maximum parameter parameter bounds (scaled)
+        :rtype: list
+
+        """
         if 'max_param_bounds_scaled' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['max_param_bounds_scaled']
         raise Exception("\"max_param_bounds_scaled\" not set in algorithm state")
 
     def set_tr_center_scaled(self,tr_center_scaled):
+        """
+
+        Set trust region center (scaled)
+
+        :param tr_center_scaled: trust region center (scaled)
+        :type tr_center_scaled: list
+
+        """
         self.algorithm_parameters_dict['tr_center_scaled'] = tr_center_scaled
 
     def set_scaled_min_max_parameter_bounds(self,min_bounds_scaled,max_bounds_scaled):
+        """
+
+        Set minimum and maximum parameter bounds
+
+        :param min_bounds_scaled: minimum parameter bounds
+        :type min_bounds_scaled: list
+        :param max_bounds_scaled: maximum parameter bounds
+        :type max_bounds_scaled: list
+
+        """
         self.algorithm_parameters_dict['min_param_bounds_scaled'] = min_bounds_scaled
         self.algorithm_parameters_dict['max_param_bounds_scaled'] = max_bounds_scaled
 
     def change_mc_ran(self,val:bool):
+        """
+
+        Set whether MC ran (for script run caller type)
+
+        :param val: true if MC ran, false otherwise
+        :type val: bool
+
+        """
         self.config_dict['mc_ran'] = val
 
     def update_fidelity(self,new_fidelity):
+        """
+
+        Update fidelity (add run fidelity to current fidelity)
+
+        :param new_fidelity: run fidelity to add
+        :type new_fidelity: float
+
+        """
         self.algorithm_parameters_dict['fidelity'] = new_fidelity
 
     def update_close_to_min_condition(self,value=False):
+        """
+
+        Update close to minimum condition condition
+
+        :param value: close to minimum condition condition
+        :type value: boolean
+
+        """
         self.algorithm_parameters_dict['close_to_min_condition'] = value
 
     def update_proj_grad_norm(self,pgnorm):
+        """
+
+        Update norm of projected gradient
+
+        :param pgnorm: norm of projected gradient
+        :type pgnorm: float
+
+        """
         self.algorithm_parameters_dict['proj_grad_norm'] = pgnorm
 
     @property
     def data_names(self):
+        """
+
+        Get names of the components of the objective function
+        generated from the MC
+
+        :return: names of the components of the objective function
+            generated from the MC
+        :rtype: list
+
+        """
         if 'data_names' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['data_names']
         raise Exception("\"data_names\" not set in algorithm state")
 
     def set_data_names(self, dn):
+        """
+
+        Set names of the components of the objective function
+        generated from the MC
+
+        :param dn: names of the components of the objective function
+            generated from the MC
+        :type dn: list
+
+        """
         if 'data_names' not in self.algorithm_parameters_dict:
             self.algorithm_parameters_dict['data_names'] = dn
 
     @property
     def proj_grad_norm(self):
+        """
+
+        Get norm of the projected gradient
+
+        :return: norm of the projected gradient
+        :rtype: float
+
+        """
         if 'proj_grad_norm' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['proj_grad_norm']
         return 1.0
 
     @property
     def close_to_min_condition(self):
+        """
+        Get close to minimum condition
+
+        :return: close to minimum condition
+        :rtype: bool
+
+        """
         if 'close_to_min_condition' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['close_to_min_condition']
         return False
 
     @property
     def mc_ran(self):
+        """
+
+        Get whether MC ran (for script run caller type)
+
+        :return: whether MC ran (for script run caller type)
+        :rtype: bool
+
+        """
         if 'mc_ran' in self.config_dict:
             return self.config_dict['mc_ran']
         return False
 
     @property
     def next_step(self):
+        """
+
+        Get next step of the optimization task
+
+        :return: next step of the optimization task
+        :rtype: str
+
+        """
         if 'next_step' in self.config_dict:
             return self.config_dict['next_step']
         return "ops_start"
 
     @property
     def meta_data_file(self):
+        """
+
+        Get meta data file path
+
+        :return: meta data file path
+        :rtype: str
+
+        """
         if 'meta_data_file' in self.config_dict:
             return self.config_dict['meta_data_file']
         return self.working_directory.get_log_path("parameter_metadata_1_k{}.json".format(self.k))
 
     @property
     def usefixedfidelity(self):
+        """
+
+        Get use fixed fidelity boolean
+
+        :return: true if fixed fidelity to be used, false for multi fidelity run
+        :rtype: bool
+
+        """
         if 'usefixedfidelity' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['usefixedfidelity']
         return True
 
     @property
     def fidelity(self):
+        """
+
+        Get current fidelity
+
+        :return: current fidelity
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['fidelity']
 
     @property
     def max_iterations(self):
+        """
+
+        Get maximum iteration value
+
+        :return: maximum iteration value
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['max_iteration']
 
     @property
     def max_fidelity_iteration(self):
+        """
+
+        Get iteration allowed at max fidelity
+
+        :return: iteration allowed at max fidelity
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['max_fidelity_iteration']
 
     @property
     def max_simulation_budget(self):
+        """
+
+        Get maximum simulation budget
+
+        :return: maximum simulation budget
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['max_simulation_budget']
 
     @property
     def max_fidelity(self):
+        """
+
+        Get maximum fidelity value
+
+        :return: maximum fidelity value
+        :rtype: int
+
+        """
         return np.infty if self.usefixedfidelity else self.algorithm_parameters_dict['max_fidelity']
 
     @property
     def min_fidelity(self):
+        """
+
+        Get minimum fidelity value
+
+        :return: minimum fidelity value
+        :rtype: int
+
+        """
         if self.usefixedfidelity: return self.fidelity
         if 'min_fidelity' in self.algorithm_parameters_dict:
             return self.algorithm_parameters_dict['min_fidelity']
@@ -323,118 +678,355 @@ class Settings(object):
 
     @property
     def kappa(self):
+        """
+
+        Get algorithrm parameter :math:`\kappa`
+
+        :return: algorithrm parameter :math:`\kappa`
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['kappa']
 
     @property
     def tr_radius(self):
+        """
+
+        Get trust region radius
+
+        :return: trust region radius
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['radius']
 
     @property
     def previous_tr_radius(self):
+        """
+
+        Get previous trust region radius
+
+        :return: previous trust region radius
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['previous_radius']
 
     @property
     def previous_tr_center(self):
+        """
+
+        Get previous trust region center
+
+        :return: previous trust region center
+        :rtype: list
+
+        """
         return self.algorithm_parameters_dict['tr']['previous_center']
 
     def update_tr_radius(self,new_radius):
+        """
+
+        Update trust region radius
+
+        :param new_radius: new trust region radius value
+        :type new_radius: float
+
+        """
         self.algorithm_parameters_dict['tr']['previous_radius'] = self.tr_radius
         self.algorithm_parameters_dict['tr']['radius'] = new_radius
 
     def update_tr_center(self,new_center):
+        """
+
+        Update trust region center
+
+        :param new_center: new trust region center
+        :type new_center: list
+
+        """
         self.algorithm_parameters_dict['tr']['previous_center'] = self.tr_center
         self.algorithm_parameters_dict['tr']['center'] = new_center
 
     @property
     def tr_mu(self):
+        """
+
+        Get trust region parameter :math:`\mu`
+
+        :return: trust region parameter :math:`\mu`
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['tr']['mu']
 
     @property
     def N_p(self):
+        """
+
+        Get number of parameters to sample
+
+        :return: number of parameters to sample
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['N_p']
 
     @property
     def dim(self):
+        """
+
+        Get dimensionality of the problem
+
+        :return: dimensionality of the problem
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['dim']
 
     @property
     def tr_center(self):
+        """
+
+        Get trust region center
+
+        :return: trust region center
+        :rtype: list
+
+        """
         return self.algorithm_parameters_dict['tr']['center']
 
     @property
     def min_param_bounds(self):
+        """
+
+        Get minimum parameter bounds
+
+        :return: minimum parameter bounds
+        :rtype: list
+
+        """
         return np.array(self.algorithm_parameters_dict['param_bounds'])[:,0]
 
     @property
     def max_param_bounds(self):
+        """
+
+        Get maximum parameter bounds
+
+        :return: maximum parameter bounds
+        :rtype: list
+
+        """
         return np.array(self.algorithm_parameters_dict['param_bounds'])[:,1]
 
     @property
     def k(self):
+        """
+
+        Get current iteration number
+
+        :return: current iteration number
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['current_iteration']
 
     def increment_k(self):
+        """
+
+        Increment current iteration number by 1
+
+        """
         self.algorithm_parameters_dict['current_iteration'] += 1
 
     @property
     def theta(self):
+        """
+
+        Get algorithm parameter :math:`\theta`
+
+        :return: algorithm parameter :math:`\theta`
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['theta']
 
     @property
     def thetaprime(self):
+        """
+
+        Get algorithm parameter :math:`\theta'`
+
+        :return: algorithm parameter :math:`\theta'`
+        :rtype: float
+
+        """
         return self.algorithm_parameters_dict['thetaprime']
 
     @property
     def param_names(self):
+        """
+
+        Get names of the parameter dimensions
+
+        :return: names of the parameter dimensions
+        :rtype:  list
+
+        """
         return self.algorithm_parameters_dict['param_names']
 
     @property
     def output_level(self):
+        """
+
+        Get output level
+
+        :return: output level
+        :rtype: int
+
+        """
         return self.algorithm_parameters_dict['output_level']
 
     @property
     def working_directory(self):
+        """
+
+        Get working directory path
+
+        :return: working directory path
+        :rtype: WorkingDirectory
+
+        """
         return self.config_dict['working_directory']
 
     def get_model_function_handle(self,data_name):
+        """
+
+        Get surrogate model function handle
+
+        :param data_name: names of the component of the objective function
+            generated from the MC  for which the  surrogate model function handle is desired
+        :type data_name: str
+        :return: surrogate model function handle
+        :rtype: function
+
+        """
         if data_name in self.config_dict['model']['function']:
             return self.config_dict['model']['function'][data_name]
         return None
 
     @property
     def model_parameters(self):
+        """
+
+        Get model parameters
+
+        :return: model parameters
+        :rtype: dict
+
+        """
         return self.config_dict['model']['parameters']
 
     @property
     def f_structure_function_handle(self):
+        """
+
+        Get function structure function handle
+
+        :return: function structure function handle
+        :rtype: function
+
+        """
         return self.config_dict['f_structure']['function']
 
     @property
     def f_structure_parameters(self):
+        """
+
+        Get function structure parameters
+
+        :return: function structure parameters
+        :rtype: dict
+
+        """
         return self.config_dict['f_structure']['parameters']
 
     def update_f_structure_model_parameters(self, model_scaling_key:str,ds:object):
+        """
+
+        Update function parametrers with scaled and unscaled model artifacts
+
+        :param model_scaling_key: scaled or unscaled model key
+        :type model_scaling_key: str
+        :param ds: model artifacts
+        :type ds: dict
+
+        """
         self.config_dict['f_structure']['parameters'][model_scaling_key].update(ds)
 
     def update_f_structure_parameters(self, key,value):
+        """
+
+        Update function structure parameters. If the key does not exist, a new one is created
+        and if the key exists, the value associated with the value is updated
+
+        :param key: key to be added or updated
+        :type key: str
+        :param value: value to be added or updated
+        :type value: Any
+
+        """
         self.config_dict['f_structure']['parameters'][key] = value
 
     @property
     def mc_run_folder_path(self):
+        """
+
+        Get MC run folder path (that the MC run sees)
+
+        :return: MC run folder path
+        :rtype: str
+
+        """
         return self.working_directory.get_log_path("MC_RUN")
 
     @property
     def mc_parameters(self):
+        """
+
+        Get MC parameters
+
+        :return: MC parameters
+        :rtype:  dict
+
+        """
         if "parameters" in self.config_dict['mc']:
             return  self.config_dict['mc']['parameters']
         return None
 
     @property
     def mc_object(self):
+        """
+
+        Get MC object
+
+        :return: MC object
+        :rtype: mfstrodf.mc.MCTask
+
+        """
         return self.config_dict['mc']['object']
 
     @property
     def mc_ranks(self):
+        """
+
+        Get MC ranks
+
+        :return:  number of ranks to use in script run
+        :rtype: int
+
+        """
         if 'ranks' in self.config_dict['mc']:
             return self.config_dict['mc']['ranks']
         else:
@@ -444,10 +1036,26 @@ class Settings(object):
 
     @property
     def mc_caller_type(self):
+        """
+
+        Get MC caller type
+
+        :return: MC caller type
+        :rtype: str
+
+        """
         return self.config_dict['mc']['caller_type']
 
     @property
     def mc_call_on_workflow(self):
+        """
+
+        Is the MC Task call on workflow?
+
+        :return: true if MC Task call on workflow
+        :rtype: bool
+
+        """
         try:
             import pyhenson as h
             pyhenson_found = True
@@ -459,14 +1067,38 @@ class Settings(object):
 
     @property
     def mc_call_using_script_run(self):
+        """
+
+        Is the MC Task call using script run?
+
+        :return: true if MC Task call using script run
+        :rtype: bool
+
+        """
         return self.mc_caller_type == "script run"
 
     @property
     def mc_call_using_function_call(self):
+        """
+
+        Is the MC Task call using function call?
+
+        :return: true if MC Task call using function call
+        :rtype: bool
+
+        """
         return self.mc_caller_type == "function call"
 
     @property
     def algorithm_status(self):
+        """
+
+        Get algorithm status object
+
+        :return: algorithm status
+        :rtype: dict
+
+        """
         if 'algorithm_status' in self.config_dict:
             return self.config_dict['algorithm_status']
         else:
@@ -474,12 +1106,36 @@ class Settings(object):
             return self.config_dict['algorithm_status']
 
     def update_parameter_metadata(self,k,p_type,param_ds):
+        """
+
+        Update parameter metadata
+
+        :param k: iteration number
+        :type k: int
+        :param p_type: parameter type
+        :type p_type: str
+        :param param_ds: parameter metadata
+        :type param_ds: dict
+
+        """
         k_str = "k{}".format(k)
         if k_str not in self.param_meta_data:
             self.param_meta_data[k_str] = {}
         self.param_meta_data[k_str][p_type] = param_ds
 
     def get_paramerter_metadata(self,k,p_type):
+        """
+
+        Get parameter metadata
+
+        :param k: iteration number
+        :type k: int
+        :param p_type: parameter type
+        :type p_type: str
+        :return: parameter metadata
+        :rtype: dict
+
+        """
         k_str = "k{}".format(k)
         if k_str in self.param_meta_data and p_type in self.param_meta_data[k_str]:
             return self.param_meta_data[k_str][p_type]
@@ -487,11 +1143,36 @@ class Settings(object):
             raise Exception("Parameter metadata {} not found in iteration {}".format(p_type,k))
 
     def copy_type_in_paramerter_metadata(self,k,curr_type_key,new_type_key):
+        """
+
+        Copy parameter metadata from one parameter type to a new parameter type
+
+        :param k: iteration number
+        :type k: int
+        :param curr_type_key: current parameter type key name
+        :type curr_type_key: str
+        :param new_type_key: new  parameter type key name
+        :type new_type_key: str
+
+        """
         k_str = "k{}".format(k)
         meta_data = copy.deepcopy(self.param_meta_data[k_str][curr_type_key])
         self.param_meta_data[k_str][new_type_key] = meta_data
 
     def delete_data_at_index_from_paramerter_metadata(self,k,p_type,index):
+        """
+
+        Delete data at an index of the parameter type and iteration number
+        from parameter metadata
+
+        :param k: iteration number
+        :type k: int
+        :param p_type: parameter type
+        :type p_type: str
+        :param index: index of the entry to delete
+        :type index: int
+
+        """
         k_str = "k{}".format(k)
         for key in self.param_meta_data[k_str][p_type].keys():
             del self.param_meta_data[k_str][p_type][key][index]
@@ -511,13 +1192,44 @@ class Settings(object):
 
 
 class WorkingDirectory():
+    """
+    Working directory utility
+    """
     def __init__(self,working_dir):
+        """
+
+        Initialize working directory utility object
+
+        :param working_dir: working directory path
+        :type working_dir: str
+
+        """
         self.working_directory = working_dir
 
     def get_log_path(self,path):
+        """
+
+        Get log path within working directory
+
+        :param path: path within log directory of the working directory
+        :type path: str
+        :return: path consisting of working directory, log and path within log directory
+        :rtype: str
+
+        """
         return os.path.join(self.working_directory,"log",path)
 
     def get_conf_path(self,path):
+        """
+
+        Get conf path within working directory
+
+        :param path: path within conf directory of the working directory
+        :type path: str
+        :return: path consisting of working directory, conf and path within conf directory
+        :rtype: str
+
+        """
         return os.path.join(self.working_directory,"conf",path)
 
     def __repr__(self):
@@ -527,7 +1239,26 @@ class WorkingDirectory():
         return "working directory set in the object of type WorkingDirectory is {}".format(self.working_directory)
 
 class AlgorithmStatus():
+    """
+    Algorithm status class
+    """
     def __init__(self,status,msg=None,tr_radius_messaage=None,tr_center_messaage=None,tr_update_code=None):
+        """
+
+        Initialize algorithm status object
+
+        :param status: algorithm status value
+        :type status: int | dict
+        :param msg: algorithm status message
+        :type msg: str
+        :param tr_radius_messaage: trust region status message
+        :type tr_radius_messaage: str
+        :param tr_center_messaage: trust region center message
+        :type tr_center_messaage: str
+        :param tr_update_code: trust region update code
+        :type tr_update_code: str
+
+        """
         if type(status)==dict:
             self.from_dict(status)
         elif type(status)==int:
@@ -538,6 +1269,14 @@ class AlgorithmStatus():
             self.tr_update_code = tr_update_code
 
     def as_dict(self):
+        """
+
+        Get algorithm status object as dictionary
+
+        :return: algorithm status object as dictionary
+        :rtype: dict
+
+        """
         return {
             "status":self.status,
             "failure_message":self.failure_message,
@@ -546,6 +1285,14 @@ class AlgorithmStatus():
             "tr_update_code":self.tr_update_code
         }
     def from_dict(self, ds):
+        """
+
+        Construct algorithm status from dictionry
+
+        :param ds: from dictionary
+        :type ds: dict
+
+        """
         self.status = ds['status']
         self.failure_message = ds['failure_message']
         self.tr_radius_messaage = ds['tr_radius_messaage']
@@ -553,17 +1300,47 @@ class AlgorithmStatus():
         self.tr_update_code = ds['tr_update_code']
 
     def update_tr_status(self,tr_radius_messaage,tr_center_messaage,tr_update_code):
+        """
+
+        Update trust region status
+
+        :param tr_radius_messaage: trust region radius status message
+        :type tr_radius_messaage: str
+        :param tr_center_messaage: trust region center status message
+        :type tr_center_messaage: str
+        :param tr_update_code: trust region update code
+        :type tr_update_code: str
+
+        """
         self.tr_radius_messaage = tr_radius_messaage
         self.tr_center_messaage = tr_center_messaage
         self.tr_update_code = tr_update_code
 
     def update_status(self,status,msg=""):
+        """
+
+        Update status
+
+        :param status: new status
+        :type status: int
+        :param msg: status message
+        :type msg: str
+
+        """
         self.status = status
         if status == 8:
             self.failure_message = msg
 
     @staticmethod
     def get_status_dict():
+        """
+
+        Get algorithm status to definition mapping
+
+        :return: algorithm status to definition mapping
+        :rtype: dict
+
+        """
         status_dict = {
             0:"Ok to continue on to next iteration",
             1:"Success: norm of the projected gradient is sufficiently small",
@@ -595,6 +1372,13 @@ class AlgorithmStatus():
 
     @property
     def status_def(self):
+        """
+
+        Get algorithm status definition
+
+        :return: algorithm status definition
+        :rtype:
+        """
         defn = AlgorithmStatus.get_status_dict()[self.status]
         if self.status == 8:
             defn += " {}".format(self.failure_message)
@@ -602,6 +1386,13 @@ class AlgorithmStatus():
 
     @property
     def status_val(self):
+        """
+
+        Get status value
+
+        :return: status value
+        :rtype: int
+        """
         return self.status
 
     def __repr__(self):

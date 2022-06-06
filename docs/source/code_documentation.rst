@@ -2,12 +2,53 @@
 Code Documentation (API)
 ===========================
 
-.. _mfstrodf_code_doc:
+Here we give detailed code documentation of the class, constructor, and function
+in this project. Here is an index of all the code documentation presented in this page.
+
+* :ref:`Surrogate Model API<mfstrodf_codedoc_smapi>`
+
+  * :ref:`ModelConstruction<mfstrodf_codedoc_modelcons>`
+
+* :ref:`Function Structure API<mfstrodf_codedoc_fsapi>`
+
+  * :ref:`Fstructure<mfstrodf_codedoc_fstruct>`
+
+* :ref:`MC Task API<mfstrodf_codedoc_mctaskapi>`
+
+  * :ref:`MCTask<mfstrodf_codedoc_mctask>`
+  * :ref:`Simple App API<mfstrodf_codedoc_simpleappapi>`
+
+    * :ref:`SimpleApp<mfstrodf_codedoc_simpleapp>`
+    * :ref:`DeterministicApp<mfstrodf_codedoc_deterministicapp>`
+    * :ref:`SumOfDiffPowers<mfstrodf_codedoc_summofdiffpowers>`
+    * :ref:`RotatedHyperEllipsoid<mfstrodf_codedoc_rotatedhyperellipsoid>`
+    * :ref:`Sphere<mfstrodf_codedoc_sphere>`
+    * :ref:`SumSquares<mfstrodf_codedoc_sumofdiffpowers>`
+
+  * :ref:`MiniApp<mfstrodf_codedoc_miniapp>`
+  * :ref:`A14App<mfstrodf_codedoc_a14app>`
+
+* :ref:`State API<mfstrodf_codedoc_stateapi>`
+
+  * :ref:`Settings<mfstrodf_codedoc_settings>`
+  * :ref:`WorkingDirectory<Mfstrodf_codedoc_workingdir>`
+  * :ref:`AlgorithmStatus<mfstrodf_codedoc_algorithmstatus>`
+
+* :ref:`Utility API<mfstrodf_codedoc_utilityapi>`
+
+  * :ref:`OutputLevel<mfstrodf_codedoc_outputlevel>`
+  * :ref:`DiskUtil<mfstrodf_codedoc_diskutil>`
+  * :ref:`ParameterPointUtil<mfstrodf_codedoc_parameterpointutil>`
+
+
+.. _mfstrodf_codedoc_smapi:
 
 Surrogate Model API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-mfstrodf.ModelConstruction (mfstrodf/model.py)
+.. _mfstrodf_codedoc_modelcons:
+
+ModelConstruction (mfstrodf/model.py)
 ------------------------------------------------------
 
 .. autoclass:: mfstrodf.ModelConstruction
@@ -18,12 +59,14 @@ mfstrodf.ModelConstruction (mfstrodf/model.py)
 
    .. automethod:: __init__
 
-
+.. _mfstrodf_codedoc_fsapi:
 
 Function Structure API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-mfstrodf.Fstructure (mfstrodf/fstructure.py)
+.. _mfstrodf_codedoc_fstruct:
+
+Fstructure (mfstrodf/fstructure.py)
 ----------------------------------------------------
 
 .. autoclass:: mfstrodf.Fstructure
@@ -34,12 +77,14 @@ mfstrodf.Fstructure (mfstrodf/fstructure.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_code_doc_mc_task:
+.. _mfstrodf_codedoc_mctaskapi:
 
 MC Task API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-mfstrodf.mc.MCTask (mfstrodf/mc/mctask.py)
+.. _mfstrodf_codedoc_mctask:
+
+MCTask (mfstrodf/mc/mctask.py)
 ----------------------------------------------------
 
 .. autoclass:: mfstrodf.mc.MCTask
@@ -50,10 +95,14 @@ mfstrodf.mc.MCTask (mfstrodf/mc/mctask.py)
 
    .. automethod:: __init__
 
-mfstrodf.mc.simpleapp (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_simpleappapi:
+
+Simple App API
 -----------------------------------------------------------
 
-mfstrodf.mc.SimpleApp (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_simpleapp:
+
+SimpleApp (mfstrodf/mc/simpleapp.py)
 ******************************************************************
 
 .. autoclass:: mfstrodf.mc.SimpleApp
@@ -64,7 +113,9 @@ mfstrodf.mc.SimpleApp (mfstrodf/mc/simpleapp.py)
 
    .. automethod:: __init__
 
-mfstrodf.mc.DeterministicApp (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_deterministicapp:
+
+DeterministicApp (mfstrodf/mc/simpleapp.py)
 ******************************************************************
 
 .. autoclass:: mfstrodf.mc.DeterministicApp
@@ -75,7 +126,9 @@ mfstrodf.mc.DeterministicApp (mfstrodf/mc/simpleapp.py)
 
    .. automethod:: __init__
 
-mfstrodf.mc.SumOfDiffPowers (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_summofdiffpowers:
+
+SumOfDiffPowers (mfstrodf/mc/simpleapp.py)
 ********************************************************************
 
 .. autoclass:: mfstrodf.mc.SumOfDiffPowers
@@ -84,7 +137,9 @@ mfstrodf.mc.SumOfDiffPowers (mfstrodf/mc/simpleapp.py)
    :undoc-members:
    :show-inheritance:
 
-mfstrodf.mc.RotatedHyperEllipsoid (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_rotatedhyperellipsoid:
+
+RotatedHyperEllipsoid (mfstrodf/mc/simpleapp.py)
 ************************************************************************
 
 .. autoclass:: mfstrodf.mc.RotatedHyperEllipsoid
@@ -93,7 +148,9 @@ mfstrodf.mc.RotatedHyperEllipsoid (mfstrodf/mc/simpleapp.py)
    :undoc-members:
    :show-inheritance:
 
-mfstrodf.mc.Sphere (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_sphere:
+
+Sphere (mfstrodf/mc/simpleapp.py)
 ********************************************************
 
 .. autoclass:: mfstrodf.mc.Sphere
@@ -102,7 +159,9 @@ mfstrodf.mc.Sphere (mfstrodf/mc/simpleapp.py)
    :undoc-members:
    :show-inheritance:
 
-mfstrodf.mc.SumSquares (mfstrodf/mc/simpleapp.py)
+.. _mfstrodf_codedoc_sumofdiffpowers:
+
+SumSquares (mfstrodf/mc/simpleapp.py)
 ********************************************************
 
 .. autoclass:: mfstrodf.mc.SumSquares
@@ -111,8 +170,9 @@ mfstrodf.mc.SumSquares (mfstrodf/mc/simpleapp.py)
    :undoc-members:
    :show-inheritance:
 
+.. _mfstrodf_codedoc_miniapp:
 
-mfstrodf.mc.MiniApp (mfstrodf/mc/miniapp.py)
+MiniApp (mfstrodf/mc/miniapp.py)
 ----------------------------------------------------
 
 .. autoclass:: mfstrodf.mc.MiniApp
@@ -123,7 +183,9 @@ mfstrodf.mc.MiniApp (mfstrodf/mc/miniapp.py)
 
    .. automethod:: __init__
 
-mfstrodf.mc.A14App (mfstrodf/mc/a14app.py)
+.. _mfstrodf_codedoc_a14app:
+
+A14App (mfstrodf/mc/a14app.py)
 ----------------------------------------------------
 
 .. autoclass:: mfstrodf.mc.A14App
@@ -134,8 +196,89 @@ mfstrodf.mc.A14App (mfstrodf/mc/a14app.py)
 
    .. automethod:: __init__
 
+.. _mfstrodf_codedoc_stateapi:
+
 State API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. _mfstrodf_codedoc_settings:
+
+Settings (mfstrodf/settings.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.Settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
+
+.. _mfstrodf_codedoc_workingdir:
+
+WorkingDirectory (mfstrodf/settings.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.WorkingDirectory
+   :member-order: bysource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
+
+.. _mfstrodf_codedoc_algorithmstatus:
+
+AlgorithmStatus (mfstrodf/settings.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.AlgorithmStatus
+   :member-order: bysource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
+
+.. _mfstrodf_codedoc_utilityapi:
+
 Utility API
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _mfstrodf_codedoc_outputlevel:
+
+OutputLevel (mfstrodf/util.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.OutputLevel
+   :member-order: bysource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
+
+.. _mfstrodf_codedoc_diskutil:
+
+DiskUtil (mfstrodf/util.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.DiskUtil
+   :member-order: bysource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
+
+.. _mfstrodf_codedoc_parameterpointutil:
+
+ParameterPointUtil (mfstrodf/util.py)
+----------------------------------------------------
+
+.. autoclass:: mfstrodf.ParameterPointUtil
+   :member-order: bysource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+   .. automethod:: __init__
