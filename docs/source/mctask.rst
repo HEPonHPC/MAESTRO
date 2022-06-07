@@ -46,7 +46,7 @@ an exception.
 MC Task code documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See :ref:`code documentation<mfstrodf_code_doc_mc_task>` of ``MCTask`` in the Code documentation section for a complete
+See :ref:`of MC Task API description<mfstrodf_codedoc_mctaskapi>` in the code documentation section for a complete
 documentation of all implemented and abstract (not implemented) functions within ``MCTask``.
 
 

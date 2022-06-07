@@ -2,7 +2,7 @@
 Code Documentation (API)
 ===========================
 
-Here we give detailed code documentation of the class, constructor, and function
+Here we give detailed code documentation of the classes, constructors, and functions
 in this project. Here is an index of all the code documentation presented in this page.
 
 * :ref:`Surrogate Model API<mfstrodf_codedoc_smapi>`

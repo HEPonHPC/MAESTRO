@@ -112,8 +112,11 @@ Setting up the Monte Carlo simulator using a function call
 ************************************************************************
 
 To run the Monte Carlo simulator using a function call, write a class that is
-inherited from the MC task base class ``MCTask``. In this class, you can define
-the MC call function as ``run_mc(self):``. Then you set this class along with the
+inherited from the MC task base class ``MCTask``. In this class, you first define
+the MC call function as ``run_mc(self):``. Then, define the other inherited but abstract
+functions of ``MCTask`` in your own class and override any functions defined in ``MCTask``.
+More information about ``MCTask`` is provided in the
+:ref:`MC Task description<mfstrodf_mctask>`.  Finally, you set your class along with the
 relevant parameters in the mc object configuration.
 
 As an example, the MC call function for
@@ -140,8 +143,9 @@ miniapp within ``mfstrodf/mc/miniapp.py`` is shown below.
             if run_fidelity !=0:
                 # Set the output file path
                 outfile = os.path.join(d,"out_curr{}.yoda".format(rank))
-                # Execute the miniapp MC command. mc_location is defined in the
-                # mc object configuration (see line 5 in the JSON example below)
+                # Execute the miniapp MC command.
+                # mc_location is defined in the mc object configuration
+                # (see line 5 in the JSON example below)
                 p = Popen(
                   [self.mc_parmeters['mc_location'], str(param[0]), str(param[1]), str(param[2]),
                    str(run_fidelity), str(np.random.randint(1,9999999)), "0", "1", output_loc],
@@ -149,7 +153,7 @@ miniapp within ``mfstrodf/mc/miniapp.py`` is shown below.
                 p.communicate(b"input data that is passed to subprocess' stdin")
         comm.barrier()
 
-Now, selecting this MC call function as the one to run within the MC
+For selecting this MC call function as the one to run within the MC
 task, define the mc object configuration as shown below:
 
 .. code-block:: json
@@ -172,10 +176,11 @@ that need to be sent to the MC task within ``parameters``.
 
 Setting up the Monte Carlo simulator by executing a script
 ************************************************************************
-To run the Monte Carlo simulator using a script call, a helper script is provided that will
-run the optimization task and the MC call script (MC task) alternatively until the end of the
+To run the Monte Carlo simulator using a script call, a helper script is provided that will interleave
+the calls to the optimization task and the MC task until the end of the
 MF-STRO-DF algorithm. The MC task can be a script that calls the ``run_mc``
 described in the subsection above or the MC task can directly call a MC executable.
+These two approaches are describe in detail below.
 
 Calling the MC task with a script that calls the ``run_mc`` function
 =========================================================================
@@ -224,10 +229,10 @@ Next, set the appropriate mc configuration object for the script run
     }
 
 In the mc configuration object, set the ``caller_type`` as ``script run`` and the
-``class_str`` as the class name defined above ``Miniapp``. Also, add all the parameters
-that need to be sent to the MC task within ``parameters``. Additionally, add the
+``class_str`` as the name of your MC Task class e.g., ``Miniapp``. Also, add all the parameters
+that need to be sent to the MC task within ``parameters``. Finally, add the
 enclosing script call command within the ``commands`` array. This command will be used by
-the helper script to call the MC task.
+the interleaving helper script to call the MC task.
 
 Calling the MC task by running the MC executable command
 =========================================================================
@@ -258,7 +263,7 @@ An example mc configuration object for this kind of MC task can be found in
 Setting up the Monte Carlo simulator in a decaf_ - henson_ workflow
 ************************************************************************
 
-To run the Monte Carlo simulator within the decaf_ - henson_ workflow a JSON object
+To run the Monte Carlo simulator within the decaf_ - henson_ workflow, a JSON object
 with the task commands needs to be defined. As an example, such a JSON object for
 miniapp within ``workflow/miniapp/decaf-henson.json`` is shown below.
 
@@ -273,7 +278,10 @@ miniapp within ``workflow/miniapp/decaf-henson.json`` is shown below.
             {
              	"start_proc": 0,
                 "nprocs": "<number of ranks>",
-                "cmdline": "<location of workflow project>/mfstrodf/optimization-task.py -a <location of workflow project>/parameter_config_backup/miniapp/algoparams.json -c <location of workflow project>/parameter_config_backup/miniapp/config.json -d <working_dir_path>",
+                "cmdline": "<project location>/mfstrodf/optimization-task.py
+                  -a <project location>/parameter_config_backup/miniapp/algoparams.json
+                  -c <project location>/parameter_config_backup/miniapp/config.json
+                  -d <working directory location>",
                 "func": "opt_task_py",
                 "inports": [],
                 "outports": []
@@ -296,7 +304,8 @@ In the JSON object above, ``<MC task command>``  is either the script that calls
 the ``run_mc`` function or the MC executable command as shown in the ``commands``
 array in :ref:`setting MC simulator by executing a script<mfstrodf_tutorial_MC_script>`.
 Also, the ``<number of ranks>`` is an integer number of ranks to use to run the
-optimization task and MC task.
+optimization task and MC task, ``<project location>`` is the location of the this project,
+and ``<working directory location>`` is the lcoation of the working directory for this run
 
 To call the MC task as a task of the workflow, set the mc
 configuration object for miniapp as shown below.
@@ -461,12 +470,14 @@ When ``caller_type`` is ``script run``
     -f <parameter_config_backup_location with data, weights, and other settings
             e.g., parameter_config_backup/miniapp>
     -d ../log/workflow/miniapp/<working_dir_name>
-    -h <optional hostfile>
+    -h <optional hostfile location>
     -n <total number of ranks to use (integer)>
 
 Here, replace ``<algorithm_parameters_JSON_location>`` and ``<configuration_input_JSON_location>``
 with the correct location and assign an appropriate name in ``<working_dir_name>``.
-The optional hostfile is a list of nodes and number of ranks to use on these nodes.
+The optional hostfile contains list of nodes and number of ranks to use on these nodes.
+The total number of ranks is the number of ranks to use as ``numProcs`` in ``mpirun`` calls of the
+interleaving optimization and MC tasks.
 If hostfile is specified, the total number of ranks to use should be the sum of
 all the ranks used across all nodes.
 
@@ -484,6 +495,16 @@ When ``caller_type`` is ``workflow``
 The number of ranks to use should be the equal to or greater than the value set in the ``nprocs``
 key  in the decaf-henson JSON file as shown in the the section on
 :ref:`setting MC simulator in decaf-henson workflow<mfstrodf_tutorial_mc_setting_decafhenson>`.
+
+To run this command with a hostfile::
+
+  cd <location of decaf-henson JSON file>
+
+  mpirun -hostfile <hostfile location> -np <number of ranks to use (integer)>
+      <location of decaf-henson_python executable>/decaf-henson_python
+
+The hostfile contains list of nodes and number of ranks to use on these nodes.
+Also, the number of ranks to use should be the sum of all the ranks used across all nodes.
 
 Understanding the output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

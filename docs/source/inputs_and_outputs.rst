@@ -301,7 +301,7 @@ is given below.
       this kind of a call, in addition specifying the name of class within
       ``mfstrodf.mc`` as value of ``class_str``, the location of the script also needs
       to be specified as value of ``location_str``
-    * use ``workflow`` as value to run the simulator as a task in decaf henson
+    * use ``workflow`` as value to run the simulator as a task in decaf - henson
       workflow. Specify the name of class within ``mfstrodf.mc`` as value
       of ``class_str``
 

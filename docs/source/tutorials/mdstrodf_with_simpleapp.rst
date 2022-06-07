@@ -130,8 +130,8 @@ As an example, the `sum of different powers`_ function within
 
 ``SimpleApp`` inherits ``MCTask`` that contains
 useful utility functions that will allow you to interface with the MF-STRO-DF
-algorithm with ease. More information about the interface of these methods can be
-found in their :ref:`function documentation<mfstrodf_code_doc>`.
+algorithm with ease. More information can be found in the
+:ref:`MC Task description<mfstrodf_mctask>`.
 
 For this tutorial, we will select all four functions mentioned above with simpleapp.
 This is done using the following mc object configuration:
