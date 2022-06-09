@@ -8,7 +8,7 @@ Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``MCTask`` at ``maestro/mc/mctask.py`` contains
-useful utility functions that will allow you to interface with the MF-STRO-DF
+useful utility functions that will allow you to interface with the MÆSTRO
 algorithm with ease. Here, we describe the functions that need to be implemented
 in your MC task class that inherits ``MCTask``
 and the code documentation from ``MCTask`` class that describe the functions

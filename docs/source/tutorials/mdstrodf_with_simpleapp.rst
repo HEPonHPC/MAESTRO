@@ -1,5 +1,5 @@
 ===========================
-MF-STRO-DF with simpleapp
+MÆSTRO with simpleapp
 ===========================
 
 .. _maestro_tutorial_simpleapp:
@@ -12,7 +12,7 @@ Simpleapp is a an application comprised of simple functions to which
 noise is added to emulate the Monte Carlo simulator.
 
 In this tutorial, we describe how to setup a simpleapp problem, run the
-MF-STRO-DF algorithm over it to generate optimal parameters. For this, we
+MÆSTRO algorithm over it to generate optimal parameters. For this, we
 will go through the follwoing steps:
 
 * Test the install
@@ -23,13 +23,13 @@ will go through the follwoing steps:
   * Select a surrogate model function and setup its parameters
   * Select a function structure and setup its parameters
 
-* Run MF-STRO-DF on simpleapp
+* Run MÆSTRO on simpleapp
 * Understand the output
 
 Getting started
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installed first::
+Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed first::
 
     git clone -b DFO --single-branch git@github.com:HEPonHPC/apprentice.git
     cd  apprentice/
@@ -37,7 +37,7 @@ Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installe
 
     cd ..
 
-Then proceed to installing MF-STRO-DF::
+Then proceed to installing MÆSTRO::
 
     git clone git@bitbucket.org:mkrishnamoorthy/workflow.git
     cd workflow
@@ -129,7 +129,7 @@ As an example, the `sum of different powers`_ function within
         return s
 
 ``SimpleApp`` inherits ``MCTask`` that contains
-useful utility functions that will allow you to interface with the MF-STRO-DF
+useful utility functions that will allow you to interface with the MÆSTRO
 algorithm with ease. More information can be found in the
 :ref:`MC Task description<maestro_mctask>`.
 
@@ -260,7 +260,7 @@ More information about the key expected, their definition, their data types,
 and examples can be found in the
 :ref:`configuration input documentation<maestro_input_config>`.
 
-Running MF-STRO-DF on your problem
+Running MÆSTRO on your problem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
@@ -271,7 +271,7 @@ Then, we install the workflow code by typing the following commands::
   cd workflow
   pip install .
 
-Then try the MF-STRO-DF algorithm on the simpleapp using the command::
+Then try the MÆSTRO algorithm on the simpleapp using the command::
 
   optimization-task
     -a <algorithm_parameters_JSON_location>
@@ -285,7 +285,7 @@ Understanding the output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If every thing runs as expected, since :math:`output\_level\ge10` in the algorithm parameter input,
-the output should contain a one line summary of each iteration of the MF-STRO-DF
+the output should contain a one line summary of each iteration of the MÆSTRO
 algorithm run as described in the
 :ref:`one line output documentation<maestro_output_single_line>`.
 

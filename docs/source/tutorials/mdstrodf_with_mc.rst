@@ -7,7 +7,7 @@ MF-STRO-DF with a Monte Carlo simulator
 Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this tutorial, we describe how to run the MF-STRO-DF algorithm over a Monte
+In this tutorial, we describe how to run the MÆSTRO algorithm over a Monte
 Carlo simulator to generate optimal parameter tunes. We do this using the
 follwoing steps:
 
@@ -24,13 +24,13 @@ follwoing steps:
   * Select a surrogate model function and setup its parameters
   * Select a function structure and and setup its parameters
 
-* Run MF-STRO-DF
+* Run MÆSTRO
 * Understand the output
 
 Getting started
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installed first::
+Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed first::
 
     git clone -b DFO --single-branch git@github.com:HEPonHPC/apprentice.git
     cd  apprentice/
@@ -38,7 +38,7 @@ Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installe
 
     cd ..
 
-Then proceed to installing MF-STRO-DF::
+Then proceed to installing MÆSTRO::
 
     git clone git@bitbucket.org:mkrishnamoorthy/workflow.git
     cd workflow
@@ -178,7 +178,7 @@ Setting up the Monte Carlo simulator by executing a script
 ************************************************************************
 To run the Monte Carlo simulator using a script call, a helper script is provided that will interleave
 the calls to the optimization task and the MC task until the end of the
-MF-STRO-DF algorithm. The MC task can be a script that calls the ``run_mc``
+MÆSTRO algorithm. The MC task can be a script that calls the ``run_mc``
 described in the subsection above or the MC task can directly call a MC executable.
 These two approaches are describe in detail below.
 
@@ -430,7 +430,7 @@ More information about the key expected, their definition, their data types,
 and examples can be found in the
 :ref:`configuration input documentation<maestro_input_config>`.
 
-Running MF-STRO-DF on your problem
+Running MÆSTRO on your problem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
@@ -441,7 +441,7 @@ Then, we install the workflow code by typing the following commands::
   cd workflow
   pip install .
 
-Then, depending on the ``caller_type`` used, try the MF-STRO-DF algorithm on miniapp
+Then, depending on the ``caller_type`` used, try the MÆSTRO algorithm on miniapp
 using the commands below.
 
 When ``caller_type`` is ``function call``
@@ -510,7 +510,7 @@ Understanding the output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If every thing runs as expected, since :math:`output\_level\ge10` in the algorithm parameter input,
-the output should contain a one line summary of each iteration of the MF-STRO-DF
+the output should contain a one line summary of each iteration of the MÆSTRO
 algorithm run as described in the
 :ref:`one line output documentation<maestro_output_single_line>`.
 

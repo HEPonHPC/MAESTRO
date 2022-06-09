@@ -1,5 +1,5 @@
 ======================================================
-Interfacing with MF-STRO-DF
+Interfacing with MÆSTRO
 ======================================================
 
 .. _maestro_input:
@@ -13,7 +13,7 @@ Algorithm parameters
 *********************
 
 The algorithm parameters are used to specify the problem and algorithm metrics of
-MF-STRO-DF. These parameters are specified in JSON format and the structure and keys of
+MÆSTRO. These parameters are specified in JSON format and the structure and keys of
 the expected algorithm parameters JSON is given below.
 
 .. code-block:: json
@@ -250,7 +250,7 @@ Configuration inputs
 *********************
 
 The configuration inputs are used to specify the configuration in which to run
-MF-STRO-DF. These inputs are specified in JSON format and the structure and keys of
+MÆSTRO. These inputs are specified in JSON format and the structure and keys of
 the expected configuration inputs JSON is given below.
 
 .. code-block:: json
@@ -396,7 +396,7 @@ Outputs
 One line output
 *********************
 
-For each iteration, the MF-STRO-DF algorithm generates one line output describing the
+For each iteration, the MÆSTRO algorithm generates one line output describing the
 progress of the optimization when :math:`output\_level\ge10` in the
 :ref:`algorithm parameters inputs<maestro_input_algo_parameters>`. An example snippet of the one
 line output and the description of each column is given below:
@@ -435,7 +435,7 @@ line output and the description of each column is given below:
 Exit Codes
 ~~~~~~~~~~~~
 
-The exit codes and messages maintained by MF-STRO-DF algorithm are given below.
+The exit codes and messages maintained by MÆSTRO algorithm are given below.
 
 * 0: Ok to continue on to next iteration
 * 1: Success: norm of the projected gradient is sufficiently small
