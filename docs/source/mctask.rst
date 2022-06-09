@@ -2,12 +2,12 @@
 MC Task
 =============================================
 
-.. _mfstrodf_mctask:
+.. _maestro_mctask:
 
 Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``MCTask`` at ``mfstrodf/mc/mctask.py`` contains
+``MCTask`` at ``maestro/mc/mctask.py`` contains
 useful utility functions that will allow you to interface with the MF-STRO-DF
 algorithm with ease. Here, we describe the functions that need to be implemented
 in your MC task class that inherits ``MCTask``
@@ -22,7 +22,7 @@ The following functions need to be implemented in your MC task class that inheri
 an exception.
 
 * ``run_mc(self)``: This function is used to execute the MC task as a function call. See
-  :ref:`calling mc task as a function call tutorial<mfstrodf_tutorial_mc_function_call>` for an example.
+  :ref:`calling mc task as a function call tutorial<maestro_tutorial_mc_function_call>` for an example.
 * ``merge_statistics_and_get_max_sigma(self)``: This function is used to merge
   statistics (for multi-fidelity runs) and get the maximum standard deviation
   across all parameters from the MC run.
@@ -46,7 +46,7 @@ an exception.
 MC Task code documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See :ref:`of MC Task API description<mfstrodf_codedoc_mctaskapi>` in the code documentation section for a complete
+See :ref:`of MC Task API description<maestro_codedoc_mctaskapi>` in the code documentation section for a complete
 documentation of all implemented and abstract (not implemented) functions within ``MCTask``.
 
 

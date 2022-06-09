@@ -5,53 +5,53 @@ Code Documentation (API)
 Here we give detailed code documentation of the classes, constructors, and functions
 in this project. Here is an index of all the code documentation presented in this page.
 
-* :ref:`Surrogate Model API<mfstrodf_codedoc_smapi>`
+* :ref:`Surrogate Model API<maestro_codedoc_smapi>`
 
-  * :ref:`ModelConstruction<mfstrodf_codedoc_modelcons>`
+  * :ref:`ModelConstruction<maestro_codedoc_modelcons>`
 
-* :ref:`Function Structure API<mfstrodf_codedoc_fsapi>`
+* :ref:`Function Structure API<maestro_codedoc_fsapi>`
 
-  * :ref:`Fstructure<mfstrodf_codedoc_fstruct>`
+  * :ref:`Fstructure<maestro_codedoc_fstruct>`
 
-* :ref:`MC Task API<mfstrodf_codedoc_mctaskapi>`
+* :ref:`MC Task API<maestro_codedoc_mctaskapi>`
 
-  * :ref:`MCTask<mfstrodf_codedoc_mctask>`
-  * :ref:`Simple App API<mfstrodf_codedoc_simpleappapi>`
+  * :ref:`MCTask<maestro_codedoc_mctask>`
+  * :ref:`Simple App API<maestro_codedoc_simpleappapi>`
 
-    * :ref:`SimpleApp<mfstrodf_codedoc_simpleapp>`
-    * :ref:`DeterministicApp<mfstrodf_codedoc_deterministicapp>`
-    * :ref:`SumOfDiffPowers<mfstrodf_codedoc_summofdiffpowers>`
-    * :ref:`RotatedHyperEllipsoid<mfstrodf_codedoc_rotatedhyperellipsoid>`
-    * :ref:`Sphere<mfstrodf_codedoc_sphere>`
-    * :ref:`SumSquares<mfstrodf_codedoc_sumofdiffpowers>`
+    * :ref:`SimpleApp<maestro_codedoc_simpleapp>`
+    * :ref:`DeterministicApp<maestro_codedoc_deterministicapp>`
+    * :ref:`SumOfDiffPowers<maestro_codedoc_summofdiffpowers>`
+    * :ref:`RotatedHyperEllipsoid<maestro_codedoc_rotatedhyperellipsoid>`
+    * :ref:`Sphere<maestro_codedoc_sphere>`
+    * :ref:`SumSquares<maestro_codedoc_sumofdiffpowers>`
 
-  * :ref:`MiniApp<mfstrodf_codedoc_miniapp>`
-  * :ref:`A14App<mfstrodf_codedoc_a14app>`
+  * :ref:`MiniApp<maestro_codedoc_miniapp>`
+  * :ref:`A14App<maestro_codedoc_a14app>`
 
-* :ref:`State API<mfstrodf_codedoc_stateapi>`
+* :ref:`State API<maestro_codedoc_stateapi>`
 
-  * :ref:`Settings<mfstrodf_codedoc_settings>`
-  * :ref:`WorkingDirectory<Mfstrodf_codedoc_workingdir>`
-  * :ref:`AlgorithmStatus<mfstrodf_codedoc_algorithmstatus>`
+  * :ref:`Settings<maestro_codedoc_settings>`
+  * :ref:`WorkingDirectory<maestro_codedoc_workingdir>`
+  * :ref:`AlgorithmStatus<maestro_codedoc_algorithmstatus>`
 
-* :ref:`Utility API<mfstrodf_codedoc_utilityapi>`
+* :ref:`Utility API<maestro_codedoc_utilityapi>`
 
-  * :ref:`OutputLevel<mfstrodf_codedoc_outputlevel>`
-  * :ref:`DiskUtil<mfstrodf_codedoc_diskutil>`
-  * :ref:`ParameterPointUtil<mfstrodf_codedoc_parameterpointutil>`
+  * :ref:`OutputLevel<maestro_codedoc_outputlevel>`
+  * :ref:`DiskUtil<maestro_codedoc_diskutil>`
+  * :ref:`ParameterPointUtil<maestro_codedoc_parameterpointutil>`
 
 
-.. _mfstrodf_codedoc_smapi:
+.. _maestro_codedoc_smapi:
 
 Surrogate Model API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _mfstrodf_codedoc_modelcons:
+.. _maestro_codedoc_modelcons:
 
-ModelConstruction (mfstrodf/model.py)
+ModelConstruction (maestro/model.py)
 ------------------------------------------------------
 
-.. autoclass:: mfstrodf.ModelConstruction
+.. autoclass:: maestro.ModelConstruction
    :member-order: bysource
    :members:
    :undoc-members:
@@ -59,17 +59,17 @@ ModelConstruction (mfstrodf/model.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_fsapi:
+.. _maestro_codedoc_fsapi:
 
 Function Structure API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _mfstrodf_codedoc_fstruct:
+.. _maestro_codedoc_fstruct:
 
-Fstructure (mfstrodf/fstructure.py)
+Fstructure (maestro/fstructure.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.Fstructure
+.. autoclass:: maestro.Fstructure
    :member-order: bysource
    :members:
    :undoc-members:
@@ -77,17 +77,17 @@ Fstructure (mfstrodf/fstructure.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_mctaskapi:
+.. _maestro_codedoc_mctaskapi:
 
 MC Task API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _mfstrodf_codedoc_mctask:
+.. _maestro_codedoc_mctask:
 
-MCTask (mfstrodf/mc/mctask.py)
+MCTask (maestro/mc/mctask.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.mc.MCTask
+.. autoclass:: maestro.mc.MCTask
    :member-order: bysource
    :members:
    :undoc-members:
@@ -95,17 +95,17 @@ MCTask (mfstrodf/mc/mctask.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_simpleappapi:
+.. _maestro_codedoc_simpleappapi:
 
 Simple App API
 -----------------------------------------------------------
 
-.. _mfstrodf_codedoc_simpleapp:
+.. _maestro_codedoc_simpleapp:
 
-SimpleApp (mfstrodf/mc/simpleapp.py)
+SimpleApp (maestro/mc/simpleapp.py)
 ******************************************************************
 
-.. autoclass:: mfstrodf.mc.SimpleApp
+.. autoclass:: maestro.mc.SimpleApp
    :member-order: bysource
    :members:
    :undoc-members:
@@ -113,12 +113,12 @@ SimpleApp (mfstrodf/mc/simpleapp.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_deterministicapp:
+.. _maestro_codedoc_deterministicapp:
 
-DeterministicApp (mfstrodf/mc/simpleapp.py)
+DeterministicApp (maestro/mc/simpleapp.py)
 ******************************************************************
 
-.. autoclass:: mfstrodf.mc.DeterministicApp
+.. autoclass:: maestro.mc.DeterministicApp
    :member-order: bysource
    :members:
    :undoc-members:
@@ -126,56 +126,56 @@ DeterministicApp (mfstrodf/mc/simpleapp.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_summofdiffpowers:
+.. _maestro_codedoc_summofdiffpowers:
 
-SumOfDiffPowers (mfstrodf/mc/simpleapp.py)
+SumOfDiffPowers (maestro/mc/simpleapp.py)
 ********************************************************************
 
-.. autoclass:: mfstrodf.mc.SumOfDiffPowers
+.. autoclass:: maestro.mc.SumOfDiffPowers
    :member-order: bysource
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. _mfstrodf_codedoc_rotatedhyperellipsoid:
+.. _maestro_codedoc_rotatedhyperellipsoid:
 
-RotatedHyperEllipsoid (mfstrodf/mc/simpleapp.py)
+RotatedHyperEllipsoid (maestro/mc/simpleapp.py)
 ************************************************************************
 
-.. autoclass:: mfstrodf.mc.RotatedHyperEllipsoid
+.. autoclass:: maestro.mc.RotatedHyperEllipsoid
    :member-order: bysource
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. _mfstrodf_codedoc_sphere:
+.. _maestro_codedoc_sphere:
 
-Sphere (mfstrodf/mc/simpleapp.py)
+Sphere (maestro/mc/simpleapp.py)
 ********************************************************
 
-.. autoclass:: mfstrodf.mc.Sphere
+.. autoclass:: maestro.mc.Sphere
    :member-order: bysource
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. _mfstrodf_codedoc_sumofdiffpowers:
+.. _maestro_codedoc_sumofdiffpowers:
 
-SumSquares (mfstrodf/mc/simpleapp.py)
+SumSquares (maestro/mc/simpleapp.py)
 ********************************************************
 
-.. autoclass:: mfstrodf.mc.SumSquares
+.. autoclass:: maestro.mc.SumSquares
    :member-order: bysource
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. _mfstrodf_codedoc_miniapp:
+.. _maestro_codedoc_miniapp:
 
-MiniApp (mfstrodf/mc/miniapp.py)
+MiniApp (maestro/mc/miniapp.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.mc.MiniApp
+.. autoclass:: maestro.mc.MiniApp
    :member-order: bysource
    :members:
    :undoc-members:
@@ -183,12 +183,12 @@ MiniApp (mfstrodf/mc/miniapp.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_a14app:
+.. _maestro_codedoc_a14app:
 
-A14App (mfstrodf/mc/a14app.py)
+A14App (maestro/mc/a14app.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.mc.A14App
+.. autoclass:: maestro.mc.A14App
    :member-order: bysource
    :members:
    :undoc-members:
@@ -196,29 +196,29 @@ A14App (mfstrodf/mc/a14app.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_stateapi:
+.. _maestro_codedoc_stateapi:
 
 State API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _mfstrodf_codedoc_settings:
+.. _maestro_codedoc_settings:
 
-Settings (mfstrodf/settings.py)
+Settings (maestro/settings.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.Settings
+.. autoclass:: maestro.Settings
    :members:
    :undoc-members:
    :show-inheritance:
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_workingdir:
+.. _maestro_codedoc_workingdir:
 
-WorkingDirectory (mfstrodf/settings.py)
+WorkingDirectory (maestro/settings.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.WorkingDirectory
+.. autoclass:: maestro.WorkingDirectory
    :member-order: bysource
    :members:
    :undoc-members:
@@ -226,12 +226,12 @@ WorkingDirectory (mfstrodf/settings.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_algorithmstatus:
+.. _maestro_codedoc_algorithmstatus:
 
-AlgorithmStatus (mfstrodf/settings.py)
+AlgorithmStatus (maestro/settings.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.AlgorithmStatus
+.. autoclass:: maestro.AlgorithmStatus
    :member-order: bysource
    :members:
    :undoc-members:
@@ -239,17 +239,17 @@ AlgorithmStatus (mfstrodf/settings.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_utilityapi:
+.. _maestro_codedoc_utilityapi:
 
 Utility API
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _mfstrodf_codedoc_outputlevel:
+.. _maestro_codedoc_outputlevel:
 
-OutputLevel (mfstrodf/util.py)
+OutputLevel (maestro/util.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.OutputLevel
+.. autoclass:: maestro.OutputLevel
    :member-order: bysource
    :members:
    :undoc-members:
@@ -257,12 +257,12 @@ OutputLevel (mfstrodf/util.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_diskutil:
+.. _maestro_codedoc_diskutil:
 
-DiskUtil (mfstrodf/util.py)
+DiskUtil (maestro/util.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.DiskUtil
+.. autoclass:: maestro.DiskUtil
    :member-order: bysource
    :members:
    :undoc-members:
@@ -270,12 +270,12 @@ DiskUtil (mfstrodf/util.py)
 
    .. automethod:: __init__
 
-.. _mfstrodf_codedoc_parameterpointutil:
+.. _maestro_codedoc_parameterpointutil:
 
-ParameterPointUtil (mfstrodf/util.py)
+ParameterPointUtil (maestro/util.py)
 ----------------------------------------------------
 
-.. autoclass:: mfstrodf.ParameterPointUtil
+.. autoclass:: maestro.ParameterPointUtil
    :member-order: bysource
    :members:
    :undoc-members:

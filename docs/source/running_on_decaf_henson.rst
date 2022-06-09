@@ -2,7 +2,7 @@
 Running the simulator on decaf - henson
 ======================================================
 
-See the tutorial on :ref:`MF-STRO-DF with Monte Carlo simulator<mfstrodf_tutorial_mc>`
+See the tutorial on :ref:`MF-STRO-DF with Monte Carlo simulator<maestro_tutorial_mc>`
 for more details on how to run the MF-STRO-DF algorithm where the simulator is
 is a task within the decaf_ - henson_ workflow
 

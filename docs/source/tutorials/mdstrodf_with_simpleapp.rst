@@ -2,7 +2,7 @@
 MF-STRO-DF with simpleapp
 ===========================
 
-.. _mfstrodf_tutorial_simpleapp:
+.. _maestro_tutorial_simpleapp:
 
 Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,14 +44,14 @@ Then proceed to installing MF-STRO-DF::
     pip install .
 
 Then, test the installation as described in the
-:ref:`test installation documentation<mfstrodf_test_the_install>`.
+:ref:`test installation documentation<maestro_test_the_install>`.
 
 Setting the algorithm parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Next, we need to select the algorithm parameters. More details about the
 parameters expected, their data types, and examples can be found in the
-:ref:`algorithm parameters documentation<mfstrodf_input_algo_parameters>`.
+:ref:`algorithm parameters documentation<maestro_input_algo_parameters>`.
 Here is the example algorithm parameters JSON file for the simpleapp
 present in ``parameter_config_backup/simpleapp/algoparams.json``.
 
@@ -102,10 +102,10 @@ Selecting a simple MC function
 
 The next step is to select a functions to which noise will be added to
 emulate a Monte Carlo simulator. The function needs to be written in Python_ 3.7.
-This function should be written in a class inside ``mfstrodf/mc/simpleapp.py`` and
+This function should be written in a class inside ``maestro/mc/simpleapp.py`` and
 this function should be a static method called ``mapping``.
 Currently, the following four functions are available for use with simpleapp (see
-``mfstrodf/mc/simpleapp.py``):
+``maestro/mc/simpleapp.py``):
 
 * `sum of different powers`_
 * `rotated hyper-ellipsoid`_
@@ -113,11 +113,11 @@ Currently, the following four functions are available for use with simpleapp (se
 * `sum of squares`_
 
 As an example, the `sum of different powers`_ function within
-``mfstrodf/mc/simpleapp.py`` is shown below.
+``maestro/mc/simpleapp.py`` is shown below.
 
 .. code-block:: python
     :linenos:
-    :caption: mfstrodf/mc/simpleapp.py
+    :caption: maestro/mc/simpleapp.py
 
     class SumOfDiffPowers():
     @staticmethod
@@ -131,7 +131,7 @@ As an example, the `sum of different powers`_ function within
 ``SimpleApp`` inherits ``MCTask`` that contains
 useful utility functions that will allow you to interface with the MF-STRO-DF
 algorithm with ease. More information can be found in the
-:ref:`MC Task description<mfstrodf_mctask>`.
+:ref:`MC Task description<maestro_mctask>`.
 
 For this tutorial, we will select all four functions mentioned above with simpleapp.
 This is done using the following mc object configuration:
@@ -151,14 +151,14 @@ Selecting a surrogate model function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/model.py`` to construct surrogate models.
+``maestro/model.py`` to construct surrogate models.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined model function<mfstrodf_model_avail_func>` function
-* :ref:`create your own model<mfstrodf_model_create>` function
+* reuse a :ref:`predefined model function<maestro_model_avail_func>` function
+* :ref:`create your own model<maestro_model_create>` function
 
 For this tutorial, we will construct the surrogate model using
-:ref:`appr_pa_m_construct<mfstrodf_model_avail_func_appr_pa_m>` function with the
+:ref:`appr_pa_m_construct<maestro_model_avail_func_appr_pa_m>` function with the
 following model object configuration:
 
   .. code-block:: json
@@ -179,14 +179,14 @@ Selecting the function structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/fstructure.py`` to get a f_structure object.
+``maestro/fstructure.py`` to get a f_structure object.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined f_structure object<mfstrodf_f_structure_avail_func>` function
-* :ref:`create your own f_structure object<mfstrodf_f_structure_create>` function
+* reuse a :ref:`predefined f_structure object<maestro_f_structure_avail_func>` function
+* :ref:`create your own f_structure object<maestro_f_structure_create>` function
 
 For this tutorial, we will get the f_structure object using
-:ref:`appr_tuning_objective<mfstrodf_f_structure_avail_func_appr_tuning_objective>`
+:ref:`appr_tuning_objective<maestro_f_structure_avail_func_appr_tuning_objective>`
 function with the following f_structure object configuration:
 
   .. code-block:: json
@@ -258,14 +258,14 @@ So the configuration output for this tutorial is:
 
 More information about the key expected, their definition, their data types,
 and examples can be found in the
-:ref:`configuration input documentation<mfstrodf_input_config>`.
+:ref:`configuration input documentation<maestro_input_config>`.
 
 Running MF-STRO-DF on your problem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here, we will assume that the :ref:`dependencies<mfstrodf_dependencies>`
+Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
 and apprentice_ are installed correctly as described in the
-:ref:`initial installation test<mfstrodf_initial_install>`.
+:ref:`initial installation test<maestro_initial_install>`.
 Then, we install the workflow code by typing the following commands::
 
   cd workflow
@@ -287,7 +287,7 @@ Understanding the output
 If every thing runs as expected, since :math:`output\_level\ge10` in the algorithm parameter input,
 the output should contain a one line summary of each iteration of the MF-STRO-DF
 algorithm run as described in the
-:ref:`one line output documentation<mfstrodf_output_single_line>`.
+:ref:`one line output documentation<maestro_output_single_line>`.
 
 .. _Python: http://www.python.org
 .. _`sum of different powers`: https://www.sfu.ca/~ssurjano/sumpow.html

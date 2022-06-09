@@ -20,7 +20,7 @@ and this analytical and closed-form optimization problem is solved to find the
 next iterate within the trust-region. Then the trust region is moved and the
 iterations continue until a satisfactory convergence criteria is met.
 
-.. _mfstrodf_dependencies:
+.. _maestro_dependencies:
 
 Dependencies
 ~~~~~~~~~~~~
@@ -52,7 +52,7 @@ For compiling this documentation:
 
 * Sphinx-RTD_
 
-.. _mfstrodf_initial_install:
+.. _maestro_initial_install:
 
 Installation
 ~~~~~~~~~~~~
@@ -79,7 +79,7 @@ if mpi4py is not installed, all code will automatically run on a single rank::
     pip install mpi4py
 
 
-.. _mfstrodf_test_the_install:
+.. _maestro_test_the_install:
 
 Testing the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +94,7 @@ the following four functions that are used to emulate the Monte Carlo simulator:
 * `sum of squares`_
 
 If everything is running properly, then you should see the optimization output as
-described in :ref:`MF-STRO-DF output<mfstrodf_output>`::
+described in :ref:`MF-STRO-DF output<maestro_output>`::
 
     optimization-task
       -a parameter_config_backup/simpleapp/algoparams.json

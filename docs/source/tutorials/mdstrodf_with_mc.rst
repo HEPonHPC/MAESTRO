@@ -2,7 +2,7 @@
 MF-STRO-DF with a Monte Carlo simulator
 =============================================
 
-.. _mfstrodf_tutorial_mc:
+.. _maestro_tutorial_mc:
 
 Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,14 +45,14 @@ Then proceed to installing MF-STRO-DF::
     pip install .
 
 Then, test the installation as described in the
-:ref:`test installation documentation<mfstrodf_test_the_install>`.
+:ref:`test installation documentation<maestro_test_the_install>`.
 
 Setting the algorithm parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Next, we need to select the algorithm parameters. More details about the
 parameters expected, their data types, and examples can be found in the
-:ref:`algorithm parameters documentation<mfstrodf_input_algo_parameters>`.
+:ref:`algorithm parameters documentation<maestro_input_algo_parameters>`.
 Here is the example JSON file with algorithm parameters for a minified problem
 with a small subset of observables generated using `Pythia 8 Monte Carlo event generator`_
 present in ``parameter_config_backup/miniapp/algoparams.json``.
@@ -106,7 +106,7 @@ Setting up the Monte Carlo simulator
 The next step is to setting up the Monte Carlo simulator. The simulator can be
 run using a function call, executing a script, or in a decaf_ - henson_ workflow.
 
-.. _mfstrodf_tutorial_mc_function_call:
+.. _maestro_tutorial_mc_function_call:
 
 Setting up the Monte Carlo simulator using a function call
 ************************************************************************
@@ -116,21 +116,21 @@ inherited from the MC task base class ``MCTask``. In this class, you first defin
 the MC call function as ``run_mc(self):``. Then, define the other inherited but abstract
 functions of ``MCTask`` in your own class and override any functions defined in ``MCTask``.
 More information about ``MCTask`` is provided in the
-:ref:`MC Task description<mfstrodf_mctask>`.  Finally, you set your class along with the
+:ref:`MC Task description<maestro_mctask>`.  Finally, you set your class along with the
 relevant parameters in the mc object configuration.
 
 As an example, the MC call function for
-miniapp within ``mfstrodf/mc/miniapp.py`` is shown below.
+miniapp within ``maestro/mc/miniapp.py`` is shown below.
 
 .. code-block:: python
     :linenos:
-    :caption: mfstrodf/mc/miniapp.py
+    :caption: maestro/mc/miniapp.py
 
     # MiniApp should inherit MCTask
     class MiniApp(MCTask):
       def run_mc(self):
         # In this tutorial, we demonstrate how to run miniapp MC in serial. If you
-        # want to run miniapp MC in parallel, see the run_mc function in mfstrodf/mc/miniapp.py
+        # want to run miniapp MC in parallel, see the run_mc function in maestro/mc/miniapp.py
 
         # Get a list of parameter directory (defined in superclass MCTask)
         dirlist = self.get_param_directory_array(self.mc_run_folder)
@@ -172,7 +172,7 @@ In this mc object configuration, set the ``caller_type`` as ``function call`` an
 ``class_str`` as the class name defined above ``Miniapp``. Also, add all the parameters
 that need to be sent to the MC task within ``parameters``.
 
-.. _mfstrodf_tutorial_MC_script:
+.. _maestro_tutorial_MC_script:
 
 Setting up the Monte Carlo simulator by executing a script
 ************************************************************************
@@ -186,12 +186,12 @@ Calling the MC task with a script that calls the ``run_mc`` function
 =========================================================================
 
 First, create a enclosing script that calls ``run_mc`` function. An example script
-for miniapp that calls the ``run_mc`` function described above (see ``mfstrodf/mc/bin/miniapp.py``)
+for miniapp that calls the ``run_mc`` function described above (see ``maestro/mc/bin/miniapp.py``)
 is show below.
 
 .. code-block:: python
     :linenos:
-    :caption: mfstrodf/mc/bin//miniapp.py
+    :caption: maestro/mc/bin//miniapp.py
 
     if __name__ == "__main__":
 
@@ -207,7 +207,7 @@ is show below.
         ds = json.load(f)
     mc_parameters = ds['mc']['parameters']
 
-    from mfstrodf.mc import MiniApp
+    from maestro.mc import MiniApp
     mctask = MiniApp(args.MCDIR,mc_parameters)
     mctask.run_mc()
 
@@ -258,7 +258,7 @@ configuration object for script run as shown below.
 An example mc configuration object for this kind of MC task can be found in
 ``parameter_config_backup/a14app/config.json``.
 
-.. _mfstrodf_tutorial_mc_setting_decafhenson:
+.. _maestro_tutorial_mc_setting_decafhenson:
 
 Setting up the Monte Carlo simulator in a decaf_ - henson_ workflow
 ************************************************************************
@@ -278,7 +278,7 @@ miniapp within ``workflow/miniapp/decaf-henson.json`` is shown below.
             {
              	"start_proc": 0,
                 "nprocs": "<number of ranks>",
-                "cmdline": "<project location>/mfstrodf/optimization-task.py
+                "cmdline": "<project location>/maestro/optimization-task.py
                   -a <project location>/parameter_config_backup/miniapp/algoparams.json
                   -c <project location>/parameter_config_backup/miniapp/config.json
                   -d <working directory location>",
@@ -302,7 +302,7 @@ miniapp within ``workflow/miniapp/decaf-henson.json`` is shown below.
 
 In the JSON object above, ``<MC task command>``  is either the script that calls
 the ``run_mc`` function or the MC executable command as shown in the ``commands``
-array in :ref:`setting MC simulator by executing a script<mfstrodf_tutorial_MC_script>`.
+array in :ref:`setting MC simulator by executing a script<maestro_tutorial_MC_script>`.
 Also, the ``<number of ranks>`` is an integer number of ranks to use to run the
 optimization task and MC task, ``<project location>`` is the location of the this project,
 and ``<working directory location>`` is the lcoation of the working directory for this run
@@ -326,14 +326,14 @@ Selecting a surrogate model function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/model.py`` to construct surrogate models.
+``maestro/model.py`` to construct surrogate models.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined model function<mfstrodf_model_avail_func>` function
-* :ref:`create your own model<mfstrodf_model_create>` function
+* reuse a :ref:`predefined model function<maestro_model_avail_func>` function
+* :ref:`create your own model<maestro_model_create>` function
 
 For this tutorial, we will construct the surrogate model using
-:ref:`appr_pa_m_construct<mfstrodf_model_avail_func_appr_pa_m>` function with the
+:ref:`appr_pa_m_construct<maestro_model_avail_func_appr_pa_m>` function with the
 following model object configuration:
 
   .. code-block:: json
@@ -354,14 +354,14 @@ Selecting the function structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to select a predefined function or to create your own function in
-``mfstrodf/fstructure.py`` to get a f_structure object.
+``maestro/fstructure.py`` to get a f_structure object.
 Detailed instructions for selecting the appropriate function can be found in:
 
-* reuse a :ref:`predefined f_structure object<mfstrodf_f_structure_avail_func>` function
-* :ref:`create your own f_structure object<mfstrodf_f_structure_create>` function
+* reuse a :ref:`predefined f_structure object<maestro_f_structure_avail_func>` function
+* :ref:`create your own f_structure object<maestro_f_structure_create>` function
 
 For this tutorial, we will get the f_structure object using
-:ref:`appr_tuning_objective<mfstrodf_f_structure_avail_func_appr_tuning_objective>`
+:ref:`appr_tuning_objective<maestro_f_structure_avail_func_appr_tuning_objective>`
 function with the following f_structure object configuration:
 
   .. code-block:: json
@@ -428,14 +428,14 @@ So the configuration output for this tutorial is:
 
 More information about the key expected, their definition, their data types,
 and examples can be found in the
-:ref:`configuration input documentation<mfstrodf_input_config>`.
+:ref:`configuration input documentation<maestro_input_config>`.
 
 Running MF-STRO-DF on your problem
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here, we will assume that the :ref:`dependencies<mfstrodf_dependencies>`
+Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
 and apprentice_ are installed correctly as described in the
-:ref:`initial installation test<mfstrodf_initial_install>`.
+:ref:`initial installation test<maestro_initial_install>`.
 Then, we install the workflow code by typing the following commands::
 
   cd workflow
@@ -464,7 +464,7 @@ When ``caller_type`` is ``script run``
 .. code-block::
   :force:
 
-  mfstrodf-run
+  maestro-run
     -a <algorithm_parameters_JSON_location>
     -c <configuration_input_JSON_location>
     -f <parameter_config_backup_location with data, weights, and other settings
@@ -494,7 +494,7 @@ When ``caller_type`` is ``workflow``
 
 The number of ranks to use should be the equal to or greater than the value set in the ``nprocs``
 key  in the decaf-henson JSON file as shown in the the section on
-:ref:`setting MC simulator in decaf-henson workflow<mfstrodf_tutorial_mc_setting_decafhenson>`.
+:ref:`setting MC simulator in decaf-henson workflow<maestro_tutorial_mc_setting_decafhenson>`.
 
 To run this command with a hostfile::
 
@@ -512,7 +512,7 @@ Understanding the output
 If every thing runs as expected, since :math:`output\_level\ge10` in the algorithm parameter input,
 the output should contain a one line summary of each iteration of the MF-STRO-DF
 algorithm run as described in the
-:ref:`one line output documentation<mfstrodf_output_single_line>`.
+:ref:`one line output documentation<maestro_output_single_line>`.
 
 .. _decaf: https://link.springer.com/chapter/10.1007/978-3-030-81627-8_7
 .. _henson: https://dl.acm.org/doi/10.1145/2907294.2907301
