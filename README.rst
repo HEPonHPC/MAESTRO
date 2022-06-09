@@ -6,7 +6,8 @@ Overview of MÆSTRO
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 MÆSTRO stands for Multi-fidelity Adaptive Ensemble Stochastic
-Trust Region Optimization, a plug n play derivate fee solver.
+Trust Region Optimization and it is a plug n play derivate fee stochastic
+optimization solver.
 The problem being considered in MÆSTRO involves fitting Monte Carlo simulations that
 describe complex phenomena to experiments. This is done by finding parameters
 of the resource intensive and noisy simulation that yield the least squares
@@ -57,7 +58,7 @@ For compiling this documentation:
 Installation
 ~~~~~~~~~~~~
 
-Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installed first::
+Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed first::
 
     git clone -b DFO --single-branch git@github.com:HEPonHPC/apprentice.git
     cd  apprentice/
@@ -65,10 +66,10 @@ Before installing MF-STRO-DF, the DFO branch of apprentice_ needs to be installe
 
     cd ..
 
-Then proceed to installing MF-STRO-DF::
+Then proceed to installing MÆSTRO::
 
-    git clone git@bitbucket.org:mkrishnamoorthy/workflow.git
-    cd workflow
+    git clone git@github.com:HEPonHPC/maestro.git
+    cd maestro
     pip install .
 
 If you want to run with mpi4py parallelism you need to have a functional MPI
@@ -85,7 +86,7 @@ Testing the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now we will test whether the installation was successful.
-For this, we run the MF-STRO-DF algorithm on a simple application comprised of
+For this, we run the MÆSTRO algorithm on a simple application comprised of
 the following four functions that are used to emulate the Monte Carlo simulator:
 
 * `sum of different powers`_
@@ -94,14 +95,15 @@ the following four functions that are used to emulate the Monte Carlo simulator:
 * `sum of squares`_
 
 If everything is running properly, then you should see the optimization output as
-described in :ref:`MF-STRO-DF output<maestro_output>`::
+described in :ref:`MÆSTRO output<maestro_output>`::
 
     optimization-task
       -a parameter_config_backup/simpleapp/algoparams.json
       -c parameter_config_backup/simpleapp/config.json
       -d ../log/workflow/simpleapp/WD
 
-where ``parameter_config_backup`` is a directory at the same location where the workflow project was installed above.
+where ``parameter_config_backup`` is a directory within the ``maestro`` directory from where
+the command ``pip install .`` was run above.
 
 The output log files are stored in ``../log/workflow/simpleapp/WD/log/``. At the end of the
 optimization run, you can see the optimal parameters obtained under the

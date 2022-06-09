@@ -1,5 +1,5 @@
 =============================================
-MF-STRO-DF with a Monte Carlo simulator
+MÆSTRO with a Monte Carlo simulator
 =============================================
 
 .. _maestro_tutorial_mc:

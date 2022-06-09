@@ -3,7 +3,7 @@ Code Documentation (API)
 ===========================
 
 Here we give detailed code documentation of the classes, constructors, and functions
-in this project. Here is an index of all the code documentation presented in this page.
+within MÆSTRO. Here is an index of all the code documentation presented in this page.
 
 * :ref:`Surrogate Model API<maestro_codedoc_smapi>`
 
