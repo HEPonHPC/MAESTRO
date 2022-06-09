@@ -8,7 +8,7 @@
         "__does not work on my mac__yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge",
         "yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/YODA/dummyyodamerge.sh",
         "min_fidelity":50,
-        "weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights"
+        "weights":"/Users/mkrishnamoorthy/Research/Code/MÆSTRO/parameter_config_backup/miniapp/weights"
       }
     },
     "model":{
@@ -23,8 +23,8 @@
     },
     "f_structure":{
       "parameters":{
-        "data":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/data.json",
-        "weights":"/Users/mkrishnamoorthy/Research/Code/workflow/parameter_config_backup/miniapp/weights",
+        "data":"/Users/mkrishnamoorthy/Research/Code/MÆSTRO/parameter_config_backup/miniapp/data.json",
+        "weights":"/Users/mkrishnamoorthy/Research/Code/MÆSTRO/parameter_config_backup/miniapp/weights",
         "optimization":{
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }
