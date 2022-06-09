@@ -1,0 +1,132 @@
+#!/bin/bash
+
+# For A14 (Calling on the local copy)
+# ./maestro-run-orcun -a ../parameter_config_backup/a14app/algoparams.json -c ../parameter_config_backup/a14app/config.json -f ../parameter_config_backup/a14app -d ../../log/workflow/a14app/WD_backup_MC_run -b ../../log/workflow/a14app/WD_MC_BACKUP -n 1
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -b|--backup)
+      BACKUPMCDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -f|--confdir)
+      CONFDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -a|--algorithmfile)
+      ALGOFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -c|--configfile)
+      CONFIGFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -d|--workingdir)
+      WORKINGDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -n|--nranks)
+      NRANKS="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+      -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+#for d in $BACKUPMCDIR/log/MC_RUN_1_k0/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#for d in $BACKUPMCDIR/log/MC_RUN_Np_k0/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#for d in $BACKUPMCDIR/log/MC_RUN_1_k1/* ; do
+#    mv $d/out_qcd.yoda $d/main30_rivet.qcd.cmnd.yoda
+#    mv $d/out_ttbar.yoda $d/main30_rivet.ttbar.cmnd.yoda
+#    mv $d/out_z.yoda $d/main30_rivet.z.cmnd.yoda
+#done
+#exit
+#echo $ALGOFILE $CONFIGFILE, $WORKINGDIR
+
+mkdir -p $WORKINGDIR
+cp -r $CONFDIR "$WORKINGDIR/conf"
+current_directory=${PWD}
+ALGOFILE=$(basename "$ALGOFILEPATH")
+CONFIGFILE=$(basename "$CONFIGFILEPATH")
+new_algorithm_file="conf/$ALGOFILE"
+new_config_file="conf/$CONFIGFILE"
+cp $current_directory/$ALGOFILEPATH $WORKINGDIR/$new_algorithm_file
+cp $current_directory/$CONFIGFILEPATH $WORKINGDIR/$new_config_file
+
+cd $WORKINGDIR || exit
+new_working_dir=${PWD}
+
+optimization_task_command="mpirun -np $NRANKS optimization-task -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
+
+# Running 1 iteration in this script for Orcun
+
+    # Run Optimization task
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      exit
+    fi
+    #Use backup MC data
+    rm -r log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k0/ log/MC_RUN/
+
+    # Reset optimization task command
+    optimization_task_command="mpirun -np $NRANKS optimization-task -d $new_working_dir"
+
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      exit
+    fi
+    echo "DONE WITH SAMPLING"
+    #Use backup MC data
+    rm -r log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_Np_k0/ log/MC_RUN/
+
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      exit
+    fi
+    #Use backup MC data
+    rm -r log/MC_RUN
+    cp -r $current_directory/$BACKUPMCDIR/log/MC_RUN_1_k1/ log/MC_RUN/
+
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      exit
+    fi
+
+cd $current_directory || exit
+

@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# For A14 (If you want to use the installed copy)
+# maestro-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -f parameter_config_backup/a14app -d ../log/workflow/a14app/WD_scriptrun -n 1
+# For A14-mpirun with hostfile (If you want to use the installed copy)
+# maestro-run -a parameter_config_backup/a14app/algoparams.json -c parameter_config_backup/a14app/config.json -f parameter_config_backup/a14app -d ../log/workflow/a14app/WD_scriptrun -h hostfile_workflow.txt -n 1
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--hostfile)
+      HOSTFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -f|--confdir)
+      CONFDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -a|--algorithmfile)
+      ALGOFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -c|--configfile)
+      CONFIGFILEPATH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -d|--workingdir)
+      WORKINGDIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -n|--nranks)
+      NRANKS="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --default)
+      DEFAULT=YES
+      shift # past argument
+      ;;
+      -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+#echo $ALGOFILE $CONFIGFILE, $WORKINGDIR
+
+mkdir -p $WORKINGDIR
+cp -r $CONFDIR "$WORKINGDIR/conf"
+current_directory=${PWD}
+ALGOFILE=$(basename "$ALGOFILEPATH")
+CONFIGFILE=$(basename "$CONFIGFILEPATH")
+new_algorithm_file="conf/$ALGOFILE"
+new_config_file="conf/$CONFIGFILE"
+cp $current_directory/$ALGOFILEPATH $WORKINGDIR/$new_algorithm_file
+cp $current_directory/$CONFIGFILEPATH $WORKINGDIR/$new_config_file
+
+cd $WORKINGDIR || exit
+new_working_dir=${PWD}
+if [ -z "$HOSTFILEPATH" ]; then
+  mpicmdprefix="mpirun -np $NRANKS"
+else
+  HOSTFILE=$(basename "$HOSTFILEPATH")
+  cp $current_directory/$HOSTFILEPATH conf/$HOSTFILE
+  mpicmdprefix="mpirun --hostfile conf/$HOSTFILE -np $NRANKS"
+fi
+optimization_task_command="$mpicmdprefix optimization-task -a $new_algorithm_file -c $new_config_file -d $new_working_dir"
+while true
+do
+    # Run Optimization task
+    eval "$optimization_task_command"
+    optimization_exit_code=$?
+    # Check whether to quit
+    if [[ $optimization_exit_code -ne 0 ]] ; then
+      break
+    fi
+    #Run MC Task
+    mc_command=""
+    while read i;
+    do
+      mc_command="${mc_command} $mpicmdprefix $i > /dev/null 2>&1;"
+    done <<< "$(jq -r '.mc.commands |.[]' $new_config_file)"
+
+    eval "$mc_command"
+    mc_exit_code=$?
+#    echo $mc_exit_code
+#    Check whether to quit
+    if [[ $mc_exit_code -ne 0 ]] ; then
+      break
+    fi
+    
+    # Reset optimization task command
+    optimization_task_command="$mpicmdprefix optimization-task -d $new_working_dir"
+done
+
+cd $current_directory || exit
+

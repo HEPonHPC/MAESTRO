@@ -1,9 +1,9 @@
-.. Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochastic Optimization with DIY Parallel Data Analysis documentation master file, created by
+.. Multi-fidelity Adaptive Ensemble Stochastic Trust Region Optimization (MÆSTRO) -  a plug n play derivate fee solver documentation master file, created by
    sphinx-quickstart on Tue Jan 11 12:29:39 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochastic Optimization with DIY Parallel Data Analysis's documentation!
+Welcome to MÆSTRO's documentation!
 ================================================================================================================================================
 
 .. toctree::

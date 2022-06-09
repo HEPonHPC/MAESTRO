@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../../workflow/'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Multifidelity Adaptive Sampling Trust-Region Derivative-Free Stochastic Optimization with DIY Parallel Data Analysis'
+project = 'Multi-fidelity Adaptive Ensemble Stochastic Trust Region Optimization (MÆSTRO) -  a plug n play derivate fee solver'
 copyright = '2022, Mohan Krishnamoorthy, Sven Leyffer'
 author = 'Mohan Krishnamoorthy, Sven Leyffer'
 

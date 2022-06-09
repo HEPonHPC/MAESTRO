@@ -2,7 +2,7 @@
     "mc":{
       "caller_type":"function call",
       "class_str":"MiniApp",
-      "__only for script run__commands":["/Users/mkrishnamoorthy/Research/Code/workflow/mfstrodf/mc/bin/miniapp.py"],
+      "__only for script run__commands":["/Users/mkrishnamoorthy/Research/Code/MÆSTRO/maestro/mc/bin/miniapp.py"],
       "parameters":{
         "mc_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/pythia8rivetminiapp/miniapp",
         "__does not work on my mac__yodamerge_location":"/Users/mkrishnamoorthy/Research/Code/3Dminiapp/YODA-1.8.1/bin/yodamerge",

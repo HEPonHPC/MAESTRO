@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 setup(
-    name = 'mfstrodf',
+    name = 'maestro',
     version = '0.0.1',
-    description = 'Multi fidelity Derivative-free Stochastic Trust Region Optimization',
+    description = 'Multi-fidelity Adaptive Ensemble Stochastic Trust Region Optimization - a plug n play derivate fee solver',
     url = 'https://computing.fnal.gov/hep-on-hpc/',
     author = 'Mohan Krishnamoorthy',
     author_email = 'mkrishnamoorthy2425@gmail.com',
@@ -18,7 +18,7 @@ setup(
         'pyDOE2>=1.3.0',
 
     ],
-    scripts=["bin/mfstrodf-run","mfstrodf/optimization-task"],
+    scripts=["bin/maestro-run","maestro/optimization-task"],
     extras_require = {
     },
     entry_points = {
