@@ -18,6 +18,7 @@ Welcome to MÆSTRO's documentation!
    running_as_a_function_call
    running_as_a_script
    running_on_decaf_henson
+   license
 
 .. toctree::
    :maxdepth: 3
