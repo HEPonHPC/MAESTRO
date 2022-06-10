@@ -40,8 +40,8 @@ Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed f
 
 Then proceed to installing MÆSTRO::
 
-    git clone git@bitbucket.org:mkrishnamoorthy/workflow.git
-    cd workflow
+    git clone git@github.com:HEPonHPC/maestro.git
+    cd maestro
     pip install .
 
 Then, test the installation as described in the
@@ -130,7 +130,8 @@ miniapp within ``maestro/mc/miniapp.py`` is shown below.
     class MiniApp(MCTask):
       def run_mc(self):
         # In this tutorial, we demonstrate how to run miniapp MC in serial. If you
-        # want to run miniapp MC in parallel, see the run_mc function in maestro/mc/miniapp.py
+        # want to run miniapp MC in parallel, see the run_mc function
+        # in maestro/mc/miniapp.py
 
         # Get a list of parameter directory (defined in superclass MCTask)
         dirlist = self.get_param_directory_array(self.mc_run_folder)
@@ -145,10 +146,14 @@ miniapp within ``maestro/mc/miniapp.py`` is shown below.
                 outfile = os.path.join(d,"out_curr{}.yoda".format(rank))
                 # Execute the miniapp MC command.
                 # mc_location is defined in the mc object configuration
-                # (see line 5 in the JSON example below)
+                # (see line 5 in the mc object configuration JSON below)
                 p = Popen(
-                  [self.mc_parmeters['mc_location'], str(param[0]), str(param[1]), str(param[2]),
-                   str(run_fidelity), str(np.random.randint(1,9999999)), "0", "1", output_loc],
+                  [
+                    self.mc_parmeters['mc_location'],
+                    str(param[0]), str(param[1]), str(param[2]),
+                    str(run_fidelity), str(np.random.randint(1,9999999)),
+                    "0", "1", output_loc
+                  ],
                   stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 p.communicate(b"input data that is passed to subprocess' stdin")
         comm.barrier()
@@ -304,7 +309,7 @@ In the JSON object above, ``<MC task command>``  is either the script that calls
 the ``run_mc`` function or the MC executable command as shown in the ``commands``
 array in :ref:`setting MC simulator by executing a script<maestro_tutorial_MC_script>`.
 Also, the ``<number of ranks>`` is an integer number of ranks to use to run the
-optimization task and MC task, ``<project location>`` is the location of the this project,
+optimization task and MC task, ``<project location>`` is the location of the MÆSTRO project,
 and ``<working directory location>`` is the lcoation of the working directory for this run
 
 To call the MC task as a task of the workflow, set the mc
@@ -436,9 +441,9 @@ Running MÆSTRO on your problem
 Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
 and apprentice_ are installed correctly as described in the
 :ref:`initial installation test<maestro_initial_install>`.
-Then, we install the workflow code by typing the following commands::
+Then, we install the MÆSTRO code by typing the following commands::
 
-  cd workflow
+  cd maestro
   pip install .
 
 Then, depending on the ``caller_type`` used, try the MÆSTRO algorithm on miniapp

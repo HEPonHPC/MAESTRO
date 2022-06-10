@@ -39,8 +39,8 @@ Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed f
 
 Then proceed to installing MÆSTRO::
 
-    git clone git@bitbucket.org:mkrishnamoorthy/workflow.git
-    cd workflow
+    git clone git@github.com:HEPonHPC/maestro.git
+    cd maestro
     pip install .
 
 Then, test the installation as described in the
@@ -266,9 +266,9 @@ Running MÆSTRO on your problem
 Here, we will assume that the :ref:`dependencies<maestro_dependencies>`
 and apprentice_ are installed correctly as described in the
 :ref:`initial installation test<maestro_initial_install>`.
-Then, we install the workflow code by typing the following commands::
+Then, we install the MÆSTRO code by typing the following commands::
 
-  cd workflow
+  cd maestro
   pip install .
 
 Then try the MÆSTRO algorithm on the simpleapp using the command::

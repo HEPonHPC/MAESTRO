@@ -152,7 +152,7 @@ Note that you need to replace the ``CONSTRUCT MODELS`` and ``STORE`` sections
 in the code above to complete the model construction function.
 Install the code by typing the following commands::
 
-  cd workflow
+  cd maestro
   pip install .
 
 Then the following model object should be used in :ref:`configuration inputs<maestro_input_config>`
@@ -412,7 +412,7 @@ Also, the following methods should be callable on ``SP``::
 
 Install the code by typing the following commands::
 
-  cd workflow
+  cd maestro
   pip install .
 
 
