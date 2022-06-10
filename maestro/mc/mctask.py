@@ -86,6 +86,213 @@ class MCTask(object):
         """
         raise Exception("This function must be implemented in the derived class")
 
+    def check_and_resolve_nan_inf(self,data, all_param_directory,term_names,group_names=None):
+        """
+
+        Check for NaNs/:math:`\infty` and try to resolve them.
+
+        * If ``group_names`` is not None i.e., groups are specified, then try to interpolate NaNs/:math:`\infty`
+          for terms within each group for each parameter
+        * If ``group_names`` is None i.e., groups are not specified or if interpolation does not completely resolve
+          the issue, then:
+
+            * If the NaNs/:math:`\infty` was encountered in the start parameter,
+              then raise an exception
+            * If the NaNs/:math:`\infty` was encountered in the iterate (subproblem ``argmin``),
+              then use the surrogate models from the current iteration to fill in the missing
+              values
+            * If the NaNs/:math:`\infty` was encountered in the adaptive sample, then
+              drop the parameter from the corresponding term
+
+        Resolved NaNs/:math:`\infty` are overwritten in the ``data`` argument (as ``data`` is passed
+        as a reference to this function).
+
+        :Example:
+            Example of the ``data`` passed in as argument to this function is shown below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values::
+
+                >data
+
+                {
+                    "MC":{
+                            "Term1.P":[[1,2],[3,4],[6,3]],
+                            "Term1.V": [19, 18, 17],
+                            "Term2.P":[[1,2],[3,4],[6,3]],
+                            "Term2.V": [29, 28, 27]
+                        },
+                    "DMC":{
+                            "Term1.P":[[1,2],[3,4],[6,3]],
+                            "Term1.V": [99, 98, 97],
+                            "Term2.P":[[1,2],[3,4],[6,3]],
+                            "Term2.V": [89, 88, 87]
+                        }
+                }
+
+        :param data: MC output data formatted into a dictionary
+        :type data: dict
+        :param all_param_directory: MC outout directory path
+        :type all_param_directory: str
+        :param term_names: term names e.g., [Term1, Term2]
+        :type term_names: list
+        :param group_names: groups of terms (if any) (default: None).
+            If this argument is None, then this function will not try to
+            interpolate missing values between terms
+        :type group_names: list
+
+        """
+        self.did_middle = False
+        self.did_left = False
+        self.did_right = False
+        self.did_model_eval = False
+        self.did_discard = False
+        def interpolate_nan_inf(data_array):
+            resolved = True
+            if np.isnan(data_array).all() or np.isinf(data_array).all():
+                resolved = False
+            elif np.isnan(data_array).any() or np.isinf(data_array).any():
+                nan_inf = [i or j for (i,j) in zip(np.isnan(data_array), np.isinf(data_array))]
+                # Do (any) middle
+                not_ni_left = None
+                ni_count = 0
+                for ninum, ni in enumerate(nan_inf):
+                    if not ni and ni_count == 0:
+                        not_ni_left = data_array[ninum]
+                    elif not ni and ni_count > 0:
+                        if not_ni_left is not None:
+                            increment = (data_array[ninum]-not_ni_left)/(ni_count+1)
+                            for i in range(ninum-ni_count,ninum):
+                                data_array[i] = data_array[i-1]+increment
+                            ni_count = 0
+                            not_ni_left = data_array[ninum]
+                            self.did_middle = True
+                        else:
+                            not_ni_left = data_array[ninum]
+                            ni_count = 0
+                    else: ni_count+=1
+
+                # Do (any) left
+                nan_inf = [i or j for (i,j) in zip(np.isnan(data_array), np.isinf(data_array))]
+                ni_count = 0
+                for ninum, ni in enumerate(nan_inf):
+                    if ni: ni_count+=1
+                    elif ni_count>0:
+                        if ninum < len(nan_inf)-1 and not nan_inf[ninum] and not nan_inf[ninum+1]:
+                            difference = data_array[ninum+1] - data_array[ninum]
+                            for i in range(ninum-1,-1,-1):
+                                data_array[i] = max(data_array[i+1] - difference,0.0)
+                            self.did_left = True
+                        else:resolved = False
+                        break
+
+                # Do (any) right
+                nan_inf = [i or j for (i,j) in zip(np.isnan(data_array), np.isinf(data_array))]
+                ni_count = 0
+                for ninum in range(len(nan_inf)-1,-1,-1):
+                    ni = nan_inf[ninum]
+                    if ni: ni_count+=1
+                    elif ni_count>0:
+                        if ninum > 0 and not nan_inf[ninum] and not nan_inf[ninum-1]:
+                            difference = data_array[ninum] - data_array[ninum-1]
+                            for i in range(ninum+1,len(nan_inf)):
+                                data_array[i] = data_array[i-1] + difference
+                            self.did_right = True
+                        else:resolved = False
+                        break
+
+            return (data_array, resolved)
+
+        def use_model_to_resolve_nan_inf_or_drop():
+            import json
+            from maestro.model import ModelConstruction
+            apd_arr = os.path.basename(all_param_directory).split('_')
+            log_dir = os.path.normpath(self.mc_run_folder + os.sep + os.pardir)
+            # read algorithm_parameters_dump.json
+            with open(os.path.join(log_dir,'algorithm_parameters_dump.json')) as f:
+                algo_ds = json.load(f)
+            k = algo_ds['current_iteration']
+            with open(os.path.join(log_dir,'config_dump.json')) as f:
+                config_ds = json.load(f)
+            function_str_dict = config_ds['model']['function_str']
+            for tname in term_names:
+                for dno,dname in enumerate(data_names):
+                    X_ = data[dname]["{}.P".format(tname)]
+                    Y_ = data[dname]["{}.V".format(tname)]
+                    if np.isnan(Y_).any() or np.isinf(Y_).any():
+                        nan_inf = [i or j for (i,j) in zip(np.isnan(Y_), np.isinf(Y_))]
+                        #   If only one parameter
+                        if apd_arr[2] != 'Np':
+                            if apd_arr[3] == 'k0':
+                                raise Exception("Nan and Inf found at the start point. Algorithm cannot "
+                                                "continue. Please select a new start point in \"tr_center\" and "
+                                                "try again")
+                            # If k > 0: read model of the corresponding bin and evaluate model at x where y is nan/inf
+                            else:
+                                with open(os.path.join(log_dir,"{}_model_k{}.json".format(dname,k))) as f:
+                                    model_ds = json.load(f)
+                                for ninum,ni in enumerate(nan_inf):
+                                    if ni:
+                                        x = X_[ninum]
+                                        model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname])
+                                        Y_[ninum] = model(x)
+                                        self.did_model_eval = True
+                    #   If more than one parameter:
+                    if apd_arr[2] == 'Np':
+                        if np.isnan(Y_).any() or np.isinf(Y_).any():
+                            nan_inf = [i or j for (i,j) in zip(np.isnan(Y_), np.isinf(Y_))]
+                            for dno_inner,dname_inner in enumerate(data_names):
+                                X__ = np.array(data[dname_inner]["{}.P".format(tname)])
+                                Y__ = np.array(data[dname_inner]["{}.V".format(tname)])
+                                data[dname_inner]["{}.P".format(tname)] = X__[np.invert(nan_inf)].tolist()
+                                data[dname_inner]["{}.V".format(tname)] = Y__[np.invert(nan_inf)].tolist()
+                            self.did_discard = True
+
+        # Try to interpolate
+        # If not possible to interpolate:
+        #   If only one parameter:
+        #       find out the iteration number k of the run
+        #       If k == 0: raise exception
+        #       If k > 0: read model of the corresponding bin and evaluate model at x where y is nan/inf
+        #   If more than one parameter:
+        #       delete x and y where y is a nan/inf
+        term_names = np.array(term_names)
+        data_names = data.keys()
+        if group_names is not None:
+            resolved = True
+            for gnum, gname in enumerate(group_names):
+                # Find terms in the group
+                terms_in_group = np.sort(term_names[np.flatnonzero(np.core.defchararray.find(term_names,gname)!=-1)])
+                for pnum,param in enumerate(data['MC']["{}.P".format(terms_in_group[0])]):
+                    for dnum,dname in enumerate(data_names):
+                        Y = [data[dname]["{}.V".format(term)][pnum] for term in terms_in_group]
+                        # Try to interpolate
+                        (Y,Y_resolved) = interpolate_nan_inf(Y)
+                        if Y_resolved:
+                            for tno,term in enumerate(terms_in_group):
+                                data[dname]["{}.V".format(term)][pnum] = Y[tno]
+                        # Remember the results of interpolation
+                        resolved = resolved and Y_resolved
+        else: resolved = False
+        if not resolved:
+            use_model_to_resolve_nan_inf_or_drop()
+        nan_inf_status_code = ""
+        nan_inf_status_code += 'L' if self.did_left else '-'
+        nan_inf_status_code += 'M' if self.did_middle else '-'
+        nan_inf_status_code += 'R' if self.did_right else '-'
+        nan_inf_status_code += 'E' if self.did_model_eval else '-'
+        nan_inf_status_code += 'D' if self.did_discard else '-'
+
+        print_nan_inf_status_code = self.mc_parmeters['print_nan_inf_status_code'] \
+            if 'print_nan_inf_status_code' in self.mc_parmeters else False
+        from maestro import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        if print_nan_inf_status_code and rank == 0:
+            print("NaN/Inf Status Code: {}".format(nan_inf_status_code))
+            sys.stdout.flush()
+
     @staticmethod
     def read_params_file(path):
         """

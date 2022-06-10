@@ -11,7 +11,8 @@ Overview
 The base ``MCTask`` class at ``maestro/mc/mctask.py`` contains
 useful utility functions that will allow you to interface with the MÆSTRO
 algorithm with ease. Here, we describe the functions that need to be implemented
-in your class that inherits ``MCTask``
+in your class that inherits ``MCTask``, a useful utility function to deal with NaNs/:math:`\infty`
+in the MC output data,
 and the code documentation from ``MCTask`` class that describe the functions
 already defined in this class.
 
@@ -45,10 +46,36 @@ an exception.
         Term2.V        [29, 28, 27]            [89, 88, 87]
 
 
+Dealing with NaNs/:math:`\infty` in MC output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To deal with NaNs/:math:`\infty` in MC output, we provide a useful utility function::
+
+    def check_and_resolve_nan_inf(self,data, all_param_directory,term_names,group_names=None)
+
+The strategy used to deal with NaNs/:math:`\infty` in MC output is as follows:
+
+* If ``group_names`` is not None i.e., groups are specified, then try to interpolate NaNs/:math:`\infty`
+  for terms within each group for each parameter
+* If ``group_names`` is None i.e., groups are not specified or if interpolation does not completely resolve
+  the issue, then:
+
+  * If the NaNs/:math:`\infty` was encountered in the start parameter,
+    then raise an exception
+  * If the NaNs/:math:`\infty` was encountered in the iterate (subproblem ``argmin``),
+    then use the surrogate models from the current iteration to fill in the missing
+    values
+  * If the NaNs/:math:`\infty` was encountered in the adaptive sample, then
+    drop the parameter from the corresponding term
+
+
+More information can be found in the :ref:`MC Task Code documentation<maestro_codedoc_mctaskapi>`.
+
+
 MC Task code documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See :ref:`of MC Task API description<maestro_codedoc_mctaskapi>` in the code documentation section for a complete
+See :ref:`MC Task API description<maestro_codedoc_mctaskapi>` in the code documentation section for a complete
 documentation of all implemented and abstract (not implemented) functions within ``MCTask``.
 
 
