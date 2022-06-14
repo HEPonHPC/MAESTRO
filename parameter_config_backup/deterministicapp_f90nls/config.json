@@ -1,0 +1,27 @@
+{
+    "mc":{
+      "caller_type":"function call",
+      "class_str":"DeterministicApp",
+      "parameters":{
+        "functions":[
+          "F90NLS:p05_f:3"
+        ]
+      }
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":2}
+      },
+      "function_str":{
+        "MC":"appr_pa_m_construct"
+      }
+    },
+    "f_structure":{
+      "parameters":{
+        "optimization":{
+          "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
+        }
+      },
+      "function_str":"appr_tuning_objective_without_error_vals"
+    }
+}

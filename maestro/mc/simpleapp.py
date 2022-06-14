@@ -7,6 +7,19 @@ class SimpleApp(MCTask):
     """
     Simple but noisy MC Task
     """
+    def run_functions(self,param,term_names,term_class,term_counts):
+        F = []
+        for (tname,tclss) in zip(term_names,term_class):
+            if tclss is None:
+                continue
+            if tname.split(":")[0] == "F90NLS":
+                fnret = tclss.mapping(param,m=term_counts[tname],function_name=tname.split(":")[1])
+                for ff in fnret:
+                    F.append(ff)
+            else:
+                F.append(tclss.mapping(param))
+        return F
+
     def run_mc(self):
         """
 
@@ -14,7 +27,7 @@ class SimpleApp(MCTask):
 
         """
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        (term_names,term_class) = self.get_functions()
+        (term_names,term_class,term_counts) = self.get_functions()
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
@@ -22,9 +35,9 @@ class SimpleApp(MCTask):
                 if 'standard_deviation_weight' in self.mc_parmeters else 1
 
             if run_fidelity>0:
-                Y = [np.random.normal(clss.mapping(param),
-                                      sd_weight / np.sqrt(run_fidelity), 1)[0]
-                                        for clss in term_class]
+                F = self.run_functions(param,term_names,term_class,term_counts)
+                Y = [np.random.normal(f,sd_weight / np.sqrt(run_fidelity), 1)[0]
+                                        for f in F]
                 DY = [sd_weight / np.sqrt(run_fidelity) for clss in term_class]
 
                 outfile = os.path.join(d,"out_curr.csv")
@@ -38,9 +51,9 @@ class SimpleApp(MCTask):
         Get the class handle for the term names given in the
         configuration input:mc:parameters:functions array
 
-        :return: term names and the corresponding class handles for the
-            term names
-        :rtype: list,list
+        :return: term names, the corresponding class handles for the
+            term names, and counts
+        :rtype: list,list,dict
 
         """
         term_names = []
@@ -48,15 +61,31 @@ class SimpleApp(MCTask):
         count = {}
         import maestro.mc
         for t in self.mc_parmeters['functions']:
-            count[t] = 1 if t not in term_names else count[t] + 1
-            sct = "" if count[t] == 1 else str(count[t])
-            term_names.append("{}{}".format(t,sct))
-            try:
-                mc_class = getattr(maestro.mc,t)
-                term_class.append(mc_class)
-            except:
-                raise Exception("MC term class \""+t+"\" not found in maestro.mc")
-        return term_names,term_class
+            if len(t.split(':'))>1:
+                t_split_arr = t.split(':')
+                name = t_split_arr[0]+":"+ t_split_arr[1]
+                c = t_split_arr[2]
+                for i in range(int(c)):
+                    count[name] = 1 if name not in term_names else count[name] + 1
+                    sct = "" if count[name] == 1 else str(count[name])
+                    term_names.append("{}{}".format(name,sct))
+                    if i==0:
+                        try:
+                            mc_class = getattr(maestro.mc,name.split(':')[0])
+                            term_class.append(mc_class)
+                        except:
+                            raise Exception("MC term class \""+t+"\" not found in maestro.mc")
+                    else: term_class.append(None)
+            else:
+                count[t] = 1 if t not in term_names else count[t] + 1
+                sct = "" if count[t] == 1 else str(count[t])
+                term_names.append("{}{}".format(t,sct))
+                try:
+                    mc_class = getattr(maestro.mc,t)
+                    term_class.append(mc_class)
+                except:
+                    raise Exception("MC term class \""+t+"\" not found in maestro.mc")
+        return term_names,term_class,count
 
     def check_df_structure_sanity(self,df):
         """
@@ -129,7 +158,7 @@ class SimpleApp(MCTask):
         import pandas as pd
         import math
         dirlist = self.get_param_directory_array(self.mc_run_folder)
-        (term_names,term_class) = self.get_functions()
+        (term_names,term_class,term_counts) = self.get_functions()
         max_sigma = 0
         for dno,d in enumerate(dirlist):
             at_fidelity = self.get_fidelity_from_directory(d,fnamef="at_fidelity.dat")
@@ -184,12 +213,12 @@ class DeterministicApp(SimpleApp):
 
         """
         dirlist = self.get_param_directory_array(self.mc_run_folder) # from super class
-        (term_names,term_class) = self.get_functions() # from super class
+        (term_names,term_class,term_counts) = self.get_functions() # from super class
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d) # from super class
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
             if run_fidelity>0:
-                Y = [clss.mapping(param) for clss in term_class]
+                Y = self.run_functions(param,term_names,term_class,term_counts)
                 DY = [1. for clss in term_class]
 
                 outfile = os.path.join(d,"out_curr.csv")
@@ -202,7 +231,7 @@ class SumOfDiffPowers():
     Sum of different powers from https://www.sfu.ca/~ssurjano/sumpow.html
     """
     @staticmethod
-    def mapping(x):
+    def mapping(x,**kwargs):
         """
 
         y = f(x)
@@ -225,7 +254,7 @@ class RotatedHyperEllipsoid():
     Rotates Hyper Ellipsoid from https://www.sfu.ca/~ssurjano/rothyp.html
     """
     @staticmethod
-    def mapping(x):
+    def mapping(x,**kwargs):
         """
 
         y = f(x)
@@ -250,7 +279,7 @@ class Sphere():
     Sphere from https://www.sfu.ca/~ssurjano/spheref.html
     """
     @staticmethod
-    def mapping(x):
+    def mapping(x,**kwargs):
         """
 
         y = f(x)
@@ -273,7 +302,7 @@ class SumSquares():
     Sum of Squares function from https://www.sfu.ca/~ssurjano/sumsqu.html
     """
     @staticmethod
-    def mapping(x):
+    def mapping(x,**kwargs):
         """
 
         y = f(x)
@@ -290,7 +319,31 @@ class SumSquares():
             s = s + (i+1)*x[i]**2
         return s
 
+class F90NLS():
+    """
+    Fortran 90 Nonlinear least squares (NLS) test problems from https://people.math.sc.edu/Burkardt/f_src/test_nls/test_nls.html
+    """
+    @staticmethod
+    def mapping(x, m, function_name,**kwargs):
+        """
 
+        y = [f_1(x),...,f_m(x)]. This function should be called once for all terms with
+        the name ``term_name``
+
+        :param x:parameter
+        :type x: list
+        :param m: number of terms
+        :type m: int
+        :param function_name: name of the F90 NLS function
+        :type function_name: str
+        :return: function value for all the terms
+        :rtype: list
+        """
+        import testnls
+        fntocall = getattr(testnls,function_name)
+        values = np.empty(m,dtype=np.float64)
+        fntocall(m=m,n=len(x),x=np.array(x),f=values)
+        return values
 
 
 
