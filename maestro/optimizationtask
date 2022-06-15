@@ -240,7 +240,7 @@ class SaneFormatter(argparse.RawTextHelpFormatter,
     pass
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run the MF-STRO-DF algorithm',
+    parser = argparse.ArgumentParser(description='Run the MAESTRO algorithm',
                                      formatter_class=SaneFormatter)
     parser.add_argument("-a", dest="ALGOPARAMS", type=str, default=None,
                         help="Algorithm Parameters (JSON) location")

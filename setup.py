@@ -18,7 +18,7 @@ setup(
         'pyDOE2>=1.3.0',
 
     ],
-    scripts=["bin/maestro-run","maestro/optimization-task"],
+    scripts=["bin/maestro-run","maestro/optimizationtask"],
     extras_require = {
     },
     entry_points = {
