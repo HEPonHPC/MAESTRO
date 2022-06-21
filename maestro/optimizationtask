@@ -35,6 +35,23 @@ class OptimizaitionTask(object):
                 print("{} : {}\n".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
                 print("If the problem is abnormal or needs more investigation, please contact the "
                       "author Mohan Krishnamoorthy at mkrishnamoorthy2425@gmail.com\n")
+                tr_center_str = "[%.2E"%(self.state.tr_center[0])
+                for i in range(1,len(self.state.tr_center)):
+                    tr_center_str +=", %.5E"%(self.state.tr_center[i])
+                tr_center_str += ']'
+                end_status = "#####################################\n\n"
+                end_status += "The algorithm ended with\n\n"
+                end_status += "Number of iteratons: {}\n".format(self.state.k)
+                end_status += "TR center: {}\n".format(tr_center_str)
+                end_status += "TR radius: %.8E\n"%(self.state.tr_radius)
+                end_status += "PGNorm: %.8E\n"%(self.state.proj_grad_norm)
+                end_status += "Objective (Model): %.8E\n"%(self.state.model_objective_function_value)
+                end_status += "Objective (MC): %.8E\n"%(self.state.mc_objective_function_value)
+                end_status += "fidelity: %.2E\n\n"%(self.state.fidelity)
+
+                end_status += "\n#####################################"
+                print(end_status)
+
                 sys.stdout.flush()
             sys.exit(self.state.algorithm_status.status_val)
 

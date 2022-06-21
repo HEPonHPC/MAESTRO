@@ -86,6 +86,7 @@ class TrAmmendment(object):
                         sys.stdout.flush()
                 else:
                     if self.debug: print("rho >= eta. New point accepted")
+                    self.state.log_objective_function_values(approx_obj_val_kp1,mc_obj_val_kp1)
                     if ParameterPointUtil.is_close(
                             ParameterPointUtil.get_infinity_norm(
                                 np.array(p_star_kp1)-np.array(self.state.tr_center)),

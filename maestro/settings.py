@@ -1177,6 +1177,46 @@ class Settings(object):
         for key in self.param_meta_data[k_str][p_type].keys():
             del self.param_meta_data[k_str][p_type][key][index]
 
+    def log_objective_function_values(self,oj_fn_val_model,oj_fn_val_mc):
+        """
+        Log the current objective function value in the algorithm state
+
+        :param oj_fn_val_model: model objective function value
+        :type oj_fn_val_model: float
+        :param oj_fn_val_mc: MC objective function value
+        :type oj_fn_val_mc: float
+
+        """
+        if 'objective_function_value' not in self.algorithm_parameters_dict:
+            self.algorithm_parameters_dict['objective_function_value'] = {}
+        self.algorithm_parameters_dict['objective_function_value']['model'] = oj_fn_val_model
+        self.algorithm_parameters_dict['objective_function_value']['mc'] = oj_fn_val_mc
+
+    @property
+    def model_objective_function_value(self):
+        """
+        Get the model objective function value. If not defined, np.infinity is returned
+
+        :return: model objective function value
+        :rtype: float
+
+        """
+        if 'objective_function_value' not in self.algorithm_parameters_dict:
+            return np.infty
+        return self.algorithm_parameters_dict['objective_function_value']['model']
+
+    @property
+    def mc_objective_function_value(self):
+        """
+        Get the MC objective function value. If not defined, np.infinity is returned
+
+        :return: MC objective function value
+        :rtype: float
+
+        """
+        if 'objective_function_value' not in self.algorithm_parameters_dict:
+            return np.infty
+        return self.algorithm_parameters_dict['objective_function_value']['model']
 
     def __repr__(self):
         return self.__str__()

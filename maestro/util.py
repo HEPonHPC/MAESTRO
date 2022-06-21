@@ -267,9 +267,9 @@ class ParameterPointUtil():
         Is a point close to another point
 
         :param a: first parameter
-        :type a: list
+        :type a: float
         :param b: second parameter
-        :type b: list
+        :type b: float
         :param rel_tol: relative tolerance
         :type rel_tol: float
         :param abs_tol: absolute tolerance
