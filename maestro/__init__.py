@@ -6,4 +6,3 @@ from maestro.model import ModelConstruction
 from maestro.fstructure import Fstructure
 from maestro.tr import TrAmmendment
 from maestro.mpi4py_ import MPI_, COMM_
-from maestro.optimizationtask import OptimizaitionTask

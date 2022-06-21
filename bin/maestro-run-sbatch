@@ -1,0 +1,43 @@
+#!/bin/bash
+
+#SBATCH --job-name=A14-run
+#SBATCH --account=startup-mkrishnamoorthy
+#SBATCH --partition=bdw
+#SBATCH --nodes=3
+#SBATCH --ntasks-per-node=36
+#SBATCH --output=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.out
+#SBATCH --error=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.out
+#SBATCH --mail-user=mkrishnamoorthy@anl.gov # Optional if you require email
+#SBATCH --mail-type=ALL                  # Optional if you require email
+#SBATCH --time=30:00:00
+
+# Setup My Environment
+module purge
+source /home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/rivetenv.sh
+spack env activate test
+
+# Set up the run directory
+MAESTROLOC="/home/mkrishnamoorthy/maestro"
+WD="/home/mkrishnamoorthy/log/workflow/a14app/A14-run"
+WFLOC="/home/mkrishnamoorthy/maestro/workflow/a14app"
+PCB="/home/mkrishnamoorthy/maestro/parameter_config_backup/a14app"
+
+rm -rf $WD
+mkdir -p $WD
+mkdir -p $WD/conf
+mkdir -p $WD/logs
+cp $WFLOC/decaf-henson.json $WD/decaf-henson.json
+cp /home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/decaf-henson_python $WD/.
+cp $PCB/*.cmnd $WD/conf/.
+cp $PCB/data.json $WD/conf/.
+cp $PCB/weights $WD/conf/.
+cp $MAESTROLOC/maestro/optimization-task $WD/optimization-task.py
+
+cp $PCB/algoparams.json $WD/conf/algoparams.json
+cp $PCB/config_workflow.json $WD/conf/config.json
+
+cd $WD || exit
+srun -n 108 ./decaf-henson_python
+
+# Run My Program
+srun -n 108 optimizationtask -a parameter_config_backup/miniapp/algoparams.json -c parameter_config_backup/miniapp/config_bebop_standalone.json -d ../log/workflow/miniapp/WD
