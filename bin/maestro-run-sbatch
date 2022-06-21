@@ -6,7 +6,7 @@
 #SBATCH --nodes=3
 #SBATCH --ntasks-per-node=36
 #SBATCH --output=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.out
-#SBATCH --error=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.out
+#SBATCH --error=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.error
 #SBATCH --mail-user=mkrishnamoorthy@anl.gov # Optional if you require email
 #SBATCH --mail-type=ALL                  # Optional if you require email
 #SBATCH --time=30:00:00
