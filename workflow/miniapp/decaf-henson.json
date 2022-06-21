@@ -5,7 +5,7 @@
             {
              	"start_proc": 0,
                 "nprocs": 32,
-                "cmdline": "../optimization-task.py -a conf/algoparams.json -c conf/config.json -d ./",
+                "cmdline": "../optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
                 "func": "opt_task_py",
                 "inports": [],
                 "outports": []

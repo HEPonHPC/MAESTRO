@@ -12,7 +12,7 @@ cp /home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/decaf
 #cp $2 $3/. #process.dat
 cp $2/data.json $1/conf/.
 cp $2/weights $1/conf/.
-cp ../../maestro/optimization-task $1/optimization-task.py
+cp ../../maestro/optimizationtask $1/optimization-task.py
 cp ../../maestro/mc/bin/miniapp.py $1/.
 
 cp $2/algoparams.json $1/conf/algoparams.json

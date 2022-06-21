@@ -4,15 +4,15 @@
         "nodes": [
             {
              	"start_proc": 0,
-                "nprocs": 4,
-                "cmdline": "./optimization-task.py -a conf/algoparams.json -c conf/config.json -d ./",
+                "nprocs": 108,
+                "cmdline": "./optimizationtask.py -a conf/algoparams.json -c conf/config.json -d ./",
                 "func": "opt_task_py",
                 "inports": [],
                 "outports": []
             },
             {
              	"start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 108,
                 "cmdline": "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy -o out_rivet_qcd.yoda -i log/MC_RUN -p main30_rivet.qcd.cmnd -a ATLAS_2011_S8924791 -a ATLAS_2011_S8971293 -a ATLAS_2011_I919017-a ATLAS_2011_S9128077 -a ATLAS_2012_I1125575 -a ATLAS_2014_I1298811-a ATLAS_2012_I1094564",
                 "func": "mc_task_qcd",
                 "inports": [],
@@ -20,7 +20,7 @@
             },
             {
                 "start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 108,
                 "cmdline": "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy -o out_rivet_z.yoda -i log/MC_RUN -p main30_rivet.z.cmnd -a ATLAS_2011_S9131140 -a ATLAS_2014_I1300647",
                 "func": "mc_task_z",
                 "inports": [],
@@ -28,7 +28,7 @@
             },
             {
                 "start_proc": 0,
-                "nprocs": 4,
+                "nprocs": 108,
                 "cmdline": "/home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/pythia8-diy -o out_rivet_ttbar.yoda -i log/MC_RUN -p main30_rivet.ttbar.cmnd -a ATLAS_2012_I1094568 -a ATLAS_2013_I1243871",
                 "func": "mc_task_ttbar",
                 "inports": [],

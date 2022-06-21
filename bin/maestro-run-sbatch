@@ -31,13 +31,12 @@ cp /home/oyildiz/mohan/pythia/pythia8-diy-master/install/bin/latest-160522/decaf
 cp $PCB/*.cmnd $WD/conf/.
 cp $PCB/data.json $WD/conf/.
 cp $PCB/weights $WD/conf/.
-cp $MAESTROLOC/maestro/optimization-task $WD/optimization-task.py
+cp $MAESTROLOC/maestro/optimizationtask $WD/optimizationtask.py
 
 cp $PCB/algoparams.json $WD/conf/algoparams.json
 cp $PCB/config_workflow.json $WD/conf/config.json
 
 cd $WD || exit
-srun -n 108 ./decaf-henson_python
 
 # Run My Program
-srun -n 108 optimizationtask -a parameter_config_backup/miniapp/algoparams.json -c parameter_config_backup/miniapp/config_bebop_standalone.json -d ../log/workflow/miniapp/WD
+srun -n 108 ./decaf-henson_python
