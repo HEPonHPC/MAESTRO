@@ -56,12 +56,12 @@ class TrAmmendment(object):
                     self.state.algorithm_status.update_status(10)
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
-                    if self.state.usefixedfidelity or \
-                            ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
-                            ParameterPointUtil.order_of_magnitude(self.state.fidelity):
-                        tr_radius = min(self.state.tr_radius,norm_of_step)/2
-                    else:
-                        tr_radius = self.state.tr_radius/2
+                    # if self.state.usefixedfidelity or \
+                    #         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
+                    #         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
+                    tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    # else:
+                    #     tr_radius = self.state.tr_radius/2
                     curr_p = p_star_k
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                                  tr_center_messaage="TR center remains the same",
@@ -84,6 +84,9 @@ class TrAmmendment(object):
                                  approx_obj_val_k,approx_obj_val_kp1,mc_obj_val_k,mc_obj_val_kp1,self.state.fidelity,rho)
                         print(str)
                         sys.stdout.flush()
+                        file = open(self.state.working_directory.get_log_path("1lineout.dat"), "a")
+                        file.write(str+"\n")
+                        file.close()
                 else:
                     if self.debug: print("rho >= eta. New point accepted")
                     self.state.log_objective_function_values(approx_obj_val_kp1,mc_obj_val_kp1)
@@ -114,6 +117,9 @@ class TrAmmendment(object):
                                  approx_obj_val_k,approx_obj_val_kp1,mc_obj_val_k,mc_obj_val_kp1,self.state.fidelity,rho)
                         print(str)
                         sys.stdout.flush()
+                        file = open(self.state.working_directory.get_log_path("1lineout.dat"), "a")
+                        file.write(str+"\n")
+                        file.close()
             else:
                 if self.debug: print("gradient condition failed")
                 tr_radius = self.state.tr_radius/2
@@ -139,6 +145,9 @@ class TrAmmendment(object):
                                 self.state.algorithm_status.tr_update_code)
                     print(str)
                     sys.stdout.flush()
+                    file = open(self.state.working_directory.get_log_path("1lineout.dat"), "a")
+                    file.write(str+"\n")
+                    file.close()
             if self.debug: print("\Delta k+1 \t= %.4E (%s)"%(tr_radius,self.state.algorithm_status.tr_radius_messaage))
             if self.is_param_kp1:
                 print("P k+1 \t\t= {} ({})".format(["%.4f"%(c) for c in curr_p],self.state.algorithm_status.tr_center_messaage))
