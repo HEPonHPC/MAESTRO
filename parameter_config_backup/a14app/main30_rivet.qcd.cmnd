@@ -27,4 +27,5 @@ PhaseSpace:pTHatMin = 10.0
 ParticleDecays:limitTau0 = on
 ParticleDecays:tau0Max = 10
 ! ParticleDecays:allowPhotonRadiation = on
-Print:quiet = off
+Print:errors = on
+Print:quiet = on
