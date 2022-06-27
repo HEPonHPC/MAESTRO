@@ -1,15 +1,15 @@
 #!/bin/bash
 
 #SBATCH --job-name=A14-run
-#SBATCH --account=startup-mkrishnamoorthy
+#SBATCH --PEDAL
 #SBATCH --partition=bdw
 #SBATCH --nodes=3
 #SBATCH --ntasks-per-node=36
-#SBATCH --output=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.out
-#SBATCH --error=/home/mkrishnamoorthy/log/workflow/a14app/log/A14-run.error
+#SBATCH --output=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14-run.out
+#SBATCH --error=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14-run.error
 #SBATCH --mail-user=mkrishnamoorthy@anl.gov # Optional if you require email
 #SBATCH --mail-type=ALL                  # Optional if you require email
-#SBATCH --time=30:00:00
+#SBATCH --time=36:00:00
 
 # Setup My Environment
 module purge
@@ -18,7 +18,7 @@ spack env activate test
 
 # Set up the run directory
 MAESTROLOC="/home/mkrishnamoorthy/maestro"
-WD="/home/mkrishnamoorthy/log/workflow/a14app/A14-run"
+WD="/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/A14-run"
 WFLOC="/home/mkrishnamoorthy/maestro/workflow/a14app"
 PCB="/home/mkrishnamoorthy/maestro/parameter_config_backup/a14app"
 
