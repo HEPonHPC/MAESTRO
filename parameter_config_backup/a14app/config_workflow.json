@@ -16,7 +16,7 @@
     },
     "model":{
       "parameters":{
-        "MC":{"m":2},
+        "MC":{"m":3},
         "DMC":{"m":1}
       },
       "function_str":{

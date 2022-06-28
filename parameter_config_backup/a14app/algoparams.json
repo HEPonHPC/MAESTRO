@@ -3,7 +3,7 @@
         "radius": 2.5,
         "max_radius": 20,
         "min_radius": 1e-5,
-        "__center": [
+        "center": [
           0.14345763,
           1.90350783,
           1.64271215,
@@ -15,7 +15,7 @@
           0.12848193,
           1.79243402
         ],
-        "center": [
+        "__center": [
           0.124,
           1.601,
           0.7505,
@@ -59,14 +59,14 @@
     "usefixedfidelity":false,
     "__usefixedfidelity":true,
     "__N_p": 286,
-    "N_p": 143,
+    "N_p": 150,
     "__N_p": 75,
     "__N_p": 50,
     "dim": 10,
     "theta": 0.01,
     "thetaprime": 0.0001,
     "__fidelity": 10000,
-    "fidelity": 10000,
+    "fidelity": 5000,
     "__fidelity": 200,
     "max_iteration":50,
     "__max_iteration":20,
