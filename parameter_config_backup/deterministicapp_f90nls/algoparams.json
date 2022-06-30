@@ -31,7 +31,7 @@
     "thetaprime": 0.0001,
     "__fidelity": 1000,
     "fidelity": 1000,
-    "max_iteration":50,
+    "max_iteration":500,
     "max_fidelity_iteration":5,
     "min_gradient_norm": 1e-5,
     "max_simulation_budget":100000000000000000,
