@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=A14run-origcenter-stfid10k-np150-pa3
+#SBATCH --job-name=A14run-2ndcenter-stfid10k-np150-pa3
 #SBATCH --account=PEDAL
 #SBATCH --partition=bdw
 #SBATCH --nodes=3
 #SBATCH --ntasks-per-node=36
-#SBATCH --output=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14run-origcenter-stfid10k-np150-pa3.out
-#SBATCH --error=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14run-origcenter-stfid10k-np150-pa3.error
+#SBATCH --output=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14run-2ndcenter-stfid10k-np150-pa3.out
+#SBATCH --error=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14run-2ndcenter-stfid10k-np150-pa3.error
 #SBATCH --mail-user=mkrishnamoorthy@anl.gov # Optional if you require email
 #SBATCH --mail-type=ALL                  # Optional if you require email
 #SBATCH --time=100:00:00
@@ -18,7 +18,7 @@ spack env activate test
 
 # Set up the run directory
 MAESTROLOC="/home/mkrishnamoorthy/maestro"
-WD="/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/A14run-origcenter-stfid10k-np150-pa3"
+WD="/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/A14run-2ndcenter-stfid10k-np150-pa3"
 WFLOC="/home/mkrishnamoorthy/maestro/workflow/a14app"
 PCB="/home/mkrishnamoorthy/maestro/parameter_config_backup/a14app"
 
