@@ -231,9 +231,9 @@ class OptimizaitionTask(object):
                 nf = int(np.ceil((cf/max_sigma)*diff_sigma))
                 nf = 10**np.ceil(np.log10(nf))
                 # nf = 1/(diff_sigma**2)
-                nf = max(self.state.min_fidelity,nf)
                 if cf + nf > self.state.max_fidelity:
                     nf = self.state.max_fidelity - cf
+                nf = max(self.state.min_fidelity,nf)
             else:
                 nf = 0
             new_fidelities.append(nf)
