@@ -56,6 +56,7 @@
     ],
     "kappa":100,
     "max_fidelity":500000,
+    "min_fidelity":100,
     "usefixedfidelity":false,
     "__usefixedfidelity":true,
     "__N_p": 286,
