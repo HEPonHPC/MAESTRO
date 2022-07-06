@@ -9,7 +9,7 @@
 #SBATCH --error=/lcrc/project/PEDAL/mkrishnamoorthy/maestro/a14app/console/A14run2-2ndcenter-stfid10k-np150-pa3.error
 #SBATCH --mail-user=mkrishnamoorthy@anl.gov # Optional if you require email
 #SBATCH --mail-type=ALL                  # Optional if you require email
-#SBATCH --time=200:00:00
+#SBATCH --time=160:00:00
 
 # Setup My Environment
 module purge
