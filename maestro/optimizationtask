@@ -207,6 +207,7 @@ class OptimizaitionTask(object):
                 #todo check if this works on script call. Otherwise change to number and read next_step from state
                 sys.exit(0)
         elif self.state.mc_call_using_function_call:
+            self.state.save(next_step=next_step)
             self.state.mc_object.run_mc()
 
         # Merge statistics and get max sigma
