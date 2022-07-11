@@ -54,12 +54,18 @@ class TrAmmendment(object):
                 norm_of_step = ParameterPointUtil.get_infinity_norm(np.array(p_star_kp1)-np.array(self.state.tr_center))
                 if norm_of_step == 0 or np.isnan(rho) or np.isinf(rho):
                     self.state.algorithm_status.update_status(10)
+                if approx_obj_val_k < approx_obj_val_kp1:
+                    norm_of_step = 0
+                    mc_obj_val_kp1 = mc_obj_val_k
+                    approx_obj_val_kp1 = approx_obj_val_k
+                    rho = 0
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
+                    tr_radius = min(self.state.tr_radius/2,norm_of_step)
                     # if self.state.usefixedfidelity or \
                     #         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
                     #         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
-                    tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    #     tr_radius = min(self.state.tr_radius/2,norm_of_step)
                     # else:
                     #     tr_radius = self.state.tr_radius/2
                     curr_p = p_star_k
@@ -93,7 +99,7 @@ class TrAmmendment(object):
                     if ParameterPointUtil.is_close(
                             ParameterPointUtil.get_infinity_norm(
                                 np.array(p_star_kp1)-np.array(self.state.tr_center)),
-                            self.state.tr_radius,rel_tol=1e-03):
+                            self.state.tr_radius,rel_tol=1e-01):
                         tr_radius = min(self.state.tr_radius*2,self.state.tr_max_radius)
                         trradmsg = "TR radius doubled"
                         trupdatecode = "A"
