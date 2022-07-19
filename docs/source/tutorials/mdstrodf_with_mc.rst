@@ -30,15 +30,7 @@ follwoing steps:
 Getting started
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before installing MÆSTRO, the DFO branch of apprentice_ needs to be installed first::
-
-    git clone -b DFO --single-branch git@github.com:HEPonHPC/apprentice.git
-    cd  apprentice/
-    pip install .
-
-    cd ..
-
-Then proceed to installing MÆSTRO::
+To install mæstro, execute the following commands::
 
     git clone git@github.com:HEPonHPC/maestro.git
     cd maestro
