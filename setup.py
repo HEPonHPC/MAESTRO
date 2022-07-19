@@ -16,6 +16,7 @@ setup(
         'pandas>=1.1.5',
         'pyDOE>=0.3.8',
         'pyDOE2>=1.3.0',
+        'apprenticeDFO>=1.0.6'
 
     ],
     scripts=["bin/maestro-run","maestro/optimizationtask"],
