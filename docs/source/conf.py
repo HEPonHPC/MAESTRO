@@ -43,6 +43,7 @@ MOCK_MODULES = [
     "pandas",
     "scipy",
     "scipy.optimize",
+    "scipy.sparse"
 ]
 
 sys.path.insert(0, os.path.abspath('../../maestro/'))

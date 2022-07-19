@@ -8,12 +8,20 @@
         ]
       }
     },
-    "model":{
+    "__model":{
       "parameters":{
-        "MC":{"m":2}
+        "MC":{"m":3}
       },
       "function_str":{
         "MC":"appr_pa_m_construct"
+      }
+    },
+    "model":{
+      "parameters":{
+        "MC":{"m":3,"n":1}
+      },
+      "function_str":{
+        "MC":"appr_ra_m_1_construct"
       }
     },
     "f_structure":{
