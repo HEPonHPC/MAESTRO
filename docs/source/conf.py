@@ -12,7 +12,42 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../workflow/'))
+
+if sys.version_info >= (3, 3):
+    from unittest.mock import MagicMock
+else:
+    from mock import MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = [
+    "argparse",
+    "dfols",
+    "math",
+    "mpi4py",
+    "mpmath",
+    "nlopt",
+    "numpy",
+    "numpy.lib",
+    "numpy.lib.recfunctions",
+    "numpy.linalg",
+    "numpy.random",
+    "numpy.fft",
+    "numpy.lib.scimath",
+    "matplotlib.pyplot",
+    "GPy",
+    "pandas",
+    "scipy",
+    "scipy.optimize",
+]
+
+sys.path.insert(0, os.path.abspath('../../maestro/'))
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 
 # -- Project information -----------------------------------------------------
