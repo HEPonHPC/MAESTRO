@@ -61,13 +61,13 @@ class TrAmmendment(object):
                     rho = 0
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
-                    # tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    if self.state.usefixedfidelity or \
-                            ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
-                            ParameterPointUtil.order_of_magnitude(self.state.fidelity):
-                        tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    else:
-                        tr_radius = self.state.tr_radius/2
+                    tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    # if self.state.usefixedfidelity or \
+                    #         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
+                    #         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
+                    #     tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    # else:
+                    #     tr_radius = self.state.tr_radius/2
                     curr_p = p_star_k
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                                  tr_center_messaage="TR center remains the same",
