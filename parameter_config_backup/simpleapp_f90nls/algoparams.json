@@ -1,9 +1,9 @@
 {
     "tr": {
-        "__radius": 1e2,
-        "__max_radius": 1e3,
-        "radius": 5,
-        "max_radius": 20,
+        "radius": 1e2,
+        "max_radius": 1e3,
+        "__radius": 5,
+        "__max_radius": 20,
         "min_radius": 1e-5,
         "center": [
             -1.0,
