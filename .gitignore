@@ -34,6 +34,7 @@ results_p4_q3_ts2x
 
 # PyCharm files
 *.idea
+!LICENSE.pdf
 !algoparams.json
 !config.json
 !config_workflow.json
