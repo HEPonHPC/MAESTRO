@@ -61,13 +61,15 @@ class TrAmmendment(object):
                     rho = 0
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
-                    tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    # if self.state.usefixedfidelity or \
-                    #         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
-                    #         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
-                    #     tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    # else:
-                    #     tr_radius = self.state.tr_radius/2
+                    # tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    if self.state.usefixedfidelity or \
+                            ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
+                            ParameterPointUtil.order_of_magnitude(self.state.fidelity):
+                        tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    else:
+                        tr_radius = self.state.tr_radius/2
+                    # if tr_radius < 10**-1:
+                    #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
                     curr_p = p_star_k
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                                  tr_center_messaage="TR center remains the same",
@@ -100,6 +102,7 @@ class TrAmmendment(object):
                             ParameterPointUtil.get_infinity_norm(
                                 np.array(p_star_kp1)-np.array(self.state.tr_center)),
                             self.state.tr_radius,rel_tol=1e-01):
+                        # tr_radius = min(self.state.tr_radius*10,self.state.tr_max_radius)
                         tr_radius = min(self.state.tr_radius*2,self.state.tr_max_radius)
                         trradmsg = "TR radius doubled"
                         trupdatecode = "A"
@@ -107,6 +110,9 @@ class TrAmmendment(object):
                         trradmsg = "TR radius stays the same"
                         trupdatecode = "M"
                         tr_radius = self.state.tr_radius
+                    #     tr_radius = min(self.state.tr_radius*5,self.state.tr_max_radius)
+                    # if tr_radius < 10**-1:
+                    #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
                     curr_p = p_star_kp1
                     trcentermsg = "TR center moved to the SP amin"
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage=trradmsg,
@@ -129,6 +135,8 @@ class TrAmmendment(object):
             else:
                 if self.debug: print("gradient condition failed")
                 tr_radius = self.state.tr_radius/2
+                # if tr_radius < 10**-1:
+                #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
                 curr_p = p_star_k
                 self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                              tr_center_messaage="TR center remains the same",
