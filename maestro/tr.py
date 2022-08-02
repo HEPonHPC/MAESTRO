@@ -102,15 +102,15 @@ class TrAmmendment(object):
                             ParameterPointUtil.get_infinity_norm(
                                 np.array(p_star_kp1)-np.array(self.state.tr_center)),
                             self.state.tr_radius,rel_tol=1e-01):
-                        # tr_radius = min(self.state.tr_radius*10,self.state.tr_max_radius)
                         tr_radius = min(self.state.tr_radius*2,self.state.tr_max_radius)
+                        # tr_radius = min(self.state.tr_radius*10,self.state.tr_max_radius)
                         trradmsg = "TR radius doubled"
                         trupdatecode = "A"
                     else:
                         trradmsg = "TR radius stays the same"
                         trupdatecode = "M"
                         tr_radius = self.state.tr_radius
-                    #     tr_radius = min(self.state.tr_radius*5,self.state.tr_max_radius)
+                        # tr_radius = min(self.state.tr_radius*5,self.state.tr_max_radius)
                     # if tr_radius < 10**-1:
                     #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
                     curr_p = p_star_kp1
