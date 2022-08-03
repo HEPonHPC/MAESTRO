@@ -102,6 +102,7 @@ class Fstructure(object):
             sp_object = self.state.f_structure_function_handle(self,use_scaled=False)  # calls self.appr_tuning_objective
             optimization_parameters = self.state.optimization_parameters
             optimization_parameters['comm'] = comm
+            optimization_parameters['x00'] = self.state.tr_center
             # optimization_parameters
             # "nstart":5,"nrestart":10,"comm"=comm,"saddle_point_check"=false,"minimize"=true,"use_mpi"=1
             result = sp_object.minimize(**optimization_parameters)
