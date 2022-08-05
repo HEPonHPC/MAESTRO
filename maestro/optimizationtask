@@ -74,9 +74,9 @@ class OptimizaitionTask(object):
                     self.state.param_meta_data['k-1'] = old_param_meta_data_obj
                 else:
                     self.state.param_meta_data = {'k-1':old_param_meta_data_obj}
-            os.makedirs(self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
-            DiskUtil.copyanything(self.state.working_directory.get_conf_path("MC_RUN"),
-                                  self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
+                os.makedirs(self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
+                DiskUtil.copyanything(self.state.working_directory.get_conf_path("MC_RUN"),
+                                      self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
             self.ops_start()
         else: self.mc_caller_interpretor_resolver(next_step=self.state.next_step)
         self.check_whether_to_stop()
