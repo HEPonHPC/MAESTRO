@@ -58,6 +58,25 @@ class OptimizaitionTask(object):
     def run(self):
         self.check_whether_to_stop()
         if self.state.next_step == "ops_start":
+            old_param_metadata_file = self.state.working_directory.get_conf_path("parameter_metadata_dump.json")
+            if os.path.exists(old_param_metadata_file):
+                old_param_meta_data = self.state.read_setting_file(old_param_metadata_file)
+                param_directory = [self.state.working_directory.get_log_path(os.path.join("MC_RUN_Np_k-1",d))
+                                   for d in old_param_meta_data["directory name"]]
+                mc_param_directory = [self.state.working_directory.get_log_path(os.path.join("MC_RUN",d))
+                                      for d in old_param_meta_data["directory name"]]
+
+                old_param_meta_data["param directory"] = param_directory
+                old_param_meta_data["mc param directory"] = mc_param_directory
+
+                old_param_meta_data_obj = {"Np":old_param_meta_data}
+                if self.state.param_meta_data is not None:
+                    self.state.param_meta_data['k-1'] = old_param_meta_data_obj
+                else:
+                    self.state.param_meta_data = {'k-1':old_param_meta_data_obj}
+            os.makedirs(self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
+            DiskUtil.copyanything(self.state.working_directory.get_conf_path("MC_RUN"),
+                                  self.state.working_directory.get_log_path("MC_RUN_Np_k-1"))
             self.ops_start()
         else: self.mc_caller_interpretor_resolver(next_step=self.state.next_step)
         self.check_whether_to_stop()

@@ -217,6 +217,9 @@ class InterpolationSample(object):
         # tr_center_param_fn = self.state.working_directory.get_log_path(
         #     "parameter_metadata_1")  # + "_k{}.json".format(k)
         # prev_np_param_fn = self.state.working_directory.get_log_path("parameter_metadata_Np")  # + "_k{}.json".format(k)
+        try:
+            self.add_params_to_pool(self.state.get_paramerter_metadata(-1,"Np"), -1, "Np")
+        except: pass
         for i in range(self.state.k):
             # tr_center_param = tr_center_param_fn + "_k{}.json".format(i)
             self.add_params_to_pool(self.state.get_paramerter_metadata(i,"1"), i, "1")
