@@ -123,7 +123,7 @@ class Fstructure(object):
                                                      "the function structure subproblem. Quitting now")
             raise
 
-    def appr_tuning_objective(self, parameter=None, use_scaled=False):
+    def appr_tuning_objective(self, parameter=None, use_scaled=False, approx_iteration_minus_no=0):
         """
 
         Construct apprentice.appset.TuningObjective2 objective function with MC standard deviation values
@@ -149,6 +149,8 @@ class Fstructure(object):
             # Make val approximation compatible to work with apprentice
             m_type = 'model_scaled' if use_scaled else 'model'
             valscaledoutfile = self.state.f_structure_parameters[m_type][self.state.data_names[0]]
+            if approx_iteration_minus_no > 0: valscaledoutfile.replace('_k{}'.format(self.state.k),
+                                                                       '_k{}'.format(self.state.k-approx_iteration_minus_no))
             new_ds = {}
             with open(valscaledoutfile, 'r') as f:
                 ds = json.load(f)
@@ -170,6 +172,8 @@ class Fstructure(object):
             if len(self.state.data_names)>1 and \
                     self.state.f_structure_parameters[m_type][self.state.data_names[1]] is not None:
                 errscaledoutfile = self.state.f_structure_parameters[m_type][self.state.data_names[1]]
+                if approx_iteration_minus_no > 0: errscaledoutfile.replace('_k{}'.format(self.state.k),
+                                                                           '_k{}'.format(self.state.k-approx_iteration_minus_no))
                 with open(errscaledoutfile, 'r') as f:
                     ds = json.load(f)
                 for key in ds:
@@ -231,7 +235,7 @@ class Fstructure(object):
             if errscaledoutfile is not None: IO._EAS.setRecurrence(parameter)
         return IO
 
-    def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False):
+    def appr_tuning_objective_without_error_vals(self,parameter=None,use_scaled=False, approx_iteration_minus_no=0):
         """
 
         Construct apprentice.appset.TuningObjective2 objective function without MC standard deviation values
@@ -248,4 +252,4 @@ class Fstructure(object):
         if len(self.state.data_names) > 1:
             m_type = 'model_scaled' if use_scaled else 'model'
             self.state.f_structure_parameters[m_type][self.state.data_names[1]] = None
-        return self.appr_tuning_objective(parameter,use_scaled)
+        return self.appr_tuning_objective(parameter,use_scaled,approx_iteration_minus_no)

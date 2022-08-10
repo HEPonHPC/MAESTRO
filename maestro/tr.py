@@ -17,6 +17,27 @@ class TrAmmendment(object):
         self.is_param_kp1 = OutputLevel.is_param_kp1(self.state.output_level)
         self.is_norm_of_step = OutputLevel.is_norm_of_step(self.state.output_level)
 
+    def check_whether_model_is_the_same(self):
+        is_same_model = False
+        if self.state.k > 0:
+            f_structure = Fstructure(self.state)
+            # calls Fstructure.appr_tuning_objective / appr_tuning_objective_without_error_vals
+            sp_object_km1 = self.state.f_structure_function_handle(f_structure,approx_iteration_minus_no=1)
+            sp_object_k = self.state.f_structure_function_handle(f_structure,approx_iteration_minus_no=0)
+            mc_dir_np_k = self.state.working_directory.get_log_path("MC_RUN_Np_k{}".format(self.state.k))
+            parameter_dirs = self.state.mc_object.get_param_directory_array(mc_dir_np_k)
+            approx_obj_vals = []
+            for pdir in parameter_dirs:
+                parameter = self.state.mc_object.get_param_from_directory(pdir)
+                approx_obj_vals.append(sp_object_km1.objective(parameter))
+            (mc_data_df_k, additional_data_k) = \
+                self.state.mc_object.convert_mc_output_to_df(mc_dir_np_k)
+            mc_obj_vals = sp_object_k.objective_without_surrograte_values(mc_data_df_k)
+            model_error = np.average([np.sqrt((x-y)**2) for (x,y) in zip(approx_obj_vals,mc_obj_vals)])
+            if model_error<= 10**-6: is_same_model = True
+
+        return is_same_model
+
     def perform_tr_update(self):
         from maestro.mpi4py_ import MPI_
         comm = MPI_.COMM_WORLD
@@ -41,8 +62,8 @@ class TrAmmendment(object):
                     self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder_k)
                 (mc_data_df_kp1, additional_data_kp1) = \
                     self.state.mc_object.convert_mc_output_to_df(self.mc_run_folder_kp1)
-                mc_obj_val_k = sp_object.objective_without_surrograte_values(mc_data_df_k)
-                mc_obj_val_kp1 = sp_object.objective_without_surrograte_values(mc_data_df_kp1)
+                mc_obj_val_k = sp_object.objective_without_surrograte_values(mc_data_df_k)[0]
+                mc_obj_val_kp1 = sp_object.objective_without_surrograte_values(mc_data_df_kp1)[0]
 
                 if self.debug:
                     print("chi2/ra k\t= %.4E" % (approx_obj_val_k))
@@ -64,14 +85,20 @@ class TrAmmendment(object):
                 if rho < self.state.tr_eta :
                     if self.debug: print("rho < eta New point rejected")
                     # tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    # >>>>>>>>>>>>> master
                     if approx_obj_dec_neg: tr_radius = self.state.tr_radius/2
                     else: tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    # if self.state.usefixedfidelity or \
-                    #         ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
-                    #         ParameterPointUtil.order_of_magnitude(self.state.fidelity):
-                    #     tr_radius = min(self.state.tr_radius/2,norm_of_step)
-                    # else:
-                    #     tr_radius = self.state.tr_radius/2
+                    # >>>>>>>>>>>>> testfunction
+                    # if not approx_obj_dec_neg:
+                    #     if self.state.usefixedfidelity or \
+                    #             ParameterPointUtil.order_of_magnitude(self.state.max_fidelity) == \
+                    #             ParameterPointUtil.order_of_magnitude(self.state.fidelity):
+                    #         tr_radius = min(self.state.tr_radius/2,norm_of_step)
+                    #     else: tr_radius = self.state.tr_radius/2
+                    # else: tr_radius = self.state.tr_radius/2
+                    # # if tr_radius < 10**-1:
+                    # #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
+                    # >>>>>>>>>>>>> end
                     curr_p = p_star_k
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                                  tr_center_messaage="TR center remains the same",
@@ -104,13 +131,23 @@ class TrAmmendment(object):
                             ParameterPointUtil.get_infinity_norm(
                                 np.array(p_star_kp1)-np.array(self.state.tr_center)),
                             self.state.tr_radius,rel_tol=1e-01):
+                        # >>>>>>>>>>>>> master
                         tr_radius = min(self.state.tr_radius*2,self.state.tr_max_radius)
+                        # >>>>>>>>>>>>> testfunction
+                        # # tr_radius = min(self.state.tr_radius*10,self.state.tr_max_radius)
+                        # >>>>>>>>>>>>> end
                         trradmsg = "TR radius doubled"
                         trupdatecode = "A"
                     else:
                         trradmsg = "TR radius stays the same"
                         trupdatecode = "M"
+                        # >>>>>>>>>>>>> master
                         tr_radius = self.state.tr_radius
+                        # >>>>>>>>>>>>> testfunction
+                   # #      tr_radius = min(self.state.tr_radius*5,self.state.tr_max_radius)
+                   # # if tr_radius < 10**-1:
+                   # #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
+                    # >>>>>>>>>>>>> end
                     curr_p = p_star_kp1
                     trcentermsg = "TR center moved to the SP amin"
                     self.state.algorithm_status.update_tr_status(tr_radius_messaage=trradmsg,
@@ -132,7 +169,12 @@ class TrAmmendment(object):
                         file.close()
             else:
                 if self.debug: print("gradient condition failed")
-                tr_radius = self.state.tr_radius/2
+                tr_radius = self.state.tr_min_radius if self.check_whether_model_is_the_same() \
+                    else self.state.tr_radius/2
+                # >>>>>>>>>>>>> testfunction
+                # # if tr_radius < 10**-1:
+                # #     tr_radius = min(tr_radius* 10**2,self.state.tr_max_radius)
+                # >>>>>>>>>>>>> end
                 curr_p = p_star_k
                 self.state.algorithm_status.update_tr_status(tr_radius_messaage="TR radius halved",
                                                              tr_center_messaage="TR center remains the same",
