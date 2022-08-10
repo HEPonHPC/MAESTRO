@@ -10,7 +10,7 @@
           1.0,
           1.0
         ],
-        "mu": 0.01,
+        "mu": 1e-4,
         "eta": 0.01
     },
     "param_names": [
@@ -27,8 +27,8 @@
     "max_fidelity":1e19,
     "usefixedfidelity":false,
     "__N_p": 500,
-    "N_p": 36,
-    "__N_p": 100,
+    "__N_p": 36,
+    "N_p": 150,
     "dim": 3,
     "theta": 0.01,
     "thetaprime": 0.0001,
