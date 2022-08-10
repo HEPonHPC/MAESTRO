@@ -1404,7 +1404,9 @@ class AlgorithmStatus():
                "\t2. Try increasing \"fidelity\" parameter\n"
                "\t3. Try using multiple levels of fidelity by setting \"usefixedfidelity\" parameter to \"false\"\n"
                "A feature that allows the user to set the minimum percentage of new parameters required in any iteration "
-               "is in the works and will be released in future versions of this project."
+               "is in the works and will be released in future versions of this project.",
+            11:"Success: The objective function value (calculated with MC values at the current iterate) is "
+               "sufficiently small"
 
 
         }

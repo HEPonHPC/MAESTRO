@@ -229,6 +229,8 @@ class TrAmmendment(object):
                 self.state.algorithm_status.update_status(6)
             elif self.state.previous_tr_radius <= self.state.tr_min_radius:
                 self.state.algorithm_status.update_status(9)
+            elif self.state.mc_objective_function_value <= 10**-6:
+                self.state.algorithm_status.update_status(11)
             else: self.state.algorithm_status.update_status(0)
 
             if self.debug: print("Status\t\t= {} : {}".format(self.state.algorithm_status.status_val,self.state.algorithm_status.status_def))
