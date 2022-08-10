@@ -133,6 +133,9 @@ class Fstructure(object):
         :type parameter: list
         :param use_scaled: true is scaled parameters are to be used, false otherwise (default: False)
         :type use_scaled: bool
+        :param approx_iteration_minus_no: number of previous iterations to deduct from the current
+            iteration from which to use the model files
+        :type approx_iteration_minus_no: int
         :return: TuningObjective2 objective function object
         :rtype: apprentice.appset.TuningObjective2
 
@@ -245,6 +248,9 @@ class Fstructure(object):
         :type parameter: list
         :param use_scaled: true is scaled parameters are to be used, false otherwise (default: False)
         :type use_scaled: bool
+        :param approx_iteration_minus_no: number of previous iterations to deduct from the current
+            iteration from which to use the model files
+        :type approx_iteration_minus_no: int
         :return: TuningObjective2 objective function object
         :rtype: apprentice.appset.TuningObjective2
 
