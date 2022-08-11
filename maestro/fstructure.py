@@ -110,6 +110,28 @@ class Fstructure(object):
                 "x": result['x'].tolist(),
                 "fun": result['fun'],
             }
+
+            # compute projected gradient at the new iterate
+            import apprentice
+            (mc_data_df,additional_data) = self.state.mc_object.convert_mc_output_to_df(
+                                                        self.state.working_directory.get_log_path(
+                                                            "MC_RUN_Np_k{}".format(self.state.k)))
+            columnnames = list(mc_data_df.index)
+            Sclocal = apprentice.Scaler(mc_data_df[self.state.data_names[0]]
+                                        ['{}'.format(columnnames[0])],
+                                        pnames=self.state.param_names)
+            new_tr_center_scaled = Sclocal.scale(result['x'].tolist()).tolist()
+            sp_object = self.state.f_structure_function_handle(self,
+                                                               parameter=new_tr_center_scaled,
+                                                               use_scaled=True)  # calls self.appr_tuning_objective
+            grad = sp_object.gradient(new_tr_center_scaled)
+            min_param_bounds = self.state.min_parameter_bounds_scaled
+            max_param_bounds = self.state.max_parameter_bounds_scaled
+            new_proj_grad = Fstructure.projection(new_tr_center_scaled - grad, min_param_bounds,
+                                              max_param_bounds) - new_tr_center_scaled
+            new_proj_grad_norm = np.linalg.norm(new_proj_grad)
+            self.state.update_proj_grad_norm_of_next_iterate(new_proj_grad_norm)
+
             if rank == 0:
                 with open(f_structure_subproblem_result_file, 'w') as f:
                     json.dump(outputdata, f, indent=4)
