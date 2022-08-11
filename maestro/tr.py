@@ -167,6 +167,7 @@ class TrAmmendment(object):
                         file = open(self.state.working_directory.get_log_path("1lineout.dat"), "a")
                         file.write(str+"\n")
                         file.close()
+                        self.state.update_proj_grad_norm(self.state.proj_grad_norm_of_next_iterate)
             else:
                 if self.debug: print("gradient condition failed")
                 tr_radius = self.state.tr_min_radius if self.check_whether_model_is_the_same() \
