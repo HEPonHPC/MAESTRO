@@ -477,6 +477,31 @@ class Settings(object):
         """
         self.algorithm_parameters_dict['close_to_min_condition'] = value
 
+    @property
+    def proj_grad_norm_of_next_iterate(self):
+        """
+
+        Get norm of the projected gradient of the next iterate (argmin of the TR subproblem)
+
+        :return: norm of the projected gradient at the next iterate
+        :rtype: float
+
+        """
+        if 'proj_grad_norm_next_iterate' in self.algorithm_parameters_dict:
+            return self.algorithm_parameters_dict['proj_grad_norm_next_iterate']
+        return 1.0
+
+    def update_proj_grad_norm_of_next_iterate(self,pgnorm):
+        """
+
+        Update norm of projected gradient of the next iterate (argmin of the TR subproblem)
+
+        :param pgnorm: norm of projected gradient at the next iterate
+        :type pgnorm: float
+
+        """
+        self.algorithm_parameters_dict['proj_grad_norm_next_iterate'] = pgnorm
+
     def update_proj_grad_norm(self,pgnorm):
         """
 
@@ -1216,7 +1241,7 @@ class Settings(object):
         """
         if 'objective_function_value' not in self.algorithm_parameters_dict:
             return np.infty
-        return self.algorithm_parameters_dict['objective_function_value']['model']
+        return self.algorithm_parameters_dict['objective_function_value']['mc']
 
     def __repr__(self):
         return self.__str__()
