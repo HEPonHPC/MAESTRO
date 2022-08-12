@@ -265,11 +265,13 @@ class InterpolationSample(object):
         # Find close matches from p_pool for points in p_init
         # and add to p_sel_prev
         # Sort the p_pool by descending order of p_pool_at_fidelity first
+        # Take at most 90% of previous points. At least 10% points should be new
         ############################################################
 
         if self.p_pool is not None:
             ppf_order = np.argsort(-1 * np.array(self.p_pool_at_fidelity))[:len(self.p_pool_at_fidelity)]
             for pino, pi in enumerate(self.p_init):
+                if len(self.p_sel) > 0.9 * self.n_to_get: break
                 if not self.i_init[pino]: continue
                 for ppno in ppf_order:
                     pp = self.p_pool[ppno]
@@ -292,11 +294,13 @@ class InterpolationSample(object):
         # If not enough points add points not used before or not in
         # minimum seperation distance from p_pool to p_sel_prev
         # Sort the p_pool by descending order of p_pool_at_fidelity first
+        # Take at most 90% of previous points. At least 10% points should be new
         ############################################################
         if self.p_pool is not None:
             ppf_order = np.argsort(-1 * np.array(self.p_pool_at_fidelity))[:len(self.p_pool_at_fidelity)]
             if self.p_sel is None or len(self.p_sel) < self.n_to_get:
                 for ppno in ppf_order:
+                    if len(self.p_sel) > 0.9 * self.n_to_get: break
                     pp = self.p_pool[ppno]
                     if not self.i_pool[ppno]: continue
                     result = True
