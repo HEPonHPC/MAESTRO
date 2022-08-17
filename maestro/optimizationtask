@@ -60,6 +60,8 @@ class OptimizaitionTask(object):
         if self.state.next_step == "ops_start":
             old_param_metadata_file = self.state.working_directory.get_conf_path("parameter_metadata_dump.json")
             if os.path.exists(old_param_metadata_file):
+                comm = MPI_.COMM_WORLD
+                rank = comm.Get_rank()
                 old_param_meta_data = self.state.read_setting_file(old_param_metadata_file)
                 param_directory = [self.state.working_directory.get_log_path(os.path.join("MC_RUN_Np_k-1",d))
                                    for d in old_param_meta_data["directory name"]]
