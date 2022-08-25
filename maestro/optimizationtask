@@ -247,7 +247,8 @@ class OptimizaitionTask(object):
 
         new_fidelities = []
         for cf in current_fidelities:
-            if max_sigma is None or self.state.usefixedfidelity:
+            if max_sigma is None or self.state.usefixedfidelity or \
+                    cf >= self.state.max_fidelity:
                 nf = 0
             elif max_sigma > bound:
                 diff_sigma = max_sigma - bound
