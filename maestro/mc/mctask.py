@@ -235,7 +235,9 @@ class MCTask(object):
                                 for ninum,ni in enumerate(nan_inf):
                                     if ni:
                                         x = X_[ninum]
-                                        model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname])
+                                        if tname not in model_ds and tname+"#1" in model_ds:
+                                            model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname+"#1"])
+                                        else: model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname])
                                         Y_[ninum] = model(x)
                                         self.did_model_eval = True
                     #   If more than one parameter:
@@ -713,6 +715,77 @@ class MCTask(object):
             with open(out_path, "w") as ff:
                 ff.write(s)
 
+    def inject_nan(self,data,all_param_directory,term_names):
+        """
+
+        Inject NaNs into the MC data.
+
+        :Example:
+            Example of the ``data`` passed in as argument to this function is shown below.
+            In the example below, there are three parameters and two terms of the objective function.
+            Terms that end with ``.P`` are the parameters and those ending with ``.V`` are the values
+            associated with either the ``MC``, i.e., MC sample values  or the ``DMC``, i.e., MC standard deviation
+            values::
+
+                >data
+
+                {
+                    "MC":{
+                            "Term1.P":[[1,2],[3,4],[6,3]],
+                            "Term1.V": [19, 18, 17],
+                            "Term2.P":[[1,2],[3,4],[6,3]],
+                            "Term2.V": [29, 28, 27]
+                        },
+                    "DMC":{
+                            "Term1.P":[[1,2],[3,4],[6,3]],
+                            "Term1.V": [99, 98, 97],
+                            "Term2.P":[[1,2],[3,4],[6,3]],
+                            "Term2.V": [89, 88, 87]
+                        }
+                }
+
+        :param data: MC output data formatted into a dictionary
+        :type data: dict
+        :param all_param_directory: MC outout directory path
+        :type all_param_directory: str
+        :param term_names: term names e.g., [Term1, Term2]
+        :type term_names: list
+
+        """
+        chosen_to_set_nan = True
+        nan_injection_fraction = self.mc_parmeters['nan_injection_fraction'] \
+            if 'nan_injection_fraction' in self.mc_parmeters else 0.0
+        apd_arr = os.path.basename(all_param_directory).split('_')
+        if nan_injection_fraction >0 and apd_arr[2] != 'Np' and apd_arr[3] != 'k0':
+            term_names = np.array(term_names)
+            data_names = data.keys()
+            total_vals = 0
+            for tname in term_names:
+                for dno,dname in enumerate(data_names):
+                    Y_ = data[dname]["{}.V".format(tname)]
+                    total_vals += len(Y_)
+            nan_inf_bound = nan_injection_fraction * total_vals
+            number_of_nan_inf_per_line = np.ceil(nan_inf_bound/(len(term_names)*len(data_names)))
+            for tname in term_names:
+                for dno,dname in enumerate(data_names):
+                    Y_ = data[dname]["{}.V".format(tname)]
+                    nan_inf = [i or j for (i,j) in zip(np.isnan(Y_), np.isinf(Y_))]
+                    index = number_of_nan_inf_per_line
+                    for ninum,ni in enumerate(nan_inf):
+                        if not ni:
+                            if chosen_to_set_nan:
+                                choice = False
+                                Y_[ninum] = np.nan
+                                index -= 1
+                                nan_inf_bound -= 1
+                            else: chosen_to_set_nan = True
+                        else:
+                            index -= 1
+                            nan_inf_bound -= 1
+                        if index <= 0 or nan_inf_bound <= 0: break
+                    if nan_inf_bound <= 0: break
+                if nan_inf_bound <= 0: break
+
     def convert_csv_data_to_df(self,all_param_directory,mc_out_file_name):
         """
 
@@ -747,6 +820,7 @@ class MCTask(object):
         rank = comm.Get_rank()
         dirlist = self.get_param_directory_array(all_param_directory)
         main_object = {}
+        term_names = []
         for dno,d in enumerate(dirlist):
             param = self.get_param_from_directory(d)
             mc_out_path = os.path.join(d,mc_out_file_name)
@@ -761,14 +835,16 @@ class MCTask(object):
                     main_object[rownames[rno]] = {}
                     for cno in range(len(columnnames)):
                         name = df[rownames[0]][columnnames[cno]]
+                        term_names.append(name)
                         main_object[rownames[rno]]["{}.P".format(name)] = []
                         main_object[rownames[rno]]["{}.V".format(name)] = []
                 for cno in range(len(columnnames)):
                     name = df[rownames[0]][columnnames[cno]]
                     val = df[rownames[rno]][columnnames[cno]]
-                    if not math.isnan(val) and not math.isinf(val):
-                        main_object[rownames[rno]]["{}.P".format(name)].append(param)
-                        main_object[rownames[rno]]["{}.V".format(name)].append(val)
+                    main_object[rownames[rno]]["{}.P".format(name)].append(param)
+                    main_object[rownames[rno]]["{}.V".format(name)].append(val)
+        self.inject_nan(main_object,all_param_directory,term_names)
+        self.check_and_resolve_nan_inf(main_object,all_param_directory,term_names)
         return pd.DataFrame(main_object)
 
 
