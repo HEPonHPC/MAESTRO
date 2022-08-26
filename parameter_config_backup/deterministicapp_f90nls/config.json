@@ -3,6 +3,8 @@
       "caller_type":"function call",
       "class_str":"DeterministicApp",
       "parameters":{
+        "__print_nan_inf_status_code":true,
+        "__nan_injection_fraction": 0.05,
         "functions":[
           "F90NLS:p05_f:3"
         ]
