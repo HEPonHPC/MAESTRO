@@ -3,6 +3,8 @@
       "caller_type":"function call",
       "class_str":"SimpleApp",
       "parameters":{
+        "__print_nan_inf_status_code":true,
+        "__nan_injection_fraction": 0.05,
         "standard_deviation_weight":1,
         "functions":[
           "F90NLS:p05_f:3"
@@ -11,10 +13,12 @@
     },
     "__model":{
       "parameters":{
-        "MC":{"m":3}
+        "MC":{"m":3},
+        "DMC":{"m":1}
       },
       "function_str":{
-        "MC":"appr_pa_m_construct"
+        "MC":"appr_pa_m_construct",
+        "DMC":"appr_pa_m_construct"
       }
     },
     "model":{
@@ -22,7 +26,8 @@
         "MC":{"m":3,"n":1}
       },
       "function_str":{
-        "MC":"appr_ra_m_1_construct"
+        "MC":"appr_ra_m_1_construct",
+        "DMC":"appr_ra_m_1_construct"
       }
     },
     "f_structure":{
@@ -31,6 +36,6 @@
           "nstart":5,"nrestart":10,"saddle_point_check":false,"minimize":true,"use_mpi":true
         }
       },
-      "function_str":"appr_tuning_objective_without_error_vals"
+      "function_str":"appr_tuning_objective"
     }
 }
