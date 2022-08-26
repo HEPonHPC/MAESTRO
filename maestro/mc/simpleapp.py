@@ -219,12 +219,66 @@ class DeterministicApp(SimpleApp):
             run_fidelity = self.get_fidelity_from_directory(d) # from super class
             if run_fidelity>0:
                 Y = self.run_functions(param,term_names,term_class,term_counts)
-                DY = [1. for clss in term_class]
+                # DY = [1. for clss in term_class]
 
                 outfile = os.path.join(d,"out_curr.csv")
-                self.save_mc_out_as_csv(header="name,MC,DMC",
-                                        term_names=term_names,data=[Y,DY],out_path=outfile
+                self.save_mc_out_as_csv(header="name,MC",
+                                        term_names=term_names,data=[Y],out_path=outfile
                                         ) # from super class
+
+    def merge_statistics_and_get_max_sigma(self):
+        """
+
+        Merge MC output statistics and find the maximum standard deviation of the
+        MC output.
+
+        :return: maximum standard deviation of the MC output
+        :rtype: float
+
+        """
+        from maestro import MPI_
+        comm = MPI_.COMM_WORLD
+        rank = comm.Get_rank()
+        import pandas as pd
+        import math
+        dirlist = self.get_param_directory_array(self.mc_run_folder)
+        (term_names,term_class,term_counts) = self.get_functions()
+        max_sigma = 0
+        for dno,d in enumerate(dirlist):
+            prev_mc_out_path = os.path.join(d,"out.csv")
+            curr_mc_out_path = os.path.join(d,"out_curr.csv")
+            if rank == 0:
+                if not os.path.exists(prev_mc_out_path):
+                    DiskUtil.copyanything(curr_mc_out_path,prev_mc_out_path)
+                if not os.path.exists(curr_mc_out_path):
+                    DiskUtil.copyanything(prev_mc_out_path,curr_mc_out_path)
+            curr_df = None
+            if rank == 0:
+                curr_df = pd.read_csv(curr_mc_out_path)
+            curr_df = comm.bcast(curr_df, root=0)
+            rownames = list(curr_df.columns.values)
+            columnnames = list(curr_df.index)
+            prev_df = None
+            if rank == 0:
+                prev_df = pd.read_csv(prev_mc_out_path)
+            prev_df = comm.bcast(prev_df, root=0)
+            _Y = []
+
+            for cno in range(len(columnnames)):
+                curr_val = curr_df[rownames[1]][columnnames[cno]]
+                prev_val = prev_df[rownames[1]][columnnames[cno]]
+                if not math.isnan(curr_val) and not math.isinf(curr_val) \
+                        and not math.isnan(prev_val) and not math.isinf(prev_val):
+                    _Y.append(np.average([curr_val,prev_val]))
+                else:
+                    _Y.append(np.nan)
+            self.save_mc_out_as_csv(header="name,MC",
+                                    term_names=term_names,data=[_Y],out_path=prev_mc_out_path
+                                    ) # from super class
+            if rank == 0:
+                DiskUtil.remove_file(curr_mc_out_path)
+            max_sigma = max(max_sigma,1)
+        return max_sigma
 
 class SumOfDiffPowers():
     """
