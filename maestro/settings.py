@@ -925,6 +925,22 @@ class Settings(object):
         """
         return self.config_dict['working_directory']
 
+    def get_model_function_str(self,data_name):
+        """
+
+        Get surrogate model function name
+
+        :param data_name: names of the component of the objective function
+            generated from the MC  for which the  surrogate model function handle is desired
+        :type data_name: str
+        :return: surrogate model function name
+        :rtype: str
+
+        """
+        if data_name in self.config_dict['model']['function_str']:
+            return self.config_dict['model']['function_str'][data_name]
+        return None
+
     def get_model_function_handle(self,data_name):
         """
 

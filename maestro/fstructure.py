@@ -67,13 +67,15 @@ class Fstructure(object):
             proj_grad = Fstructure.projection(self.state.tr_center_scaled - grad, min_param_bounds,
                                                 max_param_bounds) - self.state.tr_center_scaled
             proj_grad_norm = np.linalg.norm(proj_grad)
-            if proj_grad_norm <= self.state.min_gradient_norm and \
-                    (self.state.usefixedfidelity or self.state.fidelity >= self.state.max_fidelity):
-                self.state.algorithm_status.update_status(1)
-            if proj_grad_norm <= self.state.tr_mu * self.state.tr_radius:
-                self.state.update_close_to_min_condition(True)
-            else:
+            from maestro import ModelConstruction
+            model = ModelConstruction(self.state)
+            if proj_grad_norm > self.state.min_gradient_norm:
                 self.state.update_close_to_min_condition(False)
+            elif self.state.tr_radius <= model.calculate_minimum_tr_radius_bound() and \
+                (self.state.usefixedfidelity or self.state.fidelity >= self.state.max_fidelity):
+                self.state.algorithm_status.update_status(1)
+            else:
+                self.state.update_close_to_min_condition(True)
             if self.debug: print(
                 "||pgrad|| \t= %.3f <=> %.3f" % (proj_grad_norm, self.state.tr_mu * self.state.tr_radius))
             self.state.update_proj_grad_norm(proj_grad_norm)
