@@ -79,6 +79,8 @@ class Settings(object):
         comm = MPI_.COMM_WORLD
         rank = comm.Get_rank()
         if rank == 0:
+            from maestro import DiskUtil
+            DiskUtil.remove_file(file)
             with open(file, 'w') as f:
                 json.dump(ds, f, indent=4)
 
