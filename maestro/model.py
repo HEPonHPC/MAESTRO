@@ -88,8 +88,7 @@ class ModelConstruction(object):
         if function_str in ['appr_pa_m_construct','appr_appx_construct']:
             return np.power(self.state.min_gradient_norm,(1/self.state.model_parameters[data_name]['m']))
         elif function_str in ['appr_ra_m_n_construct','appr_ra_m_1_construct']:
-            return np.power(self.state.min_gradient_norm,
-                            (1/(self.state.model_parameters[data_name]['m'] + self.state.model_parameters[data_name]['n'])))
+            return np.power(self.state.min_gradient_norm,(1/self.state.model_parameters[data_name]['m']))
         else:
             raise Exception("Model not implemented")
 
