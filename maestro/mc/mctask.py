@@ -244,12 +244,24 @@ class MCTask(object):
                     if apd_arr[2] == 'Np':
                         if np.isnan(Y_).any() or np.isinf(Y_).any():
                             nan_inf = [i or j for (i,j) in zip(np.isnan(Y_), np.isinf(Y_))]
-                            for dno_inner,dname_inner in enumerate(data_names):
-                                X__ = np.array(data[dname_inner]["{}.P".format(tname)])
-                                Y__ = np.array(data[dname_inner]["{}.V".format(tname)])
-                                data[dname_inner]["{}.P".format(tname)] = X__[np.invert(nan_inf)].tolist()
-                                data[dname_inner]["{}.V".format(tname)] = Y__[np.invert(nan_inf)].tolist()
-                            self.did_discard = True
+                            if apd_arr[3] == 'k0':
+                                for dno_inner,dname_inner in enumerate(data_names):
+                                    X__ = np.array(data[dname_inner]["{}.P".format(tname)])
+                                    Y__ = np.array(data[dname_inner]["{}.V".format(tname)])
+                                    data[dname_inner]["{}.P".format(tname)] = X__[np.invert(nan_inf)].tolist()
+                                    data[dname_inner]["{}.V".format(tname)] = Y__[np.invert(nan_inf)].tolist()
+                                self.did_discard = True
+                            else:
+                                with open(os.path.join(log_dir,"{}_model_k{}.json".format(dname,k-1))) as f:
+                                    model_ds = json.load(f)
+                                for ninum,ni in enumerate(nan_inf):
+                                    if ni:
+                                        x = X_[ninum]
+                                        if tname not in model_ds and tname+"#1" in model_ds:
+                                            model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname+"#1"])
+                                        else: model = ModelConstruction.get_model_object(function_str_dict[dname],model_ds[tname])
+                                        Y_[ninum] = model(x)
+                                        self.did_model_eval = True
 
         # Try to interpolate
         # If not possible to interpolate:
@@ -756,7 +768,7 @@ class MCTask(object):
         nan_injection_fraction = self.mc_parmeters['nan_injection_fraction'] \
             if 'nan_injection_fraction' in self.mc_parmeters else 0.0
         apd_arr = os.path.basename(all_param_directory).split('_')
-        if nan_injection_fraction >0 and apd_arr[2] != 'Np' and apd_arr[3] != 'k0':
+        if nan_injection_fraction >0 and apd_arr[3] != 'k0':
             term_names = np.array(term_names)
             data_names = data.keys()
             total_vals = 0
@@ -774,7 +786,6 @@ class MCTask(object):
                     for ninum,ni in enumerate(nan_inf):
                         if not ni:
                             if chosen_to_set_nan:
-                                choice = False
                                 Y_[ninum] = np.nan
                                 index -= 1
                                 nan_inf_bound -= 1
