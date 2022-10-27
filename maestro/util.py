@@ -251,7 +251,7 @@ class ParameterPointUtil():
         :param tr_radius: trust region radius
         :type point: list
         :type tr_center: list
-        :type tr_radius: list
+        :type tr_radius: float
         :return: true if parameter is within trust region, false otherwise
         :rtype: bool
 
