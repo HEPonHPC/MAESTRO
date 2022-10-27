@@ -57,14 +57,15 @@ class InterpolationSample(object):
         for pno, p in enumerate(params):
             if ParameterPointUtil.check_if_point_in_TR(p, self.state.tr_center, self.state.tr_radius):
                 if not ParameterPointUtil.check_if_same_point(p, self.state.tr_center):
-                    if self.p_pool is None:
-                        self.p_pool = np.array([p])
-                        self.p_pool_metadata["0"] = {"index":pno,"k": iterno, "ptype": paramtype}
-                    else:
-                        self.p_pool = np.concatenate((self.p_pool, np.array([p])))
-                        self.p_pool_metadata[str(len(self.p_pool) - 1)] = {"index":pno,"k": iterno,
-                                                                           "ptype": paramtype}
-                    self.p_pool_at_fidelity.append(param_metadata['at fidelity'][pno])
+                    if param_metadata['at fidelity'][pno] <= self.state.fidelity:
+                        if self.p_pool is None:
+                            self.p_pool = np.array([p])
+                            self.p_pool_metadata["0"] = {"index":pno,"k": iterno, "ptype": paramtype}
+                        else:
+                            self.p_pool = np.concatenate((self.p_pool, np.array([p])))
+                            self.p_pool_metadata[str(len(self.p_pool) - 1)] = {"index":pno,"k": iterno,
+                                                                               "ptype": paramtype}
+                        self.p_pool_at_fidelity.append(param_metadata['at fidelity'][pno])
 
     def add_tr_center_to_selected_params(self):
         param_metadata = self.state.get_paramerter_metadata(self.state.k,"1")
